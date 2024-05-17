@@ -1,7 +1,7 @@
 # fertiscan/cv/ocr.py
 
 from azure.core.credentials import AzureKeyCredential
-from azure.ai.formrecognizer import DocumentAnalysisClient
+from azure.ai.formrecognizer import DocumentAnalysisClient, AnalyzeResult
 
 class OCR:
     def __init__(self, api_endpoint, api_key):
@@ -13,9 +13,9 @@ class OCR:
             credential=AzureKeyCredential(api_key)
         )
 
-    def extract_text(self, document) :
+    def extract_text(self, document) -> AnalyzeResult:
         poller = self.client.begin_analyze_document(
-            model="prebuilt-layout", document=document
+            model="prebuilt-layout", document=document, outputContentFormat='markdown'
         )
         result = poller.result()
         return result

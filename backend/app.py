@@ -66,8 +66,12 @@ def analyze_document():
     result = ocr.extract_text(BytesIO(document))
     
     # Generate form from extracted text
-    # extracted_text = "\n".join([line.content for page in result.pages for line in page.lines])
-    form = language_model.generate_form(result)
+    dict = result.to_dict()
+    # dict.pop('documents')
+    # dict.pop('pages')
+    # dict.pop('styles')
+    # dict.pop('paragraphs')
+    form = language_model.generate_form(jsonify(dict))
     
     return jsonify({'form': form}), 200
 
