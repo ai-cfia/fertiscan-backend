@@ -1,1 +1,1 @@
-from .image_loader import ImageLoader
+from .document_store import DocumentStore

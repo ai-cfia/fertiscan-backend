@@ -1,44 +1,75 @@
-# import libraries
+# server.py
+
+from flask import Flask, request, jsonify, render_template
+from werkzeug.utils import secure_filename
 import os
 import json
+from io import BytesIO
 from dotenv import load_dotenv
-from azure.core.credentials import AzureKeyCredential
-from azure.ai.formrecognizer import DocumentAnalysisClient
+from backend import DocumentStore, OCR, LanguageModel
 
+
+# Load environment variables
 load_dotenv()
 
-# set `<your-endpoint>` and `<your-key>` variables with the values from the Azure portal
-endpoint = os.getenv('API_ENDPOINT')
-key = os.getenv('API_KEY')
+# Ensure the directory for uploaded images exists
+UPLOAD_FOLDER = 'uploads'
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
-def format_polygon(polygon):
-    if not polygon:
-        return "N/A"
-    return ", ".join(["[{}, {}]".format(p.x, p.y) for p in polygon])
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-def analyze_layout():
-    # sample document
-    form = open('./samples/image.png', mode='rb')
-    formBytes = form.read()
-    form.close()
+# Configuration for Azure Form Recognizer
+API_ENDPOINT = os.getenv('AZURE_API_ENDPOINT')
+API_KEY = os.getenv('AZURE_API_KEY')
+ocr = OCR(api_endpoint=API_ENDPOINT, api_key=API_KEY)
 
-    document_analysis_client = DocumentAnalysisClient(
-        endpoint=endpoint, credential=AzureKeyCredential(key)
-    )
+# Configuration for OpenAI GPT-4
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+language_model = LanguageModel(api_key=OPENAI_API_KEY)
 
-    poller = document_analysis_client.begin_analyze_document(
-            "prebuilt-layout", formBytes)
-    result = poller.result()
+# Document storage
+document_storage = DocumentStore()
 
+@app.route('/')
+def main_page():
+    return render_template('index.html')
+
+@app.route('/upload', methods=['POST'])
+def upload_image():
+    if 'file' not in request.files:
+        return "No file part", 400
     
-    # Serialize the result variable to JSON and save it to a file
-    with open('./samples/image.json', 'w') as json_file:
-        dict = result.to_dict()
-        dict.pop('documents')
-        dict.pop('pages')
-        dict.pop('styles')
-        dict.pop('paragraphs')
-        json.dump(dict, json_file, indent=4)
+    file = request.files['file']
+    if file.filename == '':
+        return "No selected file", 400
+    
+    if file:
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+
+        # Add image to document storage
+        with open(file_path, 'rb') as f:
+            document_storage.add_document(f.read())
+        
+        return "File uploaded successfully", 200
+
+@app.route('/analyze', methods=['GET'])
+def analyze_document():
+    document = document_storage.get_documents()
+    if not document:
+        return "No documents to analyze", 400
+    
+    # For simplicity, only analyze the first document
+    result = ocr.extract_text(BytesIO(document))
+    
+    # Generate form from extracted text
+    # extracted_text = "\n".join([line.content for page in result.pages for line in page.lines])
+    form = language_model.generate_form(result)
+    
+    return jsonify({'form': form}), 200
 
 if __name__ == "__main__":
-    analyze_layout()
+    app.run(debug=True)
