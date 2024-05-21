@@ -26,8 +26,9 @@ API_KEY = os.getenv('AZURE_API_KEY')
 ocr = OCR(api_endpoint=API_ENDPOINT, api_key=API_KEY)
 
 # Configuration for OpenAI GPT-4
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-language_model = LanguageModel(api_key=OPENAI_API_KEY)
+OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_API_ENDPOINT')
+OPENAI_API_KEY = os.getenv('AZURE_OPENAI_API_KEY')
+language_model = LanguageModel(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY)
 
 # Document storage
 document_storage = DocumentStore()
@@ -67,10 +68,10 @@ def analyze_document():
     
     # Generate form from extracted text
     dict = result.to_dict()
-    # dict.pop('documents')
-    # dict.pop('pages')
-    # dict.pop('styles')
-    # dict.pop('paragraphs')
+    dict.pop('documents')
+    dict.pop('pages')
+    dict.pop('styles')
+    dict.pop('paragraphs')
     form = language_model.generate_form(jsonify(dict))
     
     return jsonify({'form': form}), 200

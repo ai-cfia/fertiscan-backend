@@ -15,7 +15,7 @@ class OCR:
 
     def extract_text(self, document) -> AnalyzeResult:
         poller = self.client.begin_analyze_document(
-            model="prebuilt-layout", document=document, outputContentFormat='markdown'
+            model="prebuilt-layout", document=document
         )
         result = poller.result()
         return result
