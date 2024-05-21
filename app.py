@@ -67,15 +67,15 @@ def analyze_document():
     
     # Generate form from extracted text
     dict = result.to_dict()
-    dict.pop('documents')
-    dict.pop('pages')
-    dict.pop('styles')
-    dict.pop('tables')
-    dict.pop('paragraphs')
+    # dict.pop('documents')
+    # dict.pop('pages')
+    # dict.pop('styles')
+    # dict.pop('tables')
+    # dict.pop('paragraphs')
     # form = language_model.generate_form(json.dumps(dict))
     form = language_model.generate_form(dict['content'])
     
-    return jsonify({'form': form}), 200
+    return jsonify(form), 200
 
 if __name__ == "__main__":
     app.run(debug=True)
