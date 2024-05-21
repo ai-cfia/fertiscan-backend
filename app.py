@@ -1,10 +1,7 @@
-# server.py
-
 from flask import Flask, request, jsonify, render_template
 from werkzeug.utils import secure_filename
 import os
 import json
-from io import BytesIO
 from dotenv import load_dotenv
 from backend import DocumentStore, OCR, LanguageModel
 

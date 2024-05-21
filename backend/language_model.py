@@ -1,5 +1,3 @@
-# fertiscan/llm/language_model.py
-
 from openai import AzureOpenAI
 
 prompt_file = open('./prompt.txt')

@@ -1,5 +1,3 @@
-# fertiscan/io/document_storage.py
-
 import os
 
 class DocumentStore:
