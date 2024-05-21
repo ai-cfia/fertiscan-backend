@@ -8,7 +8,6 @@ from io import BytesIO
 from dotenv import load_dotenv
 from backend import DocumentStore, OCR, LanguageModel
 
-
 # Load environment variables
 load_dotenv()
 
@@ -26,12 +25,12 @@ API_KEY = os.getenv('AZURE_API_KEY')
 ocr = OCR(api_endpoint=API_ENDPOINT, api_key=API_KEY)
 
 # Configuration for OpenAI GPT-4
-OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_API_ENDPOINT')
-OPENAI_API_KEY = os.getenv('AZURE_OPENAI_API_KEY')
+OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
+OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
 language_model = LanguageModel(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY)
 
 # Document storage
-document_storage = DocumentStore()
+document_store = DocumentStore()
 
 @app.route('/')
 def main_page():
@@ -53,26 +52,28 @@ def upload_image():
 
         # Add image to document storage
         with open(file_path, 'rb') as f:
-            document_storage.add_document(f.read())
+            document_store.add_page(f.read())
         
         return "File uploaded successfully", 200
 
 @app.route('/analyze', methods=['GET'])
 def analyze_document():
-    document = document_storage.get_documents()
+    document = document_store.get_document()
     if not document:
         return "No documents to analyze", 400
     
     # For simplicity, only analyze the first document
-    result = ocr.extract_text(BytesIO(document))
+    result = ocr.extract_text(document=document)
     
     # Generate form from extracted text
     dict = result.to_dict()
     dict.pop('documents')
     dict.pop('pages')
     dict.pop('styles')
+    dict.pop('tables')
     dict.pop('paragraphs')
-    form = language_model.generate_form(jsonify(dict))
+    # form = language_model.generate_form(json.dumps(dict))
+    form = language_model.generate_form(dict['content'])
     
     return jsonify({'form': form}), 200
 
