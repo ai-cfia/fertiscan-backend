@@ -14,6 +14,7 @@ A flask-based backend for FertiScan.
 
 ```sh
 cd fertiscan-backend
+pip install -r requirements.txt
 python ./app.py
 ```
 
