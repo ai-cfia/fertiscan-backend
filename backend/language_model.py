@@ -1,8 +1,7 @@
+import os
 from openai import AzureOpenAI
 
-prompt_file = open('./prompt.txt')
-SETUP_PROMPT = prompt_file.read()
-prompt_file.close()
+PROMPT_PATH = os.getenv('PROMPT_PATH')
 
 class LanguageModel:
     def __init__(self, api_endpoint, api_key):
@@ -16,10 +15,13 @@ class LanguageModel:
         )
 
     def generate_form(self, prompt):
+        prompt_file = open(PROMPT_PATH)
+        setup_prompt = prompt_file.read()
+        prompt_file.close()
         response = self.client.chat.completions.create(
             model="gpt-4", # model = "deployment_name".
             messages=[
-                {"role": "system", "content": SETUP_PROMPT},
+                {"role": "system", "content": setup_prompt},
                 {"role": "system", "content": prompt},
             ]
         )

@@ -1,13 +1,13 @@
-import unittest
-from unittest.mock import patch, mock_open, MagicMock
-from io import BytesIO
 import os
-from backend import DocumentStore  # Replace 'your_module_path' with the actual module path
+import unittest
+from io import BytesIO
+from backend import DocumentStorage
+from unittest.mock import patch, mock_open, MagicMock
 
-class TestDocumentStore(unittest.TestCase):
+class TestDocumentStorage(unittest.TestCase):
     
     def setUp(self):
-        self.store = DocumentStore()
+        self.store = DocumentStorage()
 
     @patch('builtins.open', new_callable=mock_open, read_data="fake image data")
     @patch('os.path.exists', return_value=True)

@@ -1,15 +1,15 @@
-from flask import Flask, request, jsonify, render_template
-from werkzeug.utils import secure_filename
 import os
 import json
 from dotenv import load_dotenv
-from backend import DocumentStore, OCR, LanguageModel
+from werkzeug.utils import secure_filename
+from backend import DocumentStorage, OCR, LanguageModel
+from flask import Flask, request, jsonify, render_template
 
 # Load environment variables
 load_dotenv()
 
 # Ensure the directory for uploaded images exists
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = os.getenv('UPLOAD_PATH')
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
@@ -27,7 +27,7 @@ OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
 language_model = LanguageModel(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY)
 
 # Document storage
-document_store = DocumentStore()
+document_storage = DocumentStorage()
 
 @app.route('/')
 def main_page():
@@ -49,13 +49,13 @@ def upload_image():
 
         # Add image to document storage
         with open(file_path, 'rb') as f:
-            document_store.add_page(f.read())
+            document_storage.add_page(f.read())
         
         return "File uploaded successfully", 200
 
 @app.route('/analyze', methods=['GET'])
 def analyze_document():
-    document = document_store.get_document()
+    document = document_storage.get_document()
     if not document:
         return "No documents to analyze", 400
     
@@ -72,7 +72,12 @@ def analyze_document():
     # form = language_model.generate_form(json.dumps(dict))
     form = language_model.generate_form(dict['content'])
     
-    return jsonify(form), 200
+    return app.response_class(
+        response=form,
+        status=200,
+        mimetype='application/json'
+    )
+    # return jsonify(form), 200
 
 if __name__ == "__main__":
     app.run(debug=True)
