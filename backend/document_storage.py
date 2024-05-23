@@ -1,5 +1,3 @@
-import os
-
 class DocumentStorage:
     def __init__(self):
         self.document = []
