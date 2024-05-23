@@ -2,6 +2,6 @@ azure-ai-formrecognizer==3.3.0
 
 flask
 
-dotenv
+python-dotenv
 
 openai
