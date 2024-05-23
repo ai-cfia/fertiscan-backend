@@ -65,5 +65,5 @@ UPLOAD_PATH=path/to/file
 
 ## API Endpoints
 
-* `POST /upload`: Upload an image to be analyzed.
-* `GET /analyze`: Analyze the uploaded image and returns the form.
+- `POST /upload`: Upload an image to be analyzed.
+- `GET /analyze`: Analyze the uploaded image and returns the form.
