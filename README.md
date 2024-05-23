@@ -8,10 +8,10 @@ A flask-based backend for FertiScan.
 
 - Python 3.8 or higher
 - [pip](https://pip.pypa.io/en/stable/installation/)
-- [virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
+- [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html)
 - Azure Document Intelligence and OpenAI API keys
 
-### Running
+### Running 
 
 #### Locally
 
