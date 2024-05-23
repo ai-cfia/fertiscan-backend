@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from backend import DocumentStorage, OCR, LanguageModel
 from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS, cross_origin
+
 
 # Load environment variables
 load_dotenv()
@@ -12,10 +14,13 @@ load_dotenv()
 UPLOAD_FOLDER = os.getenv('UPLOAD_PATH')
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+FRONTEND_URL = os.getenv('FRONTEND_URL')
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
+# CORS configuration limited to the frontend URL
+cors = CORS(app,resources={"*",FRONTEND_URL}) 
+app.config['CORS_HEADERS'] = 'Content-Type'
 # Configuration for Azure Form Recognizer
 API_ENDPOINT = os.getenv('AZURE_API_ENDPOINT')
 API_KEY = os.getenv('AZURE_API_KEY')
