@@ -11,7 +11,7 @@ A flask-based backend for FertiScan.
 - [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html)
 - Azure Document Intelligence and OpenAI API keys
 
-### Running 
+### Running
 
 #### Locally
 
