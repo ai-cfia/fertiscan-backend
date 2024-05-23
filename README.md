@@ -5,6 +5,7 @@ A flask-based backend for FertiScan.
 ## Setup for Development
 
 ### Prerequisites
+
 - Python 3.8 or higher
 - [pip](https://pip.pypa.io/en/stable/installation/)
 - [virtualenv](https://virtualenv.pypa.io/en/stable/installation/)
@@ -12,11 +13,42 @@ A flask-based backend for FertiScan.
 
 ### Running
 
+#### Locally
+
 ```sh
 cd fertiscan-backend
 pip install -r requirements.txt
 python ./app.py
 ```
+
+#### With docker
+
+1. Build the docker image
+
+    ```bash
+    docker build -t fertiscan-backend \
+    --build-arg ARG_AZURE_API_ENDPOINT=your_actual_azure_form_recognizer_endpoint \
+    --build-arg ARG_AZURE_API_KEY=your_actual_azure_form_recognizer_key \
+    --build-arg ARG_AZURE_OPENAI_API_ENDPOINT=your_actual_azure_openai_endpoint \
+    --build-arg ARG_AZURE_OPENAI_API_KEY=your_actual_azure_openai_key \
+    --build-arg ARG_PROMPT_PATH=actual_path/to/prompt_file \
+    --build-arg ARG_UPLOAD_PATH=actual_path/to/upload_file \
+    .
+    ```
+
+2. Run the docker image
+
+```bash
+docker run -p 5000:5000 fertiscan-backend
+```
+
+3. Test the application
+
+Go to `http://localhost:5000`
+
+#### With docker-compose
+
+Coming soon...
 
 ### Environment Variables
 
