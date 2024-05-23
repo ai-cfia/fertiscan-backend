@@ -38,13 +38,13 @@ python ./app.py
 
 2. Run the docker image
 
-```bash
-docker run -p 5000:5000 fertiscan-backend
-```
+    ```bash
+    docker run -p 5000:5000 fertiscan-backend
+    ```
 
 3. Test the application
 
-Go to `http://localhost:5000`
+Go to `http://localhost:5000` and test the application.
 
 #### With docker-compose
 
