@@ -33,6 +33,7 @@ python ./app.py
     --build-arg ARG_AZURE_OPENAI_API_KEY=your_actual_azure_openai_key \
     --build-arg ARG_PROMPT_PATH=actual_path/to/prompt_file \
     --build-arg ARG_UPLOAD_PATH=actual_path/to/upload_file \
+    --build-arg ARG_FRONTEND_URL=http://url.to_frontend/ \
     .
     ```
 
