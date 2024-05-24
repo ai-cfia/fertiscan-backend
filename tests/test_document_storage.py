@@ -1,8 +1,6 @@
-import os
 import unittest
-from io import BytesIO
 from backend import DocumentStorage
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import patch, mock_open
 
 class TestDocumentStorage(unittest.TestCase):
     

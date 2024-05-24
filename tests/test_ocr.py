@@ -1,6 +1,5 @@
 import unittest
 
-
 class TestOCR(unittest.TestCase):
     """Basic test cases."""
 

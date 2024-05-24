@@ -1,11 +1,9 @@
 import os
-import json
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from backend import DocumentStorage, OCR, LanguageModel
-from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS, cross_origin
-
+from flask import Flask, request, render_template
+from flask_cors import CORS
 
 # Load environment variables
 load_dotenv()
