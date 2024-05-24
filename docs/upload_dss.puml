@@ -13,7 +13,7 @@ C -> F: upload()
 F -> B: POST /upload "file=@/path/to/file"
 alt Document found
 F <<-- B: //File uploaded successfully, 200//
-else No path givenn
+else No path given
 F <<-- B: //No selected file, 400//
 else
 else Document not found
