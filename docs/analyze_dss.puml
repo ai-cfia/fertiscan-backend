@@ -1,0 +1,43 @@
+@startuml Analyze DSS
+header 22/05/2024
+
+title FertiScan Document Analysis
+hide empty members
+hide footbox
+
+actor "Client" as C
+participant Frontend as F
+participant Backend as B
+box Azure #LightBlue
+participant "Document Intelligence" as D
+participant "OpenAI" as O<<GPT-4>>
+end box
+
+C -> F: analyze()
+F -> B: GET /analyze
+alt Document uploaded
+B -> D: POST .../prebuilt-layout:analyze
+note right
+Extracts the content
+of the document.
+end note
+B <<-- D: return AnalyzeResult
+B -> O: POST .../completions
+B <<-- O: return JSON
+note left
+A form with all the
+information needed
+by the inspector.
+end note
+F <<-- B: return Response
+F -> F: GET /form
+note right
+Open the page where the
+form will be displayed
+end note
+else No document uploaded
+F <<-- B: //No documents to analyze, 400// 
+end
+
+
+@enduml
