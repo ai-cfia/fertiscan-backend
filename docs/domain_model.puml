@@ -1,0 +1,48 @@
+@startuml Model Diagram
+
+header 27-05-2024
+ 
+title FertiScan Domain Model
+ 
+hide empty members
+ 
+package Backend {
+
+class "Flask" as S <<localhost:5000>> {
+  + upload_image()
+  + analyze_document()
+}
+ 
+    class "DocumentStorage" as DS {
+    + add_page(page)
+    + get_document() bytes
+    }
+
+    class "LanguageModel" as LLM {
+    + generate_form(prompt)
+    }
+
+    class "OCR" {
+    + extract_text(document) AnalyzeResult
+    }
+
+    class "AnalyzeResult" as R
+}
+ 
+ 
+entity "Prompt" as P 
+entity "Document" as D
+entity "Form" as F
+ 
+ 
+S -down- OCR: uses >
+S -down- LLM: uses >
+S -down- DS: uses >
+ 
+OCR -down- R: produces >
+DS -down- D: contains > 
+LLM -down- P: takes >
+LLM -down- F: generates >
+R -down- P: contains >
+
+@enduml
