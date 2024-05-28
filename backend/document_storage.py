@@ -4,12 +4,11 @@ class DocumentStorage:
 
     def add_page(self, page):
         if isinstance(page, str):
-            try:
-                file = open(page)
-                image = file.read()
-                file.close()
-            except FileNotFoundError(f"The file {page} does not exist."):
-                print('')
+            if not os.path.exists(page):
+                raise FileNotFoundError(f"The file {page} does not exist.")
+            file = open(page)
+            image = file.read()
+            file.close()
         elif isinstance(page, bytes):
             image = page
         else:
