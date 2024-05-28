@@ -52,7 +52,7 @@ def upload_image():
 
         # Add image to document storage
         with open(file_path, 'rb') as f:
-            document_storage.add_page(f.read())
+            document_storage.add_image(f.read())
         
         return "File uploaded successfully", 200
 
