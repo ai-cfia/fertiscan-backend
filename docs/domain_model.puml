@@ -6,43 +6,40 @@ title FertiScan Domain Model
  
 hide empty members
  
-package Backend {
-
 class "Flask" as S <<localhost:5000>> {
   + upload_image()
   + analyze_document()
 }
- 
-    class "DocumentStorage" as DS {
-    + add_page(page)
-    + get_document() bytes
-    }
 
-    class "LanguageModel" as LLM {
-    + generate_form(prompt)
-    }
-
-    class "OCR" {
-    + extract_text(document) AnalyzeResult
-    }
-
-    class "AnalyzeResult" as R
+class "DocumentStorage" as DS {
++ add_image(image)
++ get_document() Document
 }
- 
- 
-entity "Prompt" as P 
+
+class "LanguageModel" as LLM {
++ generate_form(prompt)
+}
+
+class "OCR" {
++ extract_text(document) AnalyzeResult
+}
+
+class "AnalyzeResult" as R
+entity "Image" as I
 entity "Document" as D
+entity "Prompt" as P 
 entity "Form" as F
  
  
-S -down- OCR: uses >
-S -down- LLM: uses >
-S -down- DS: uses >
+S "1" -down- "1" OCR: uses >
+S "1" -down- "1" LLM: uses >
+S "1" -down- "1" DS: uses >
  
-OCR -down- R: produces >
-DS -down- D: contains > 
-LLM -down- P: takes >
-LLM -down- F: generates >
-R -down- P: contains >
+OCR "1" -down- "*" R: produces >
+DS "1" -down- "*" D: gives > 
+DS "1" - "*" I: contains >
+LLM "1" -down- "*" P: takes >
+LLM "1" -down- "*" F: generates >
+R "1" -down- "1" P: contains >
 
 @enduml
