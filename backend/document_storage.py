@@ -49,7 +49,7 @@ class DocumentStorage:
         return pdf_buffer
 
 
-    def get_document(self, format='png') -> bytes:
+    def get_document(self, format='pdf') -> bytes:
         # Ensure there are images to merge
         if not self.images:
             raise ValueError("No images to merge.")
