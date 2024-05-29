@@ -2,7 +2,7 @@ import os
 from PIL import Image
 from io import BytesIO
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.pagesizes import letter
 
 class DocumentStorage:
     def __init__(self):
