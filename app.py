@@ -51,8 +51,7 @@ def upload_image():
         file.save(file_path)
 
         # Add image to document storage
-        with open(file_path, 'rb') as f:
-            document_storage.add_image(f.read())
+        document_storage.add_image(file_path)
         
         return "File uploaded successfully", 200
 

@@ -1,20 +1,24 @@
 import os
 import unittest
+import Levenshtein
 from dotenv import load_dotenv
 from backend.ocr import OCR
 from backend.document_storage import DocumentStorage
 
-def jaccard_similarity(text1, text2):
-    # Tokenize the texts into sets of words
-    set1 = set(text1.split())
-    set2 = set(text2.split())
-
-    # Compute the Jaccard similarity
-    intersection = set1.intersection(set2)
-    union = set1.union(set2)
-    similarity = len(intersection) / len(union)
+def jaccard_similarity(str1, str2):
+    # Calculate the Levenshtein distance
+    distance = Levenshtein.distance(str1, str2)
     
-    return similarity
+    # Determine the maximum possible length
+    max_len = max(len(str1), len(str2))
+    
+    if max_len == 0:
+        return 100.0  # If both strings are empty, they are identical
+    
+    # Calculate the similarity as a percentage
+    similarity_percentage = (1 - (distance / max_len)) * 100
+    
+    return similarity_percentage
 
 class TestOCR(unittest.TestCase):
     def setUp(self):
