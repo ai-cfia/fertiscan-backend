@@ -40,8 +40,8 @@ class TestDocumentStorage(unittest.TestCase):
         self.store.add_image(self.sample_image_path_1)
         self.store.add_image(self.sample_image_path_2)
 
-        composite_image = self.store.get_document(format='pdf')
-        save_bytes_to_file(composite_image, self.composite_document_path)
+        doc = self.store.get_document(format='pdf')
+        save_bytes_to_file(doc, self.composite_document_path)
         self.assertTrue(os.path.exists(self.composite_document_path))
 
     def tearDown(self):
