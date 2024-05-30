@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from backend.ocr import OCR
 from backend.document_storage import DocumentStorage
 
-def jaccard_similarity(str1, str2):
+def levenshtein_similarity(str1, str2):
     # Calculate the Levenshtein distance
     distance = Levenshtein.distance(str1, str2)
     
@@ -88,7 +88,7 @@ class TestOCR(unittest.TestCase):
         extracted_text_1 = result_1.to_dict()["content"]
         extracted_text_2 = result_2.to_dict()["content"]
 
-        distance = jaccard_similarity(extracted_text, extracted_text_1 + " " + extracted_text_2)
+        distance = levenshtein_similarity(extracted_text, extracted_text_1 + " " + extracted_text_2)
 
         self.assertGreater(distance, 0.9, "The distance between the merged text and individual extractions is too great!")
 
@@ -96,3 +96,4 @@ class TestOCR(unittest.TestCase):
         # Clean up created files after tests
         if os.path.exists(self.composite_image_path):
             os.remove(self.composite_image_path)
+            
