@@ -96,4 +96,3 @@ class TestOCR(unittest.TestCase):
         # Clean up created files after tests
         if os.path.exists(self.composite_image_path):
             os.remove(self.composite_image_path)
-            

@@ -70,4 +70,3 @@ class DocumentStorage:
 def save_bytes_to_file(image_bytes: bytes, output_path: str):
     with open(output_path, 'wb') as output_file:
         output_file.write(image_bytes)
-        
