@@ -12,4 +12,3 @@ reportlab
 
 # Test dependencies
 Levenshtein
-
