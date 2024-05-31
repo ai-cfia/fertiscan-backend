@@ -1,8 +1,6 @@
 import os
 from openai import AzureOpenAI
 
-PROMPT_PATH = os.getenv('PROMPT_PATH')
-
 class LanguageModel:
     def __init__(self, api_endpoint, api_key):
         if not api_endpoint or not api_key:
@@ -15,7 +13,7 @@ class LanguageModel:
         )
 
     def generate_form(self, prompt):
-        prompt_file = open(PROMPT_PATH)
+        prompt_file = open(os.getenv('PROMPT_PATH'))
         setup_prompt = prompt_file.read()
         prompt_file.close()
         response = self.client.chat.completions.create(
