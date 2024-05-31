@@ -1,10 +1,10 @@
 import os
 from openai import AzureOpenAI
 
-class LanguageModel:
+class GPT:
     def __init__(self, api_endpoint, api_key):
         if not api_endpoint or not api_key:
-            raise ValueError("API endpoint and key are required to instantiate the LanguageModel class.")
+            raise ValueError("API endpoint and key are required to instantiate the GPT class.")
         
         self.client = AzureOpenAI(
             api_key = api_key,  

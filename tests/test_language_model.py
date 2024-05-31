@@ -2,17 +2,17 @@ import os
 import unittest
 import json
 from dotenv import load_dotenv
-from backend.language_model import LanguageModel
+from backend.gpt import GPT
 
 class TestLanguageModel(unittest.TestCase):
     def setUp(self):
         load_dotenv()
-        self.api_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-        self.api_key = os.getenv("AZURE_OPENAI_KEY")
+        api_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+        api_key = os.getenv("AZURE_OPENAI_KEY")
 
-        self.model = LanguageModel(api_endpoint=self.api_endpoint, api_key=self.api_key)
+        self.gpt = GPT(api_endpoint=api_endpoint, api_key=api_key)
 
-    def test_generate_form(self):
+    def test_generate_form_gpt(self):
         prompt = """
         Fertilizer Label:
         Example Fertilizer Co. is located at 1234 Green St, Fertile City, FC 56789. Visit us at www.examplefertilizer.com or call 123-456-7890.
@@ -32,7 +32,7 @@ class TestLanguageModel(unittest.TestCase):
         Other label text in French: Ce produit est conforme aux exigences de sécurité.
         Other label text in English: This product meets safety requirements.
         """
-        result = self.model.generate_form(prompt)
+        result = self.gpt.generate_form(prompt)
         result_json = json.loads(result)
 
         # Check that the expected fields are correctly populated

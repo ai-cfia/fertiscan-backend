@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
-from backend import DocumentStorage, OCR, LanguageModel
+from backend import DocumentStorage, OCR, GPT
 from flask import Flask, request, render_template
 from flask_cors import CORS
 
@@ -25,9 +25,10 @@ API_KEY = os.getenv('AZURE_API_KEY')
 ocr = OCR(api_endpoint=API_ENDPOINT, api_key=API_KEY)
 
 # Configuration for OpenAI GPT-4
-OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
-OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
-language_model = LanguageModel(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY)
+# OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
+# OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
+OLLAMA_API_ENDPOINT = os.getenv('OLLAMA_API_ENDPOINT')
+language_model = GPT(api_endpoint=OLLAMA_API_ENDPOINT)
 
 # Document storage
 document_storage = DocumentStorage()
