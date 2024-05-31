@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  fertiscan-frontend:
+    image: ghcr.io/ai-cfia/fertiscan-frontend:main
+    container_name: fertiscan-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://tempo:4317
+    depends_on:
+      - tempo
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  fertiscan-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fertiscan-backend
+    environment:
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://tempo:4317
+    ports:
+      - "5000:5000"
+    depends_on:
+      - tempo
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/mnt/config/loki-config.yaml
+    volumes:
+      - ./loki-config.yaml:/mnt/config/loki-config.yaml
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  alloy:
+    image: grafana/alloy:v1.1.1
+    container_name: alloy
+    ports:
+      - "12345:12345"
+    volumes:
+      - ./config.alloy:/etc/alloy/config.alloy
+      - alloy_data:/var/lib/alloy/data
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:12345/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  tempo:
+    image: grafana/tempo:1.2.0
+    container_name: tempo
+    ports:
+      - "3200:3200"  # for the Tempo UI
+    volumes:
+      - ./tempo-config.yaml:/etc/tempo/config.yaml
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3200/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  grafana_data:
+  alloy_data:
+
+networks:
+  default:
+    name: monitoring-network
+    driver: bridge

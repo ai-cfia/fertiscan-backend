@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'fertiscan-frontend'
+    static_configs:
+      - targets: ['fertiscan-frontend:3000']
+
+  - job_name: 'fertiscan-backend'
+    static_configs:
+      - targets: ['fertiscan-backend:5000']
