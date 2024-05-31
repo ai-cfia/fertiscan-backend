@@ -29,11 +29,12 @@ python ./app.py
     docker build -t fertiscan-backend \
     --build-arg ARG_AZURE_API_ENDPOINT=your_actual_azure_form_recognizer_endpoint \
     --build-arg ARG_AZURE_API_KEY=your_actual_azure_form_recognizer_key \
-    --build-arg ARG_AZURE_OPENAI_API_ENDPOINT=your_actual_azure_openai_endpoint \
-    --build-arg ARG_AZURE_OPENAI_API_KEY=your_actual_azure_openai_key \
+    --build-arg ARG_AZURE_OPENAI_ENDPOINT=your_actual_azure_openai_endpoint \
+    --build-arg ARG_AZURE_OPENAI_KEY=your_actual_azure_openai_key \
     --build-arg ARG_PROMPT_PATH=actual_path/to/prompt_file \
     --build-arg ARG_UPLOAD_PATH=actual_path/to/upload_file \
     --build-arg ARG_FRONTEND_URL=http://url.to_frontend/ \
+    --build-arg ARG_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=0.0.0.0:4317 \
     .
     ```
 
@@ -58,8 +59,8 @@ Create a `.env` file in the root directory from `.env.template`:
 ```plaintext
 AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint
 AZURE_API_KEY=your_azure_form_recognizer_key
-AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint
-AZURE_OPENAI_API_KEY=your_azure_openai_key
+AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint
+AZURE_OPENAI_KEY=your_azure_openai_key
 PROMPT_PATH=path/to/file
 UPLOAD_PATH=path/to/file
 FRONTEND_URL=http://url.to_frontend/
