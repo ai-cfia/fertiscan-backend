@@ -52,8 +52,7 @@ def upload_image():
 
         # Add image to document storage
         document_storage.add_image(file_path)
-        
-        
+
         global SHOULD_GET_DATA 
         SHOULD_GET_DATA = False
         global data 
