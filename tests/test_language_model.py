@@ -42,16 +42,16 @@ class TestLanguageModel(unittest.TestCase):
         result_json = json.loads(result)
 
         # Check that the expected fields are correctly populated
-        self.assertIn("compagny_name", result_json)
+        self.assertIn("company_name", result_json)
         self.assertEqual(result_json["compagny_name"], "Example Fertilizer Co.")
         
-        self.assertIn("compagny_address", result_json)
+        self.assertIn("company_address", result_json)
         self.assertEqual(result_json["compagny_address"], "1234 Green St, Fertile City, FC 56789")
 
-        self.assertIn("compagny_website", result_json)
+        self.assertIn("company_website", result_json)
         self.assertEqual(result_json["compagny_website"], "www.examplefertilizer.com")
 
-        self.assertIn("compagny_phone_number", result_json)
+        self.assertIn("company_phone_number", result_json)
         self.assertEqual(result_json["compagny_phone_number"], "123-456-7890")
 
         self.assertIn("fertiliser_NPK", result_json)
@@ -72,16 +72,16 @@ class TestLanguageModel(unittest.TestCase):
         result_json = json.loads(result)
 
         # Check that the expected fields are correctly populated
-        self.assertIn("compagny_name", result_json)
+        self.assertIn("company_name", result_json)
         self.assertEqual(result_json["compagny_name"], "Example Fertilizer Co.")
         
-        self.assertIn("compagny_address", result_json)
+        self.assertIn("company_address", result_json)
         self.assertEqual(result_json["compagny_address"], "1234 Green St, Fertile City, FC 56789")
 
-        self.assertIn("compagny_website", result_json)
+        self.assertIn("company_website", result_json)
         self.assertEqual(result_json["compagny_website"], "www.examplefertilizer.com")
 
-        self.assertIn("compagny_phone_number", result_json)
+        self.assertIn("company_phone_number", result_json)
         self.assertEqual(result_json["compagny_phone_number"], "123-456-7890")
 
         self.assertIn("fertiliser_NPK", result_json)
