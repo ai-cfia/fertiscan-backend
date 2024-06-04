@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
-from backend import DocumentStorage, OCR, Ollama
+from backend import DocumentStorage, OCR, GPT
 from flask import Flask, request, render_template
 from flask_cors import CORS
 
@@ -25,10 +25,10 @@ API_KEY = os.getenv('AZURE_API_KEY')
 ocr = OCR(api_endpoint=API_ENDPOINT, api_key=API_KEY)
 
 # Configuration for OpenAI GPT-4
-# OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
-# OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
-OLLAMA_API_ENDPOINT = os.getenv('OLLAMA_API_ENDPOINT')
-language_model = Ollama(api_endpoint=OLLAMA_API_ENDPOINT)
+OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
+OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
+# OLLAMA_API_ENDPOINT = os.getenv('OLLAMA_API_ENDPOINT')
+language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY)
 
 # Document storage
 document_storage = DocumentStorage()
@@ -67,12 +67,6 @@ def analyze_document():
     
     # Generate form from extracted text
     dict = result.to_dict()
-    # dict.pop('documents')
-    # dict.pop('pages')
-    # dict.pop('styles')
-    # dict.pop('tables')
-    # dict.pop('paragraphs')
-    # form = language_model.generate_form(json.dumps(dict))
     form = language_model.generate_form(dict['content'])
     
     return app.response_class(
@@ -80,7 +74,6 @@ def analyze_document():
         status=200,
         mimetype='application/json'
     )
-    # return jsonify(form), 200
 
 if __name__ == "__main__":
     app.run(debug=True)
