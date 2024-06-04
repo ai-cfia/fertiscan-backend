@@ -1,4 +1,4 @@
-azure-ai-formrecognizer==3.3.0
+azure-ai-formrecognizer==3.3.3
 
 flask
 
