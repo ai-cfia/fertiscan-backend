@@ -17,25 +17,8 @@ class TestLanguageModel(unittest.TestCase):
         self.gpt = GPT(api_endpoint=gpt_api_endpoint, api_key=gpt_api_key)
         self.ollama = Ollama(api_endpoint=ollama_api_endpoint)
 
-        self.prompt = """
-        Fertilizer Label:
-        Example Fertilizer Co. is located at 1234 Green St, Fertile City, FC 56789. Visit us at www.examplefertilizer.com or call 123-456-7890.
-        Manufactured by Example Manufacturer Inc., located at 5678 Blue St, Fertile City, FC 12345. Visit www.examplemanufacturer.com or call 987-654-3210.
-        Our product, SuperGrow, has a registration number of 12345-678 and a lot number Lot 54321. The NPK ratio is 10-10-10.
-        Precautionary statements include: Tenir hors de portée des enfants (FR) and Keep out of reach of children (EN).
-        Instructions: Appliquer uniformément sur le sol (FR) and Apply evenly on the soil (EN).
-        Ingredients: Azote, Phosphore, Potassium (FR) and Nitrogen, Phosphorus, Potassium (EN).
-        Specifications: Conforme aux normes (FR) and Meets standards (EN).
-        Cautions: Éviter tout contact avec la peau (FR) and Avoid contact with skin (EN).
-        Recommendation: Utiliser deux fois par mois (FR) and Use twice a month (EN).
-        First Aid: En cas d'ingestion, contacter le centre antipoison (FR) and In case of ingestion, contact poison control (EN).
-        Warranty: Garantie de satisfaction (FR) and Satisfaction guaranteed (EN).
-        Danger: Danger d'explosion (FR) and Explosion hazard (EN).
-        Guaranteed Analysis: Azote 10%, Phosphore 10%, Potassium 10%.
-        The product weighs 20kg, has a density of 1.2g/cm³, and a volume of 16L.
-        Other label text in French: Ce produit est conforme aux exigences de sécurité.
-        Other label text in English: This product meets safety requirements.
-        """
+        with open('../samples/label1.txt', 'w') as sample:
+            self.prompt = sample.read()
 
     def check_json(self, result_json):
         # Check that the expected fields are correctly populated

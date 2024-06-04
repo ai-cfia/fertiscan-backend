@@ -2,7 +2,7 @@ import os
 import unittest
 import Levenshtein
 from dotenv import load_dotenv
-from backend.ocr import OCR
+from backend.ocr import OCR, save_text_to_file
 from backend.document_storage import DocumentStorage
 
 def levenshtein_similarity(str1, str2):
@@ -87,6 +87,9 @@ class TestOCR(unittest.TestCase):
 
         extracted_text_1 = result_1.to_dict()["content"]
         extracted_text_2 = result_2.to_dict()["content"]
+
+        save_text_to_file(extracted_text_1, output_path=self.sample_image_path_1.replace(".png",".txt"))
+        save_text_to_file(extracted_text_2, output_path=self.sample_image_path_2.replace(".png",".txt"))
 
         distance = levenshtein_similarity(extracted_text, extracted_text_1 + " " + extracted_text_2)
 

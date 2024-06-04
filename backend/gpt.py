@@ -20,7 +20,8 @@ class GPT:
         response = self.client.chat.completions.create(
             model=self.model, # model = "deployment_name".
             messages=[
-                {"role": "system", "content": setup_prompt + "\n" + prompt},
+                {"role": "system", "content": setup_prompt},
+                {"role": "system", "content": prompt}
             ]
         )
         return response.choices[0].message.content
