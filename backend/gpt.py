@@ -21,7 +21,7 @@ class GPT:
             model=self.model, # model = "deployment_name".
             messages=[
                 {"role": "system", "content": setup_prompt},
-                {"role": "system", "content": prompt}
+                {"role": "user", "content": prompt}
             ]
         )
         return response.choices[0].message.content
