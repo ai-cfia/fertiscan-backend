@@ -8,13 +8,13 @@ class Ollama:
         self.client = Client(host=api_endpoint)
     def generate_form(self, prompt):
         prompt_file = open(os.getenv('PROMPT_PATH'))
-        setup_prompt = prompt_file.read()
+        system_prompt = prompt_file.read()
         prompt_file.close()
         response = self.client.chat(
             model="llama3", # model = "deployment_name".
             messages=[
-                {"role": "system", "content": setup_prompt},
-                {"role": "system", "content": prompt},
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
             ],
             stream=False
         )
