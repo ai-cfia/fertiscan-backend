@@ -1,9 +1,8 @@
 import os
 import unittest
 import Levenshtein
-import json
 from dotenv import load_dotenv
-from backend.ocr import OCR, save_text_to_file
+from backend.ocr import OCR
 from backend.document_storage import DocumentStorage
 
 def levenshtein_similarity(str1, str2):
