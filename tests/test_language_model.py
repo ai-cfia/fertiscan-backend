@@ -36,67 +36,46 @@ class TestLanguageModel(unittest.TestCase):
         Other label text in French: Ce produit est conforme aux exigences de sécurité.
         Other label text in English: This product meets safety requirements.
         """
+    
+    def check_json(self, result_json: str):
+        # Check that the expected fields are correctly populated
+        self.assertIn("company_name", result_json)
+        self.assertEqual(result_json["company_name"], "Example Fertilizer Co.")
+        
+        self.assertIn("company_address", result_json)
+        self.assertEqual(result_json["company_address"], "1234 Green St, Fertile City, FC 56789")
+
+        self.assertIn("company_website", result_json)
+        self.assertEqual(result_json["company_website"], "www.examplefertilizer.com")
+
+        self.assertIn("company_phone_number", result_json)
+        self.assertEqual(result_json["company_phone_number"], "123-456-7890")
+
+        self.assertIn("fertiliser_npk", result_json)
+        self.assertEqual(result_json["fertiliser_npk"], "10-10-10")
+
+        self.assertIn("fertiliser_weight", result_json)
+        self.assertEqual(result_json["fertiliser_weight"], "20kg")
+
+        # Check that the expected fields are "null" for missing data
+        self.assertIn("manufacturer_address", result_json)
+        self.assertEqual(result_json["manufacturer_address"], "5678 Blue St, Fertile City, FC 12345")
+        self.assertIn("manufacturer_website", result_json)
+        self.assertEqual(result_json["manufacturer_website"], "www.examplemanufacturer.com")
+        self.assertIn("manufacturer_phone_number", result_json)
+        self.assertEqual(result_json["manufacturer_phone_number"], "987-654-3210")
 
     def test_generate_form_gpt(self):
         result = self.gpt.generate_form(self.prompt)
         result_json = json.loads(result)
+        self.check_json(result_json)
 
-        # Check that the expected fields are correctly populated
-        self.assertIn("company_name", result_json)
-        self.assertEqual(result_json["compagny_name"], "Example Fertilizer Co.")
-        
-        self.assertIn("company_address", result_json)
-        self.assertEqual(result_json["compagny_address"], "1234 Green St, Fertile City, FC 56789")
 
-        self.assertIn("company_website", result_json)
-        self.assertEqual(result_json["compagny_website"], "www.examplefertilizer.com")
-
-        self.assertIn("company_phone_number", result_json)
-        self.assertEqual(result_json["compagny_phone_number"], "123-456-7890")
-
-        self.assertIn("fertiliser_NPK", result_json)
-        self.assertEqual(result_json["fertiliser_NPK"], "10-10-10")
-
-        self.assertIn("fertiliser_weight", result_json)
-        self.assertEqual(result_json["fertiliser_weight"], "20kg")
-
-        # Check that the expected fields are "null" for missing data
-        self.assertIn("manufacturer_address", result_json)
-        self.assertEqual(result_json["manufacturer_address"], "5678 Blue St, Fertile City, FC 12345")
-        self.assertIn("manufacturer_website", result_json)
-        self.assertEqual(result_json["manufacturer_website"], "www.examplemanufacturer.com")
-        self.assertIn("manufacturer_phone_number", result_json)
-        self.assertEqual(result_json["manufacturer_phone_number"], "987-654-3210")
     def test_generate_form_ollama(self):
         result = self.ollama.generate_form(self.prompt)
         result_json = json.loads(result)
+        self.check_json(result_json)
 
-        # Check that the expected fields are correctly populated
-        self.assertIn("company_name", result_json)
-        self.assertEqual(result_json["compagny_name"], "Example Fertilizer Co.")
-        
-        self.assertIn("company_address", result_json)
-        self.assertEqual(result_json["compagny_address"], "1234 Green St, Fertile City, FC 56789")
-
-        self.assertIn("company_website", result_json)
-        self.assertEqual(result_json["compagny_website"], "www.examplefertilizer.com")
-
-        self.assertIn("company_phone_number", result_json)
-        self.assertEqual(result_json["compagny_phone_number"], "123-456-7890")
-
-        self.assertIn("fertiliser_NPK", result_json)
-        self.assertEqual(result_json["fertiliser_NPK"], "10-10-10")
-
-        self.assertIn("fertiliser_weight", result_json)
-        self.assertEqual(result_json["fertiliser_weight"], "20kg")
-
-        # Check that the expected fields are "null" for missing data
-        self.assertIn("manufacturer_address", result_json)
-        self.assertEqual(result_json["manufacturer_address"], "5678 Blue St, Fertile City, FC 12345")
-        self.assertIn("manufacturer_website", result_json)
-        self.assertEqual(result_json["manufacturer_website"], "www.examplemanufacturer.com")
-        self.assertIn("manufacturer_phone_number", result_json)
-        self.assertEqual(result_json["manufacturer_phone_number"], "987-654-3210")
 
 if __name__ == '__main__':
     unittest.main()
