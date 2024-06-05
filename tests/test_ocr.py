@@ -47,7 +47,7 @@ class TestOCR(unittest.TestCase):
         result = self.ocr.extract_text(document_bytes)
         
         # Extract content from result
-        extracted_text = result.to_dict()["content"]
+        extracted_text = result.as_dict()["content"]
 
         # Define patterns for each word
         patterns = [
@@ -79,7 +79,7 @@ class TestOCR(unittest.TestCase):
         result = self.ocr.extract_text(composite_image_bytes)
 
         # Extract content from result
-        extracted_text = result.to_dict()["content"]
+        extracted_text = result.content
 
         # Verify that the extracted text contains the text from both sample images
         with open(self.sample_image_path_1, 'rb') as f:
@@ -90,8 +90,8 @@ class TestOCR(unittest.TestCase):
         result_1 = self.ocr.extract_text(document_bytes_1)
         result_2 = self.ocr.extract_text(document_bytes_2)
 
-        extracted_text_1 = result_1.to_dict()["content"]
-        extracted_text_2 = result_2.to_dict()["content"]
+        extracted_text_1 = result_1.content
+        extracted_text_2 = result_2.content
 
         save_text_to_file(extracted_text_1, output_path=self.sample_image_path_1.replace(".png",".txt"))
         save_text_to_file(extracted_text_2, output_path=self.sample_image_path_2.replace(".png",".txt"))
