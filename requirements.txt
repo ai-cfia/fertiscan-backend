@@ -1,4 +1,4 @@
-azure-ai-documentintelligence==1.0.0b2
+azure-ai-documentintelligence==1.0.0b3
 
 flask
 
