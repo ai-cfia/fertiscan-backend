@@ -65,4 +65,3 @@ class DocumentStorage:
             raise ValueError("Unknown document format output.")
 
         return output.getvalue()
-
