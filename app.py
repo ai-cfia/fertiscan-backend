@@ -63,16 +63,9 @@ def analyze_document():
     
     # For simplicity, only analyze the first document
     result = ocr.extract_text(document=document)
-    
+
     # Generate form from extracted text
-    dict = result.to_dict()
-    # dict.pop('documents')
-    # dict.pop('pages')
-    # dict.pop('styles')
-    # dict.pop('tables')
-    # dict.pop('paragraphs')
-    # form = language_model.generate_form(json.dumps(dict))
-    form = language_model.generate_form(dict['content'])
+    form = language_model.generate_form(result.content)
     
     return app.response_class(
         response=form,
