@@ -31,7 +31,6 @@ python ./app.py
     --build-arg ARG_AZURE_API_KEY=your_actual_azure_form_recognizer_key \
     --build-arg ARG_AZURE_OPENAI_API_ENDPOINT=your_actual_azure_openai_endpoint \
     --build-arg ARG_AZURE_OPENAI_API_KEY=your_actual_azure_openai_key \
-    --build-arg ARG_OLLAMA_API_ENDPOINT=your_actual_ollama_endpoint \
     --build-arg ARG_PROMPT_PATH=actual_path/to/prompt_file \
     --build-arg ARG_UPLOAD_PATH=actual_path/to/upload_file \
     --build-arg ARG_FRONTEND_URL=http://url.to_frontend/ \
@@ -61,7 +60,6 @@ AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint
 AZURE_API_KEY=your_azure_form_recognizer_key
 AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint
 AZURE_OPENAI_API_KEY=your_azure_openai_key
-OLLAMA_API_ENDPOINT=your_ollama_endpoint
 
 PROMPT_PATH=path/to/file
 UPLOAD_PATH=path/to/file
