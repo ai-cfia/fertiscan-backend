@@ -47,7 +47,12 @@ class DocumentStorage:
         pdf_buffer.seek(0)
 
         return pdf_buffer
+    
+    def clear(self):
+        for image_path in self.images:
+            os.remove(image_path)
 
+        self.images = []
 
     def get_document(self, format='pdf') -> bytes:
         # Ensure there are images to merge

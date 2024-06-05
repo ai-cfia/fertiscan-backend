@@ -68,6 +68,8 @@ def analyze_document():
     dict = result.to_dict()
     form = language_model.generate_form(dict['content'])
     
+    document_storage.clear()
+
     return app.response_class(
         response=form,
         status=200,
