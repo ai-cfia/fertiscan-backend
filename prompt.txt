@@ -6,7 +6,7 @@ Ta réponse est sous le format JSON.
 Ta réponse contient tout le texte présent dans le texte fourni.
 Avant de rendre ta réponse, vérifie celle-ci afin qu'elle concorde avec tous les points précédents.
 Voici la liste de clés :
-"compagny_name"
+"company_name"
 "company_address"
 "company_website"
 "company_phone_number"
