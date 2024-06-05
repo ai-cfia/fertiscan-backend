@@ -1,5 +1,6 @@
 import unittest
 import os
+import requests
 from backend.document_storage import DocumentStorage, save_bytes_to_file
 
 class TestDocumentStorage(unittest.TestCase):
@@ -11,14 +12,13 @@ class TestDocumentStorage(unittest.TestCase):
         self.composite_image_path = './samples/composite_test.png'
         self.composite_document_path = './samples/composite_test.pdf'
 
+        curl_file('https://lesgranulaines.com/wp-content/uploads/2024/01/IMG-5014-copie.webp', self.sample_image_path_1)
+        curl_file('https://tlhort.com/cdn/shop/products/10-52-0MAP.jpg', self.sample_image_path_2)
+
+
     def test_add_image_from_nonexistent_file(self):
         with self.assertRaises(FileNotFoundError):
             self.store.add_image('fake_path')
-
-    # def test_add_image_from_bytes(self):
-    #     fake_bytes = b'fake image data'
-    #     with self.assertRaises(UnidentifiedImageError):
-    #         self.store.add_image(fake_bytes)
 
     def test_get_document_empty(self):
         with self.assertRaises(ValueError):
@@ -50,7 +50,15 @@ class TestDocumentStorage(unittest.TestCase):
             os.remove(self.composite_image_path)
         if os.path.exists(self.composite_document_path):
             os.remove(self.composite_document_path)
-        
+        if os.path.exists(self.sample_image_path_1):
+            os.remove(self.sample_image_path_1)
+        if os.path.exists(self.sample_image_path_2):
+            os.remove(self.sample_image_path_2)
+            
+def curl_file(url:str, path: str):
+    img_data = requests.get(url).content
+    with open(path, 'wb') as handler:
+        handler.write(img_data)    
 
 if __name__ == '__main__':
     unittest.main()

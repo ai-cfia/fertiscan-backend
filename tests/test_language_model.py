@@ -3,7 +3,6 @@ import unittest
 import json
 from dotenv import load_dotenv
 from backend.gpt import GPT
-from backend.ollama import Ollama
 
 class TestLanguageModel(unittest.TestCase):
     def setUp(self):
@@ -12,10 +11,7 @@ class TestLanguageModel(unittest.TestCase):
         gpt_api_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
         gpt_api_key = os.getenv("AZURE_OPENAI_KEY")
 
-        ollama_api_endpoint = os.getenv("OLLAMA_API_ENDPOINT")
-
         self.gpt = GPT(api_endpoint=gpt_api_endpoint, api_key=gpt_api_key)
-        self.ollama = Ollama(api_endpoint=ollama_api_endpoint)
 
         self.prompt = """
         Fertilizer Label:
@@ -67,12 +63,6 @@ class TestLanguageModel(unittest.TestCase):
 
     def test_generate_form_gpt(self):
         result = self.gpt.generate_form(self.prompt)
-        result_json = json.loads(result)
-        self.check_json(result_json)
-
-
-    def test_generate_form_ollama(self):
-        result = self.ollama.generate_form(self.prompt)
         result_json = json.loads(result)
         self.check_json(result_json)
 
