@@ -1,7 +1,7 @@
 import unittest
 import os
-import requests
-from backend.document_storage import DocumentStorage, save_bytes_to_file
+from backend import curl_file, save_image_to_file
+from backend.document_storage import DocumentStorage
 
 class TestDocumentStorage(unittest.TestCase):
     
@@ -33,7 +33,7 @@ class TestDocumentStorage(unittest.TestCase):
         self.store.add_image(self.sample_image_path_2)
 
         composite_image = self.store.get_document(format='png')
-        save_bytes_to_file(composite_image, self.composite_image_path)
+        save_image_to_file(composite_image, self.composite_image_path)
         self.assertTrue(os.path.exists(self.composite_image_path))
     
     def test_get_pdf_document(self):
@@ -41,7 +41,7 @@ class TestDocumentStorage(unittest.TestCase):
         self.store.add_image(self.sample_image_path_2)
 
         doc = self.store.get_document(format='pdf')
-        save_bytes_to_file(doc, self.composite_document_path)
+        save_image_to_file(doc, self.composite_document_path)
         self.assertTrue(os.path.exists(self.composite_document_path))
 
     def tearDown(self):
@@ -53,12 +53,7 @@ class TestDocumentStorage(unittest.TestCase):
         if os.path.exists(self.sample_image_path_1):
             os.remove(self.sample_image_path_1)
         if os.path.exists(self.sample_image_path_2):
-            os.remove(self.sample_image_path_2)
-            
-def curl_file(url:str, path: str):
-    img_data = requests.get(url).content
-    with open(path, 'wb') as handler:
-        handler.write(img_data)    
+            os.remove(self.sample_image_path_2)  
 
 if __name__ == '__main__':
     unittest.main()

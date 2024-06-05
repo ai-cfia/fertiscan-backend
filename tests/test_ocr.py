@@ -1,8 +1,10 @@
 import os
 import unittest
 import Levenshtein
+import json
+from backend import curl_file, save_text_to_file
 from dotenv import load_dotenv
-from backend.ocr import OCR, save_text_to_file
+from backend.ocr import OCR
 from backend.document_storage import DocumentStorage
 
 def levenshtein_similarity(str1, str2):
@@ -31,9 +33,12 @@ class TestOCR(unittest.TestCase):
         self.sample_image_path_2 = './samples/label2.png'
         self.composite_image_path = './samples/composite_test.png'
 
+        curl_file('https://scotts.com/dw/image/v2/BGFS_PRD/on/demandware.static/-/Sites-consolidated-master-catalog/default/dw5764839e/images/hi-res/scotts_01291_1_2000x2000.jpg?', self.sample_image_path_1)
+        curl_file('https://tlhort.com/cdn/shop/products/10-52-0MAP.jpg', self.sample_image_path_2)
+
     def test_extract_text(self):
         # Prepare the document bytes
-        with open(self.sample_image_path_1, 'rb') as f:
+        with open(self.sample_image_path_2, 'rb') as f:
             document_bytes = f.read()
 
         # Extract text
@@ -44,20 +49,18 @@ class TestOCR(unittest.TestCase):
 
         # Define patterns for each word
         patterns = [
-            r'\bCAMERON\b',
-            r'\bPOIDS\b',
-            r'\bengrais\b',
-            r'\birritation\b',
-            r'\bZinc\b',
-            r'\bRESPONSABILITÉ\b'
+            r'\bAmmonium\b',
+            r'\bPhosphate\b',
+            r'\bGranular\b',
+            r'\b25\b',
+            r'\bTerraLink\b',
+            r'\bCAUTION\b'
         ]
         
         # Check if each pattern matches the extracted text
         for pattern in patterns:
             self.assertRegex(text=extracted_text, expected_regex=pattern)
 
-        self.assertIn("CAMERON", extracted_text)
-    
     def test_composite_image_text_extraction(self):
         # Create a DocumentStorage instance and add images
         doc_storage = DocumentStorage()
@@ -84,12 +87,13 @@ class TestOCR(unittest.TestCase):
 
         result_1 = self.ocr.extract_text(document_bytes_1)
         result_2 = self.ocr.extract_text(document_bytes_2)
+        
+        save_text_to_file(json.dumps(result_1.to_dict(), indent=4), output_path=self.sample_image_path_1.replace(".png",".json"))
+        save_text_to_file(json.dumps(result_2.to_dict(), indent=4), output_path=self.sample_image_path_2.replace(".png",".json"))
 
         extracted_text_1 = result_1.to_dict()["content"]
         extracted_text_2 = result_2.to_dict()["content"]
 
-        save_text_to_file(extracted_text_1, output_path=self.sample_image_path_1.replace(".png",".txt"))
-        save_text_to_file(extracted_text_2, output_path=self.sample_image_path_2.replace(".png",".txt"))
 
         distance = levenshtein_similarity(extracted_text, extracted_text_1 + " " + extracted_text_2)
 
@@ -99,3 +103,7 @@ class TestOCR(unittest.TestCase):
         # Clean up created files after tests
         if os.path.exists(self.composite_image_path):
             os.remove(self.composite_image_path)
+        if os.path.exists(self.sample_image_path_1):
+            os.remove(self.sample_image_path_1)
+        if os.path.exists(self.sample_image_path_2):
+            os.remove(self.sample_image_path_2)  
