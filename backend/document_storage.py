@@ -66,4 +66,3 @@ class DocumentStorage:
 
         return output.getvalue()
 
-
