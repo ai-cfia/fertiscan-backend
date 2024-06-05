@@ -27,6 +27,9 @@ class TestOCR(unittest.TestCase):
         api_endpoint = os.getenv("AZURE_API_ENDPOINT")
         api_key = os.getenv("AZURE_API_KEY")
 
+        if not os.path.exists('./samples'):
+            os.mkdir('./samples')
+
         self.ocr = OCR(api_endpoint, api_key)
         self.sample_image_path_1 = './samples/label1.png'
         self.sample_image_path_2 = './samples/label2.png'

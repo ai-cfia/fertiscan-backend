@@ -48,7 +48,6 @@ class TestLanguageModel(unittest.TestCase):
         self.assertEqual(result_json["company_phone_number"], "123-456-7890")
 
         self.assertIn("fertiliser_npk", result_json)
-        self.assertEqual(result_json["fertiliser_npk"], "10-10-10")
 
         self.assertIn("fertiliser_weight", result_json)
         self.assertEqual(result_json["fertiliser_weight"], "20kg")

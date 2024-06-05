@@ -6,6 +6,9 @@ from backend.document_storage import DocumentStorage
 class TestDocumentStorage(unittest.TestCase):
     
     def setUp(self):
+        if not os.path.exists('./samples'):
+            os.mkdir('./samples')
+
         self.store = DocumentStorage()
         self.sample_image_path_1 = './samples/label1.png'
         self.sample_image_path_2 = './samples/label2.png'
