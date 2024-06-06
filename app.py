@@ -37,38 +37,47 @@ sessions = {}
 def main_page():
     return render_template('index.html')
 
+# Example request
+# curl -X POST http://localhost:5000/upload \
+#     -H "Authorization: Basic <your_encoded_credentials>" \
+#     -F "images=@/path/to/image1.jpg" \
+#     -F "images=@/path/to/image2.jpg"
 @app.route('/upload', methods=['POST'])
-def upload_image():
-    if 'file' not in request.files:
+def upload_images():
+    # Check if the 'images' part is present in the files part of the request
+    if 'images' not in request.files:
         return "No file part", 400
     
-    file = request.files['file']
-    if file.filename == '':
-        return "No selected file", 400
+    files = request.files.getlist('images')
     
-    # The authorization scheme is still unknown.
-    #
-    # Potential format: user_id:session_id
-    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication    
-    token = Token()
-    header = request.authorization
-    if header is not None:
-        token = Token(header)
-    
-    if file:
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
+    # Check if there are no files selected
+    if not files or all(f.filename == '' for f in files):
+        return "No selected images", 400
 
-        # Init the storage if it does not exist
-        if token.user_id not in sessions:
-            sessions[token.user_id] = {}
-            sessions[token.user_id][token.label_id] = LabelStorage()
+    # Initialize a token instance from the request authorization header
+    token = Token(request.authorization) if request.authorization else Token()
 
-        # Add image to label storage
-        sessions[token.user_id][token.label_id].add_image(file_path)
-        
-        return "File uploaded successfully", 200
+    uploaded_files = []
+    for file in files:
+        if file:
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+            uploaded_files.append(filename)
+
+            # Initialize storage if it does not exist for this user and label
+            if token.user_id not in sessions:
+                sessions[token.user_id] = {}
+            if token.label_id not in sessions[token.user_id]:
+                sessions[token.user_id][token.label_id] = LabelStorage()
+
+            # Add image to label storage
+            sessions[token.user_id][token.label_id].add_image(file_path)
+
+    if not uploaded_files:
+        return "No files uploaded", 400
+
+    return f"Files uploaded successfully: {', '.join(uploaded_files)}", 200
 
 @app.route('/analyze', methods=['GET'])
 def analyze_document():
@@ -76,10 +85,7 @@ def analyze_document():
     #
     # Potential format: user_id:session_id
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication
-    token = Token()
-    header = request.authorization
-    if header is not None:
-        token = Token(header)
+    token = Token(request.authorization) if request.authorization else Token()
 
     if token.user_id == '':
         return "Unknown user", 404
