@@ -1,3 +1,5 @@
+import random
+
 DEFAULT_HEADER = "Basic default_user:0"
 
 class Token:
@@ -16,7 +18,12 @@ class Token:
             raise KeyError("The name is required to authentify a user")
         
         self.user_id = credentials[0]
-        self.label_id = credentials[1]
+
+        # Create a label_id if there's none given
+        if credentials[1] == '':
+            self.label_id = hex(random.randint(0, 2**32 - 1))
+        else:
+            self.label_id = credentials[1]
 
     def __str__(self) -> str:
         return self.user_id + ":" + self.label_id

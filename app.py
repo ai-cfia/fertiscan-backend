@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from auth import Token
 from werkzeug.utils import secure_filename
 from backend import OCR, GPT, LabelStorage
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, jsonify
 from flask_cors import CORS
 
 # Load environment variables
@@ -104,11 +104,10 @@ def analyze_document():
     
     label.clear()
 
-    return app.response_class(
-        response=form,
-        status=200,
-        mimetype='application/json'
-    )
+    return jsonify({
+        "label_id": token.label_id,
+        "form": form
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)
