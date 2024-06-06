@@ -9,6 +9,9 @@ class Token:
         
         credentials = parts[1].split(":")
 
+        # TO-DO authenticate the user
+        # check_user(user_id)
+
         if credentials[0] == '':
             raise KeyError("The name is required to authentify a user")
         
