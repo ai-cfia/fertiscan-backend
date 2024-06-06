@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
+from auth import Token
 from werkzeug.utils import secure_filename
-from backend import DocumentStorage, OCR, GPT
+from backend import OCR, GPT, LabelStorage
 from flask import Flask, request, render_template
 from flask_cors import CORS
 
@@ -29,8 +30,8 @@ OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
 OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
 language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY)
 
-# Document storage
-document_storage = DocumentStorage()
+# Creating a dictionary to hold the sessions with string keys
+sessions = {}
 
 @app.route('/')
 def main_page():
@@ -45,29 +46,57 @@ def upload_image():
     if file.filename == '':
         return "No selected file", 400
     
+    # The authorization scheme is still unknown.
+    #
+    # Potential format: user_id:session_id
+    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication    
+    token = Token()
+    header = request.authorization
+    if header is not None:
+        token = Token(header)
+    
     if file:
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
 
-        # Add image to document storage
-        document_storage.add_image(file_path)
+        # Init the storage if it does not exist
+        if token.user_id not in sessions:
+            sessions[token.user_id] = {}
+            sessions[token.user_id][token.label_id] = LabelStorage()
+
+        # Add image to label storage
+        sessions[token.user_id][token.label_id].add_image(file_path)
         
         return "File uploaded successfully", 200
 
 @app.route('/analyze', methods=['GET'])
 def analyze_document():
-    document = document_storage.get_document()
+    # The authorization scheme is still unknown.
+    #
+    # Potential format: user_id:session_id
+    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication
+    token = Token()
+    header = request.authorization
+    if header is not None:
+        token = Token(header)
+
+    if token.user_id == '':
+        return "Unknown user", 404
+    
+    # For simplicity, only analyze the first label in the session
+    label = sessions[token.user_id][token.label_id]
+
+    document = label.get_document()
     if not document:
         return "No documents to analyze", 400
     
-    # For simplicity, only analyze the first document
     result = ocr.extract_text(document=document)
 
     # Generate form from extracted text
     form = language_model.generate_form(result.content)
     
-    document_storage.clear()
+    label.clear()
 
     return app.response_class(
         response=form,

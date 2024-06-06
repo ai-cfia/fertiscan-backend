@@ -1,7 +1,7 @@
 import unittest
 import os
 from backend import curl_file, save_image_to_file
-from backend.document_storage import DocumentStorage
+from backend.label import LabelStorage
 
 class TestDocumentStorage(unittest.TestCase):
     
@@ -9,7 +9,7 @@ class TestDocumentStorage(unittest.TestCase):
         if not os.path.exists('./samples'):
             os.mkdir('./samples')
 
-        self.store = DocumentStorage()
+        self.store = LabelStorage()
         self.sample_image_path_1 = './samples/label1.png'
         self.sample_image_path_2 = './samples/label2.png'
         self.composite_image_path = './samples/composite_test.png'
