@@ -1,4 +1,60 @@
 logging {
-  level  = "info"
+  level = "info"
   format = "logfmt"
+}
+
+otelcol {
+  exporter.otlp "tempo" {
+    client {
+      endpoint = "http://tempo:4317"
+      tls {
+        insecure = true
+      }
+    }
+  }
+
+  exporter.loki "default" {
+    endpoint {
+      url = "http://loki:3100/loki/api/v1/push"
+    }
+  }
+
+  exporter.prometheus "default" {
+    endpoint {
+      url = "http://prometheus:9090/api/v1/write"
+    }
+  }
+
+  receiver.otlp "default" {
+    protocols.grpc {}
+    protocols.http {}
+  }
+
+  processor.batch "batch" {}
+  processor.memory_limiter "memory_limiter" {
+    check_interval = "1s"
+    limit_mib = 1024
+  }
+
+  pipeline.metrics {
+    receivers  = [receiver.otlp.default]
+    processors = [processor.memory_limiter, processor.batch]
+    exporters  = [exporter.prometheus.default]
+  }
+
+  pipeline.logs {
+    receivers  = [receiver.otlp.default]
+    processors = [processor.memory_limiter, processor.batch]
+    exporters  = [exporter.loki.default]
+  }
+
+  pipeline.traces {
+    receivers  = [receiver.otlp.default]
+    processors = [processor.memory_limiter, processor.batch]
+    exporters  = [exporter.otlp.tempo]
+  }
+}
+
+extensions {
+  health_check {}
 }
