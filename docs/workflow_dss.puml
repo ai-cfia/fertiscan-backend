@@ -1,0 +1,35 @@
+@startuml FertiScan Sequence Diagram
+header 07/06/2024
+
+title FertiScan Workflow
+hide empty members
+hide footbox
+
+actor "Client" as C
+participant Frontend as F
+participant Backend as B
+
+C -> F: http://fertiscan_url.ca
+F -> B: /new_label
+F <<-- B: returns //label_id//
+note left
+  All the images will be linked
+  to the label with this id.
+end note
+loop for all images
+  C -> F: upload()
+  F -> B: /upload
+  note left
+    The /upload takes the credentials
+    in the Authaurization header 
+    (user_id and token_id).
+  end note
+  F <<-- B: //File uploaded successfully, 200//
+end
+C -> F: analyze()
+F -> B: /analyze  
+note left    
+  /analyze also takes credentials.
+end note
+F <<-- B: returns the analysis of the label.
+@enduml

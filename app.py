@@ -1,6 +1,7 @@
 import os
+import json
 from dotenv import load_dotenv
-from auth import Token
+from auth import Token, create_label_id
 from werkzeug.utils import secure_filename
 from backend import OCR, GPT, LabelStorage
 from flask import Flask, request, render_template, jsonify
@@ -30,12 +31,26 @@ OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
 OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
 language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY)
 
-# Creating a dictionary to hold the sessions with string keys
+# Creating a dictionary to hold the sessions
 sessions = {}
 
 @app.route('/')
 def main_page():
     return render_template('index.html')
+
+@app.route('/new_label', methods=['POST'])
+def new_label():
+    auth_header = request.headers.get("Authorization")
+    print(auth_header)
+    try:
+        Token(auth_header)
+        return "Succes", 200
+    except KeyError:
+        return jsonify({
+            "label_id": create_label_id()
+        })
+    except:   # noqa: E722
+        return "Unknown user", 404
 
 # Example request
 # curl -X POST http://localhost:5000/upload \
@@ -54,8 +69,16 @@ def upload_images():
     if not files or all(f.filename == '' for f in files):
         return "No selected images", 400
 
+    # The authorization scheme is still unsure.
+    #
+    # Current format: user_id:session_id
     # Initialize a token instance from the request authorization header
-    token = Token(request.authorization) if request.authorization else Token()
+    auth_header = request.headers.get("Authorization")
+    token = Token(auth_header) if request.authorization else Token()
+
+    # Initialize storage if it does not exist for this user and label
+    if token not in sessions:
+        sessions[token] = LabelStorage()
 
     uploaded_files = []
     for file in files:
@@ -65,14 +88,8 @@ def upload_images():
             file.save(file_path)
             uploaded_files.append(filename)
 
-            # Initialize storage if it does not exist for this user and label
-            if token.user_id not in sessions:
-                sessions[token.user_id] = {}
-            if token.label_id not in sessions[token.user_id]:
-                sessions[token.user_id][token.label_id] = LabelStorage()
-
             # Add image to label storage
-            sessions[token.user_id][token.label_id].add_image(file_path)
+            sessions[token].add_image(file_path)
 
     if not uploaded_files:
         return "No files uploaded", 400
@@ -81,17 +98,15 @@ def upload_images():
 
 @app.route('/analyze', methods=['GET'])
 def analyze_document():
-    # The authorization scheme is still unknown.
+    # The authorization scheme is still unsure.
     #
-    # Potential format: user_id:session_id
+    # Current format: user_id:session_id
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication
-    token = Token(request.authorization) if request.authorization else Token()
+    auth_header = request.headers.get("Authorization")
+    token = Token(auth_header) if request.authorization else Token()
 
-    if token.user_id == '':
-        return "Unknown user", 404
-    
     # For simplicity, only analyze the first label in the session
-    label = sessions[token.user_id][token.label_id]
+    label = sessions[token]
 
     document = label.get_document()
     if not document:
@@ -101,12 +116,12 @@ def analyze_document():
 
     # Generate form from extracted text
     form = language_model.generate_form(result.content)
-    
+
     label.clear()
 
     return jsonify({
         "label_id": token.label_id,
-        "form": form
+        "form": json.loads(form)
     })
 
 if __name__ == "__main__":
