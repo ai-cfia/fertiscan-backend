@@ -55,8 +55,7 @@ def new_label():
 # Example request
 # curl -X POST http://localhost:5000/upload \
 #     -H "Authorization: Basic <your_encoded_credentials>" \
-#     -F "images=@/path/to/image1.jpg" \
-#     -F "images=@/path/to/image2.jpg"
+#     -F "image=@/path/to/image1.jpg"
 @app.route('/upload', methods=['POST'])
 def upload_images():
     if 'image' not in request.files:
