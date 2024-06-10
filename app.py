@@ -59,16 +59,13 @@ def new_label():
 #     -F "images=@/path/to/image2.jpg"
 @app.route('/upload', methods=['POST'])
 def upload_images():
-    # Check if the 'images' part is present in the files part of the request
-    if 'images' not in request.files:
+    if 'image' not in request.files:
         return "No file part", 400
     
-    files = request.files.getlist('images')
+    file = request.files['image']
+    if file.filename == '':
+        return "No selected image", 400
     
-    # Check if there are no files selected
-    if not files or all(f.filename == '' for f in files):
-        return "No selected images", 400
-
     # The authorization scheme is still unsure.
     #
     # Current format: user_id:session_id
@@ -79,22 +76,16 @@ def upload_images():
     # Initialize storage if it does not exist for this user and label
     if token not in sessions:
         sessions[token] = LabelStorage()
+    
+    if file:
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
 
-    uploaded_files = []
-    for file in files:
-        if file:
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(file_path)
-            uploaded_files.append(filename)
-
-            # Add image to label storage
-            sessions[token].add_image(file_path)
-
-    if not uploaded_files:
-        return "No files uploaded", 400
-
-    return f"Files uploaded successfully: {', '.join(uploaded_files)}", 200
+        # Add image to document storage
+        sessions[token].add_image(file_path)
+        
+        return "File uploaded successfully", 200
 
 @app.route('/analyze', methods=['GET'])
 def analyze_document():
