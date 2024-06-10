@@ -86,6 +86,11 @@ def upload_images():
         
         return "File uploaded successfully", 200
 
+# Example request
+# curl -X POST http://localhost:5000/upload \
+#     -H "Authorization: Basic <your_encoded_credentials>" \
+#     -F "images=@/path/to/image1.jpg" \
+#     -F "images=@/path/to/image2.jpg" \
 @app.route('/analyze', methods=['GET'])
 def analyze_document():
     files = request.files.getlist('images')

@@ -11,7 +11,7 @@ class TestLanguageModel(unittest.TestCase):
         gpt_api_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
         gpt_api_key = os.getenv("AZURE_OPENAI_KEY")
 
-        self.gpt = GPT(api_endpoint=gpt_api_endpoint, api_key=gpt_api_key)
+        self.gpt = GPT(api_endpoint=gpt_api_endpoint, api_key=gpt_api_key, deployment="ailab-llm")
 
         self.prompt = """
         Fertilizer Label:
@@ -62,6 +62,7 @@ class TestLanguageModel(unittest.TestCase):
 
     def test_generate_form_gpt(self):
         result = self.gpt.generate_form(self.prompt)
+        print(result)
         result_json = json.loads(result)
         self.check_json(result_json)
 
