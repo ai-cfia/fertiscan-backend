@@ -55,8 +55,7 @@ def new_label():
 # Example request
 # curl -X POST http://localhost:5000/upload \
 #     -H "Authorization: Basic <your_encoded_credentials>" \
-#     -F "images=@/path/to/image1.jpg" \
-#     -F "images=@/path/to/image2.jpg"
+#     -F "image=@/path/to/image1.jpg" \
 @app.route('/upload', methods=['POST'])
 def upload_images():
     if 'image' not in request.files:
@@ -89,12 +88,29 @@ def upload_images():
 
 @app.route('/analyze', methods=['GET'])
 def analyze_document():
+    files = request.files.getlist('images')
+    
     # The authorization scheme is still unsure.
     #
     # Current format: user_id:session_id
-    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication
+    # Initialize a token instance from the request authorization header
     auth_header = request.headers.get("Authorization")
     token = Token(auth_header) if request.authorization else Token()
+
+    # Initialize storage if it does not exist for this user and label
+    if token not in sessions:
+        sessions[token] = LabelStorage()
+
+    uploaded_files = []
+    for file in files:
+        if file:
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+            uploaded_files.append(filename)
+
+            # Add image to label storage
+            sessions[token].add_image(file_path)
 
     # For simplicity, only analyze the first label in the session
     label = sessions[token]
