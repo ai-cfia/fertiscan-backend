@@ -119,10 +119,11 @@ def analyze_document():
 
     label.clear()
 
-    return jsonify({
-        "label_id": token.label_id,
-        "form": json.loads(form)
-    })
+    return app.response_class(
+        response=form,
+        status=200,
+        mimetype="application/json"
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
