@@ -4,7 +4,7 @@ from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 
-class DocumentStorage:
+class LabelStorage:
     def __init__(self):
         self.images = []
 

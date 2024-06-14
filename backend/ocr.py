@@ -20,7 +20,3 @@ class OCR:
         )
         result = poller.result()
         return result
-    
-def save_text_to_file(text: str, output_path: str):
-    with open(output_path, 'w') as output_file:
-        output_file.write(text)
