@@ -1,4 +1,4 @@
-azure-ai-formrecognizer==3.3.0
+azure-ai-documentintelligence==1.0.0b2
 
 flask
 
@@ -7,3 +7,8 @@ python-dotenv
 flask-cors
 
 openai
+
+reportlab
+
+# Test dependencies
+Levenshtein

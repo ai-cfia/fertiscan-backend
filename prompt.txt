@@ -6,62 +6,62 @@ Ta réponse est sous le format JSON.
 Ta réponse contient tout le texte présent dans le texte fourni.
 Avant de rendre ta réponse, vérifie celle-ci afin qu'elle concorde avec tous les points précédents.
 Voici la liste de clés :
-"compagny_name";
-"compagny_address";
-"compagny_website";
-"compagny_phone_number";
-"manufacturer_name";
-"manufacturer_address";
-"manufacturer_website";
-"manufacturer_phone_number";
-"fertiliser_name";
-"fertiliser_registration_number";
-"fertiliser_lot_number";
-"fertiliser_NPK";
-"fertiliser_precautionary_FR";
-"fertiliser_precautionary_EN";
-"fertiliser_instructions_FR";
-"fertiliser_instructions_EN";
-"fertiliser_ingredients_FR";
-"fertiliser_ingredients_EN";
-"fertiliser_specifications_FR";
-"fertiliser_specifications_EN";
-"fertiliser_cautions_FR";
-"fertiliser_cautions_EN";
-"fertiliser_recommendation_FR";
-"fertiliser_recommendation_EN";
-"fertiliser_first_aid_FR";
-"fertiliser_first_aid_EN";
-"fertiliser_warranty_FR";
-"fertiliser_warranty_EN";
-"fertiliser_danger_FR";
-"fertiliser_danger_EN";
+"company_name"
+"company_address"
+"company_website"
+"company_phone_number"
+"manufacturer_name"
+"manufacturer_address"
+"manufacturer_website"
+"manufacturer_phone_number"
+"fertiliser_name"
+"fertiliser_registration_number"
+"fertiliser_lot_number"
+"fertiliser_npk"
+"fertiliser_precautionary_fr"
+"fertiliser_precautionary_en"
+"fertiliser_instructions_fr"
+"fertiliser_instructions_en"
+"fertiliser_ingredients_fr"
+"fertiliser_ingredients_en"
+"fertiliser_specifications_fr"
+"fertiliser_specifications_en"
+"fertiliser_cautions_fr"
+"fertiliser_cautions_en"
+"fertiliser_recommendation_fr"
+"fertiliser_recommendation_en"
+"fertiliser_first_aid_fr"
+"fertiliser_first_aid_en"
+"fertiliser_warranty_fr"
+"fertiliser_warranty_en"
+"fertiliser_danger_fr"
+"fertiliser_danger_en"
 "fertiliser_guaranteed_analysis", -> sous-section "nutrient_in_guaranteed_analysis" -> sous-section "percentage_in_guaranteed_analysis";
-"fertiliser_weight";
-"fertiliser_density";
-"fertiliser_volume";
-"fertiliser_label_all_other_text_FR";
-"fertiliser_label_all_other_text_EN";
+"fertiliser_weight"
+"fertiliser_density"
+"fertiliser_volume"
+"fertiliser_label_all_other_text_fr"
+"fertiliser_label_all_other_text_en"
 
 Fin de la liste. 
 
 Spécification&nbsp;: 
 Tu dois garder l'ordre des clés comme dans la liste ci-dessus.
-NPK est toujours sous la forme "chiffre - chiffre - chiffre"
+npk est toujours sous la forme "chiffre - chiffre - chiffre"
 Mettre du texte dans la version française ou anglaise seulement si elle est présente dans le texte donné. 
 "Fertiliser_lot_number" doit avoir le mot lot avant sinon associer à null.
 "Fertiliser_registration_number" doit avoir le mot "numéro d'enregistrement" ou "registration number" sinon associer à null.
 La traduction du texte est interdite.
-"Fertiliser_label_all_other_text_FR" et "Fertiliser_label_all_other_text_EN" doivent contenir l'entièreté du texte non associé à des clés. 
-Pour chaque section de texte dans la clé "Fertiliser_label_all_other_text_FR": faire une sous-section numéroté: {other_text_FR_1;other_text_FR_2;other_text_FR_3;other_text_FR_4;other_text_FR_5;etc;}.
-Pour chaque section de texte dans la clé "Fertiliser_label_all_other_text_EN" faire une sous-section numéroté {other_text_EN_1;other_text_EN_2;other_text_EN_3;other_text_EN_4;other_text_EN_5;etc;}.
-"Fertiliser_precautionary_FR", "Fertiliser_precautionary_EN", "Fertiliser_instructions_FR", "Fertiliser_instructions_EN", "Fertiliser_ingredients_FR", "Fertiliser_ingredients_EN", "Fertiliser_specifications_FR", "Fertiliser_specifications_EN", "Fertiliser_cautions_FR", "Fertiliser_cautions_EN", "Fertiliser_recommendation_FR", "Fertiliser_recommendation_EN", "Fertiliser_first_aid_FR", "Fertiliser_first_aid_EN", "Fertiliser_warranty_FR" et "Fertiliser_warranty_EN" la réponse pour chacune de ces clés doit contenir le texte complet qui lui est associé dans ta réponse. L'utilisation de "..." est interdite.
+"Fertiliser_label_all_other_text_fr" et "Fertiliser_label_all_other_text_en" doivent contenir l'entièreté du texte non associé à des clés. 
+Pour chaque section de texte dans la clé "Fertiliser_label_all_other_text_fr": faire une sous-section numéroté: {other_text_fr_1;other_text_fr_2;other_text_fr_3;etc;}.
+Pour chaque section de texte dans la clé "Fertiliser_label_all_other_text_en" faire une sous-section numéroté {other_text_en_1;other_text_en_2;other_text_en_3;etc;}
+"Fertiliser_precautionary_fr", "Fertiliser_precautionary_en", "Fertiliser_instructions_fr", "Fertiliser_instructions_en", "Fertiliser_ingredients_fr", "Fertiliser_ingredients_en", "Fertiliser_specifications_fr", "Fertiliser_specifications_en", "Fertiliser_cautions_fr", "Fertiliser_cautions_en", "Fertiliser_recommendation_fr", "Fertiliser_recommendation_en", "Fertiliser_first_aid_fr", "Fertiliser_first_aid_en", "Fertiliser_warranty_fr" et "Fertiliser_warranty_en" la réponse pour chacune de ces clés doit contenir le texte complet qui lui est associé dans ta réponse. L'utilisation de "..." est interdite.
 Lorsque la section du texte analysé est similaire à "Analyse minimum garantie" ou a sa traduction anglaise alors celle-ci est automatiquement mis dans la clé "Fertiliser_guaranteed_analysis" et les % la suivant sont mis dans ces sous-sections.
 Pour toutes les clés&nbsp;: si aucune information associée, associer null et mettre dans la réponse.
 
 "Percentage_in_guaranteed_analysis" contient les pourcentages sous forme de liste.
 "Nutrient_in_guaranteed_analysis" contient le nom des nutrients dans l'analyse garantie sous forme de liste.
-Si un mot ne semble pas cohérent avec sa traduction, par exemple le mot "baeau" ce trouve dans "Fertiliser_instruction_FR" et dans "Fertiliser_instruction_EN" on retrouve "Boat" alors tu es dans l'obligation de changer le mot dans "Fertiliser_instruction_FR" pour "bateau".
-Lorsqu'une clé contient "FR" Le texte associé doit absolument être en français.
-Lorsqu'une clé contient "EN" Le texte associé doit absolument être en anglais.
+Si un mot ne semble pas cohérent avec sa traduction, par exemple le mot "baeau" ce trouve dans "Fertiliser_instruction_fr" et dans "Fertiliser_instruction_en" on retrouve "Boat" alors tu es dans l'obligation de changer le mot dans "Fertiliser_instruction_fr" pour "bateau".
+Lorsqu'une clé contient "fr" Le texte associé doit absolument être en français.
+Lorsqu'une clé contient "en" Le texte associé doit absolument être en anglais.
 Voici le texte:

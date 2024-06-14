@@ -1,6 +1,6 @@
 @startuml Model Diagram
 
-header 27-05-2024
+header 06-06-2024
  
 title FertiScan Domain Model
  
@@ -11,12 +11,12 @@ class "Flask" as S <<localhost:5000>> {
   + analyze_document()
 }
 
-class "DocumentStorage" as DS {
+class "Label" as DS {
 + add_image(image)
 + get_document() Document
 }
 
-class "LanguageModel" as LLM {
+class "GPT" as LLM {
 + generate_form(prompt)
 }
 
@@ -25,21 +25,24 @@ class "OCR" {
 }
 
 class "AnalyzeResult" as R
+entity "User" as U
 entity "Image" as I
 entity "Document" as D
 entity "Prompt" as P 
 entity "Form" as F
  
  
-S "1" -down- "1" OCR: uses >
-S "1" -down- "1" LLM: uses >
-S "1" -down- "1" DS: uses >
- 
-OCR "1" -down- "*" R: produces >
-DS "1" -down- "*" D: gives > 
-DS "1" - "*" I: contains >
-LLM "1" -down- "*" P: takes >
-LLM "1" -down- "*" F: generates >
-R "1" -down- "1" P: contains >
+S "1" -- "1" OCR: uses >
+S "1" -- "1" LLM: uses >
+S "1" -- U: authentifies >
+
+U "1" -- "*" DS: possesses > 
+OCR "1" -- "*" D: processes >
+OCR "1" -- "*" R: produces >
+DS "1" -- "*" D: produces > 
+DS "1" - "*" I: loads >
+LLM "1" -- "*" P: takes >
+LLM "1" -- "*" F: generates >
+R "1" -- "1" P: contains >
 
 @enduml
