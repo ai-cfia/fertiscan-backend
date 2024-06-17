@@ -12,17 +12,11 @@ class Token:
         credentials = parts[1].split(":")
         # TO-DO authenticate the user
         # check_user(user_id)
-        print(credentials)
-
-        if credentials[0] == '':
-            raise NameError("The user_id is required to authentify a user")
-        
         self.user_id = credentials[0]
 
         # Create a label_id if there's none given
         if credentials[1] == '':
             raise KeyError("The label_id is missing")
-        
         self.label_id = credentials[1]
 
     def __str__(self) -> str:
