@@ -1,5 +1,8 @@
 import os
 from openai import AzureOpenAI
+from openai.types.chat.completion_create_params import ResponseFormat
+
+MODELS_WITH_RESPONSE_FORMAT = ["ailab-llm"]
 
 # Constants
 MODELS_WITH_RESPONSE_FORMAT = [
@@ -27,16 +30,17 @@ class GPT:
         system_prompt = prompt_file.read()
         prompt_file.close()
 
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt},
-        ]
-        request_params = {
-            "model": self.model,  # model = "deployment_name".
-            "messages": messages,
-            "temperature": 0,
-        }
+        response_format = None
         if self.model in MODELS_WITH_RESPONSE_FORMAT:
-            request_params["response_format"] = {"type": "json_object"}
-        response = self.client.chat.completions.create(**request_params)
+            response_format = ResponseFormat(type='json_object')
+
+        response = self.client.chat.completions.create(
+            model=self.model, # model = "deployment_name".
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            response_format=response_format,
+            temperature=0,
+        )
         return response.choices[0].message.content
