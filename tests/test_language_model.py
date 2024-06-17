@@ -11,7 +11,7 @@ class TestLanguageModel(unittest.TestCase):
         gpt_api_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
         gpt_api_key = os.getenv("AZURE_OPENAI_KEY")
 
-        self.gpt = GPT(api_endpoint=gpt_api_endpoint, api_key=gpt_api_key, deployment="ailab-llm")
+        self.gpt = GPT(api_endpoint=gpt_api_endpoint, api_key=gpt_api_key)
 
         self.prompt = """
         Fertilizer Label:
