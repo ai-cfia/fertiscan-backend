@@ -1,11 +1,9 @@
 import os
-import json
 from http  import HTTPStatus
 from dotenv import load_dotenv
 from auth import Token, create_label_id
 from werkzeug.utils import secure_filename
-from backend import OCR, GPT, LabelStorage, save_text_to_file
-from datetime import datetime
+from backend import OCR, GPT, LabelStorage
 from flask import Flask, request, render_template, jsonify
 from flask_cors import CORS
 
