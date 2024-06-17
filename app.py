@@ -125,12 +125,12 @@ def analyze_document():
         return "No documents to analyze", HTTPStatus.NO_CONTENT
     
     result = ocr.extract_text(document=document)
-    result_dict = result.as_dict()
-    result_json = json.dumps({
-        "version": result_dict["apiVersion"],
-        "content": result_dict["content"],
-        "paragraphs": result_dict["paragraphs"],
-    }, indent=2)
+    # result_dict = result.as_dict()
+    # result_json = json.dumps({
+    #     "version": result_dict["apiVersion"],
+    #     "content": result_dict["content"],
+    #     "paragraphs": result_dict["paragraphs"],
+    # }, indent=2)
 
     # now = datetime.now()
     # Logs the results from document intelligence
@@ -141,7 +141,7 @@ def analyze_document():
     # Generate form from extracted text
     # Send the JSON if we have more token.
     # form = language_model.generate_form(result_json)
-    form = language_model.generate_form(result_dict["content"])
+    form = language_model.generate_form(result.content)
 
     # Clear the label cache
     label.clear()
