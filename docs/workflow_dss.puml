@@ -1,5 +1,5 @@
 @startuml FertiScan Sequence Diagram
-header 07/06/2024
+header 12/06/2024
 
 title FertiScan Workflow
 hide empty members
@@ -8,26 +8,12 @@ hide footbox
 actor "Client" as C
 participant FertiScan as F <<http:localhost:5000>>
 
-C -> F: GET /new_label
-F -> F: new_label()
-C <<-- F: returns //label_id//
-note right
-  All the images will be linked
-  to the label with this id.
+C -> F: POST /analyze
+note over F
+  The request takes:
+    * 'Basic' authentication token (optional)
+    * 'images' of the label
 end note
-loop for all images
-  C -> F: POST /upload
-  F -> F: upload()
-  note left
-    The request takes the credentials
-    in the Authorization header 
-    (user_id and token_id).
-  end note
-end
-C -> F: GET /analyze
 F -> F: analyze()  
-note left    
-  This request also takes credentials.
-end note
-C <<-- F: returns the analysis of the label.
+C <<-- F: returns JSON
 @enduml

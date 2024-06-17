@@ -62,6 +62,7 @@ class TestLanguageModel(unittest.TestCase):
 
     def test_generate_form_gpt(self):
         result = self.gpt.generate_form(self.prompt)
+        print(result)
         result_json = json.loads(result)
         self.check_json(result_json)
 
