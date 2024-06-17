@@ -8,7 +8,7 @@ hide footbox
 actor "Client" as C
 participant FertiScan as F <<http:localhost:5000>>
 
-C -> F: GET /analyze
+C -> F: POST /analyze
 note over F
   The request takes:
     * 'Basic' authentication token (optional)
