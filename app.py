@@ -3,7 +3,8 @@ import json
 from dotenv import load_dotenv
 from auth import Token, create_label_id
 from werkzeug.utils import secure_filename
-from backend import OCR, GPT, LabelStorage
+from backend import OCR, GPT, LabelStorage, save_text_to_file
+from datetime import datetime
 from flask import Flask, request, render_template, jsonify
 from flask_cors import CORS
 
@@ -55,7 +56,7 @@ def new_label():
 # Example request
 # curl -X POST http://localhost:5000/upload \
 #     -H "Authorization: Basic <your_encoded_credentials>" \
-#     -F "image=@/path/to/image1.jpg" \
+#     -F "image=@/path/to/image1.jpg"
 @app.route('/upload', methods=['POST'])
 def upload_images():
     if 'image' not in request.files:
@@ -87,11 +88,11 @@ def upload_images():
         return "File uploaded successfully", 200
 
 # Example request
-# curl -X POST http://localhost:5000/upload \
+# curl -X POST http://localhost:5000/analyze \
 #     -H "Authorization: Basic <your_encoded_credentials>" \
 #     -F "images=@/path/to/image1.jpg" \
-#     -F "images=@/path/to/image2.jpg" \
-@app.route('/analyze', methods=['GET'])
+#     -F "images=@/path/to/image2.jpg"
+@app.route('/analyze', methods=['POST'])
 def analyze_document():
     files = request.files.getlist('images')
     
@@ -125,10 +126,27 @@ def analyze_document():
         return "No documents to analyze", 400
     
     result = ocr.extract_text(document=document)
+    result_dict = result.as_dict()
+
+    result_json = json.dumps({
+        "version": result_dict["apiVersion"],
+        "content": result_dict["content"],
+        "paragraphs": result_dict["paragraphs"],
+    }, indent=2)
+
+    now = datetime.now()
+
+    # Logs the results from document intelligence
+    if not os.path.exists('./.logs'):
+        os.mkdir('./.logs')
+    save_text_to_file(result_json, "./.log/"+now.__str__()+".json") 
 
     # Generate form from extracted text
-    form = language_model.generate_form(result.content)
+    # Send the JSON if we have more token.
+    # form = language_model.generate_form(result_json)
+    form = language_model.generate_form(result_json["content"])
 
+    # Clear the label cache
     label.clear()
 
     return app.response_class(
