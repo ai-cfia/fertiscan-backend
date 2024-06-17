@@ -132,12 +132,11 @@ def analyze_document():
         "paragraphs": result_dict["paragraphs"],
     }, indent=2)
 
-    now = datetime.now()
-
+    # now = datetime.now()
     # Logs the results from document intelligence
-    if not os.path.exists('./.logs'):
-        os.mkdir('./.logs')
-    save_text_to_file(result_json, "./.logs/"+now.__str__()+".json") 
+    # if not os.path.exists('./.logs'):
+        # os.mkdir('./.logs')
+    # save_text_to_file(result_json, "./.logs/"+now.__str__()+".json") 
 
     # Generate form from extracted text
     # Send the JSON if we have more token.
