@@ -68,5 +68,4 @@ FRONTEND_URL=http://url.to_frontend/
 
 ## API Endpoints
 
-- `POST /upload`: Upload an image to be analyzed.
-- `GET /analyze`: Analyze the uploaded image and returns the form.
+- `POST /analyze`: Analyze the images and returns the form.
