@@ -1,5 +1,4 @@
 import os
-<<<<<<< HEAD
 import dspy
 from openai.types.chat.completion_create_params import ResponseFormat
 
@@ -11,12 +10,6 @@ class ProduceLabelForm(dspy.Signature):
     context = dspy.InputField(desc="You are a fertilizer label inspector working for the Canadian Food Inspection Agency. Your task is to classify all information present in the provided text using the specified keys. Your response should be accurate, formatted in JSON, and contain all the text from the provided text without modifications. Ensure the following specifications are met before submission.")
     rules = dspy.InputField(desc="The rules you must follow to accomplish your task correctly.")
     form = dspy.OutputField(desc="A complete JSON with all fields occupied. The form will be directly parsed into JSON so it must be no other text aside of the JSON.")
-=======
-from openai import AzureOpenAI
-from openai.types.chat.completion_create_params import ResponseFormat
-
-MODELS_WITH_RESPONSE_FORMAT = ["ailab-llm"]
->>>>>>> main
 
 class GPT:
     def __init__(self, api_endpoint, api_key, deployment="ailab-gpt-35-turbo-16k"):
