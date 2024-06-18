@@ -1,6 +1,4 @@
 {
-  "prompt": "You are a fertilizer label inspector working for the Canadian Food Inspection Agency. Your task is to classify all information present in the provided text using the specified keys. Your response should be accurate, formatted in JSON, and contain all the text from the provided text without modifications. Ensure the following specifications are met before submission.",
-  "context": "Provided text extracted from an image.",
   "keys": [
     "company_name",
     "company_address",
@@ -35,8 +33,8 @@
     {
       "fertiliser_guaranteed_analysis": [
         {
-          "substance": "...",
-          "concentration": "..."
+          "nutrient": "",
+          "quantity": ""
         }
       ]
     },
@@ -45,15 +43,14 @@
     "fertiliser_volume"
   ],
   "specifications": [
-    "Keep the order of keys as listed above.",
     "NPK is always in the form 'number - number - number'.",
     "Include text in the French or English version only if it is present in the provided text.",
     "fertiliser_lot_number must have the word 'lot' before it; otherwise, assign null.",
     "fertiliser_registration_number must have the phrase 'numéro d'enregistrement' or 'registration number'; otherwise, assign null.",
     "Translation of the text is prohibited.",
+    "There are no keys besides the ones explicitly specified in the prompt.",
     "The response for each key must contain the complete text associated with it. The use of '...' is prohibited.",
     "When a section of text analyzed is similar to 'Analyse minimum garantie' or its English translation, it should be automatically placed in the key 'fertiliser_guaranteed_analysis' in the specified format.",
     "For all keys: if no associated information is found, assign null and include it in the response."
-  ],
-  "text": "Here is the provided text to classify."
+  ]
 }

@@ -142,7 +142,7 @@ def analyze_document():
     # Generate form from extracted text
     # Send the JSON if we have more token.
     # form = language_model.generate_form(result_json)
-    form = language_model.generate_form(result_dict["content"])
+    form = language_model.generate_form(result.content)
 
     # Clear the label cache
     label.clear()
