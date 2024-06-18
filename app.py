@@ -31,9 +31,6 @@ OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
 OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
 language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY)
 
-# Creating a dictionary to hold the sessions
-sessions = {}
-
 @app.route('/')
 def main_page():
     return render_template('index.html')
@@ -52,11 +49,11 @@ def analyze_document():
     # Current format: user_id:session_id
     # Initialize a token instance from the request authorization header
     auth_header = request.headers.get("Authorization")
-    token = Token(auth_header) if request.authorization else Token()
-
-    # Initialize storage if it does not exist for this user and label
-    if token not in sessions:
-        sessions[token] = LabelStorage()
+    # Currently we are not using the token. It might change in the future.
+    Token(auth_header) if request.authorization else Token()
+    
+    # Initialize the storage for the user
+    label_storage = LabelStorage()
 
     for file in files:
         if file:
@@ -65,12 +62,9 @@ def analyze_document():
             file.save(file_path)
             
             # Add image to label storage
-            sessions[token].add_image(file_path)
+            label_storage.add_image(file_path)
 
-    # For simplicity, only analyze the first label in the session
-    label = sessions[token]
-
-    document = label.get_document()
+    document = label_storage.get_document()
     if not document:
         return "No documents to analyze", HTTPStatus.NO_CONTENT
     
@@ -94,7 +88,7 @@ def analyze_document():
     form = language_model.generate_form(result.content)
 
     # Clear the label cache
-    label.clear()
+    label_storage.clear()
 
     return app.response_class(
         response=form,
