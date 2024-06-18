@@ -1,5 +1,4 @@
 import os
-import json
 from http  import HTTPStatus
 from dotenv import load_dotenv
 from auth import Token
@@ -71,24 +70,17 @@ def analyze_document():
         return "No documents to analyze", HTTPStatus.NO_CONTENT
     
     result = ocr.extract_text(document=document)
-    result_dict = result.as_dict()
-    result_json = json.dumps({
-        "version": result_dict["apiVersion"],
-        "content": result_dict["content"],
-        "paragraphs": result_dict["paragraphs"],
-    }, indent=2)
-
-    now = datetime.now()
-
-    # Logs the results from document intelligence
-    if not os.path.exists('./.logs'):
-        os.mkdir('./.logs')
-    save_text_to_file(result_json, "./.logs/"+now.__str__()+".json") 
 
     # Generate form from extracted text
     # Send the JSON if we have more token.
     # form = language_model.generate_form(result_json)
     form = language_model.generate_form(result.content)
+
+    # Logs the results from document intelligence
+    now = datetime.now()
+    if not os.path.exists('./.logs'):
+        os.mkdir('./.logs')
+    save_text_to_file(form, "./.logs/"+now.__str__()+".json") 
 
     # Clear the label cache
     label_storage.clear()
