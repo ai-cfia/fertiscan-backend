@@ -1,10 +1,10 @@
 import os
 from http  import HTTPStatus
 from dotenv import load_dotenv
-from auth import Token, create_label_id
+from auth import Token
 from werkzeug.utils import secure_filename
 from backend import OCR, GPT, LabelStorage
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template
 from flask_cors import CORS
 
 # Load environment variables
@@ -37,54 +37,6 @@ sessions = {}
 @app.route('/')
 def main_page():
     return render_template('index.html')
-
-@app.route('/new_label', methods=['POST'])
-def new_label():
-    auth_header = request.headers.get("Authorization")
-    print(auth_header)
-    try:
-        Token(auth_header)
-        return "Succes", HTTPStatus.OK
-    except KeyError:
-        return jsonify({
-            "label_id": create_label_id()
-        })
-    except:   # noqa: E722
-        return "Unknown user", HTTPStatus.UNAUTHORIZED
-
-# Example request
-# curl -X POST http://localhost:5000/upload \
-#     -H "Authorization: Basic <your_encoded_credentials>" \
-#     -F "image=@/path/to/image1.jpg"
-@app.route('/upload', methods=['POST'])
-def upload_images():
-    if 'image' not in request.files:
-        return "No file part", HTTPStatus.BAD_REQUEST
-    
-    file = request.files['image']
-    if file.filename == '':
-        return "No selected image", HTTPStatus.NO_CONTENT
-    
-    # The authorization scheme is still unsure.
-    #
-    # Current format: user_id:session_id
-    # Initialize a token instance from the request authorization header
-    auth_header = request.headers.get("Authorization")
-    token = Token(auth_header) if request.authorization else Token()
-
-    # Initialize storage if it does not exist for this user and label
-    if token not in sessions:
-        sessions[token] = LabelStorage()
-    
-    if file:
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-
-        # Add image to document storage
-        sessions[token].add_image(file_path)
-        
-        return "File uploaded successfully", HTTPStatus.OK
 
 # Example request
 # curl -X POST http://localhost:5000/analyze \
