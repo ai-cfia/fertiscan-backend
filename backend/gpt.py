@@ -5,10 +5,10 @@ from openai.types.chat.completion_create_params import ResponseFormat
 MODELS_WITH_RESPONSE_FORMAT = ["ailab-llm"]
 
 class ProduceLabelForm(dspy.Signature):
-    """Put the text of a document into multiple keyed fields."""
+    """You are a fertilizer label inspector working for the Canadian Food Inspection Agency. Your task is to classify all information present in the provided text using the specified keys. Your response should be accurate, formatted in JSON, and contain all the text from the provided text without modifications."""
     
-    context = dspy.InputField(desc="You are a fertilizer label inspector working for the Canadian Food Inspection Agency. Your task is to classify all information present in the provided text using the specified keys. Your response should be accurate, formatted in JSON, and contain all the text from the provided text without modifications. Ensure the following specifications are met before submission.")
-    rules = dspy.InputField(desc="Your task is to extract specific information and format it into a JSON object according to the given keys and requirements.")
+    text = dspy.InputField(desc="The text of fertilizer label extracted using an OCR.")
+    specification = dspy.InputField(desc="Follow this specification.")
     form = dspy.OutputField(desc="A complete JSON with all fields occupied. Do not return any note or additional text that isn't in the JSON.")
 
 class GPT:
@@ -28,7 +28,7 @@ class GPT:
             model=deployment,
             api_version="2024-02-01",
             max_tokens=12000,
-            # response_format=response_format,
+            response_format=response_format,
         )
 
     def generate_form(self, prompt):
@@ -38,7 +38,7 @@ class GPT:
 
         dspy.configure(lm=self.dspy_client)
         signature = dspy.ChainOfThought(ProduceLabelForm)
-        prediction = signature(rules=system_prompt, context=prompt)
+        prediction = signature(specification=system_prompt, text=prompt)
 
         print(prediction)
 
