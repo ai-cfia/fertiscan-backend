@@ -40,6 +40,5 @@ class GPT:
         signature = dspy.ChainOfThought(ProduceLabelForm)
         prediction = signature(specification=system_prompt, text=prompt)
 
-        print(prediction)
-
+        # print(prediction)
         return prediction.form

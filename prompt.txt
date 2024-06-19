@@ -10,28 +10,29 @@ Keys:
 - "fertiliser_name"
 - "fertiliser_registration_number"
 - "fertiliser_lot_number"
-- "fertiliser_weight"
+- "fertiliser_weight_kg"
+- "fertiliser_weight_lb"
 - "fertiliser_density"
 - "fertiliser_volume"
 - "warranty"
 - "fertiliser_npk" (format: "number-number-number")
 - "precautions_en" (array of strings)
 - "instructions_en" (array of strings)
-- "micronutrients_en" (array of objects with "name" and "quantity")
-- "organic_ingredients_en" (array of objects with "name" and "quantity")
+- "micronutrients_en" (array of objects with "name" and "percentage")
+- "organic_ingredients_en" (array of objects with "name" and "percentage")
 - "inert_ingredients_en" (array of strings)
-- "specifications_en" (array of objects with "fertiliser_category", "humidity", "ph", and "solubility")
+- "specifications_en" (array of objects with "humidity", "pH", and "solubility")
 - "cautions_en" (array of strings)
 - "first_aid_en" (array of strings)
 - "precautions_fr" (array of strings)
 - "instructions_fr" (array of strings)
-- "micronutrients_fr" (array of objects with "name" and "quantity")
-- "organic_ingredients_fr" (array of objects with "name" and "quantity")
+- "micronutrients_fr" (array of objects with "name" and "percentage")
+- "organic_ingredients_fr" (array of objects with "name" and "percentage")
 - "inert_ingredients_fr" (array of strings)
-- "specifications_fr" (array of objects with "fertiliser_category", "humidity", "ph", and "solubility")
+- "specifications_fr" (array of objects with "humidity", "pH", and "solubility")
 - "cautions_fr" (array of strings)
 - "first_aid_fr" (array of strings)
-- "fertiliser_guaranteed_analysis" (array of objects with "nutrient" and "quantity")
+- "fertiliser_guaranteed_analysis" (array of objects with "nutrient" and "percentage")
 
 Requirements:
 - The `fertiliser_npk` key must always be in the format "number-number-number".
