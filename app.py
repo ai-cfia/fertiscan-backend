@@ -66,7 +66,7 @@ def analyze_document():
 
     document = label_storage.get_document()
     if not document:
-        return "No documents to analyze", HTTPStatus.NO_CONTENT
+        return "No documents to analyze", HTTPStatus.BAD_REQUEST
     
     result = ocr.extract_text(document=document)
     # result_dict = result.as_dict()

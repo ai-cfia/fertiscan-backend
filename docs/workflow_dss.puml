@@ -1,19 +1,23 @@
 @startuml FertiScan Sequence Diagram
 header 12/06/2024
 
-title FertiScan Workflow
+title FertiScan Document Analysis Workflow
 hide empty members
 hide footbox
 
 actor "Client" as C
 participant FertiScan as F <<http:localhost:5000>>
 
-C -> F: POST /analyze
+C -> F: POST /analyze "images=@/path/to/file"
 note over F
-  The request takes:
-    * 'Basic' authentication token (optional)
-    * 'images' of the label
+  Multiple images can be sent
+  over the same request.
 end note
-F -> F: analyze()  
-C <<-- F: returns JSON
+alt no images
+  C <<-- F: //No documents to analyze, 400//
+else
+  F -> F: analyze()  
+  C <<-- F: //JSON, 200//
+end
+
 @enduml
