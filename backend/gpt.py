@@ -8,8 +8,8 @@ class ProduceLabelForm(dspy.Signature):
     """Put the text of a document into multiple keyed fields."""
     
     context = dspy.InputField(desc="You are a fertilizer label inspector working for the Canadian Food Inspection Agency. Your task is to classify all information present in the provided text using the specified keys. Your response should be accurate, formatted in JSON, and contain all the text from the provided text without modifications. Ensure the following specifications are met before submission.")
-    rules = dspy.InputField(desc="The rules you must follow to accomplish your task correctly.")
-    form = dspy.OutputField(desc="A complete JSON with all fields occupied. The form will be directly parsed into JSON so it must be no other text aside of the JSON.")
+    rules = dspy.InputField(desc="Your task is to extract specific information and format it into a JSON object according to the given keys and requirements.")
+    form = dspy.OutputField(desc="A complete JSON with all fields occupied. Do not return any note or additional text that isn't in the JSON.")
 
 class GPT:
     def __init__(self, api_endpoint, api_key, deployment="ailab-gpt-35-turbo-16k"):
@@ -28,7 +28,7 @@ class GPT:
             model=deployment,
             api_version="2024-02-01",
             max_tokens=12000,
-            response_format=response_format,
+            # response_format=response_format,
         )
 
     def generate_form(self, prompt):
@@ -40,6 +40,6 @@ class GPT:
         signature = dspy.ChainOfThought(ProduceLabelForm)
         prediction = signature(rules=system_prompt, context=prompt)
 
-        # print(prediction)
+        print(prediction)
 
         return prediction.form
