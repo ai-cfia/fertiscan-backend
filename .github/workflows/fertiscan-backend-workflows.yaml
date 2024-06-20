@@ -6,7 +6,7 @@ on:
       - opened
       - closed
       - synchronize
-
+#testing
 jobs:
   lint-test:
     uses: ai-cfia/github-workflows/.github/workflows/workflow-lint-test-python.yml@281-update-python-lint-workflow-to-fetch-dynamically-values-from-github-secrets
