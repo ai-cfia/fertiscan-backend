@@ -7,12 +7,6 @@ MODELS_WITH_RESPONSE_FORMAT = [
     "ailab-llm"
 ]  # List of models that support the response_format option
 
-# Constants
-MODELS_WITH_RESPONSE_FORMAT = [
-    "ailab-llm"
-]  # List of models that support the response_format option
-
-
 class GPT:
     def __init__(self, api_endpoint, api_key, deployment="ailab-gpt-35-turbo-16k"):
         if not api_endpoint or not api_key:
