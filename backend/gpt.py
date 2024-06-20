@@ -2,7 +2,10 @@ import os
 from openai import AzureOpenAI
 from openai.types.chat.completion_create_params import ResponseFormat
 
-MODELS_WITH_RESPONSE_FORMAT = ["ailab-llm"]
+# Constants
+MODELS_WITH_RESPONSE_FORMAT = [
+    "ailab-llm"
+]  # List of models that support the response_format option
 
 # Constants
 MODELS_WITH_RESPONSE_FORMAT = [
