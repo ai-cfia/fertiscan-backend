@@ -16,13 +16,13 @@ end box
 C -> F: analyze()
 F -> B: GET /analyze
 alt Document uploaded
-B -> D: POST .../prebuilt-layout:analyze
+B -> D: POST /prebuilt-layout:analyze
 note right
 Extracts the content
 of the document.
 end note
 B <<-- D: return AnalyzeResult
-B -> O: POST .../completions
+B -> O: POST /completions
 B <<-- O: return JSON
 note left
 A form with all the
