@@ -69,18 +69,6 @@ def analyze_document():
         return "No documents to analyze", HTTPStatus.BAD_REQUEST
     
     result = ocr.extract_text(document=document)
-    # result_dict = result.as_dict()
-    # result_json = json.dumps({
-    #     "version": result_dict["apiVersion"],
-    #     "content": result_dict["content"],
-    #     "paragraphs": result_dict["paragraphs"],
-    # }, indent=2)
-
-    # now = datetime.now()
-    # Logs the results from document intelligence
-    # if not os.path.exists('./.logs'):
-        # os.mkdir('./.logs')
-    # save_text_to_file(result_json, "./.logs/"+now.__str__()+".json") 
 
     # Generate form from extracted text
     # Send the JSON if we have more token.
