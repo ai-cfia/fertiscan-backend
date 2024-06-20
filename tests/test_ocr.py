@@ -4,7 +4,7 @@ import Levenshtein
 from backend import curl_file, save_text_to_file
 from dotenv import load_dotenv
 from backend.ocr import OCR
-from backend.document_storage import DocumentStorage
+from backend.label import LabelStorage
 
 def levenshtein_similarity(str1, str2):
     # Calculate the Levenshtein distance
@@ -65,7 +65,7 @@ class TestOCR(unittest.TestCase):
 
     def test_composite_image_text_extraction(self):
         # Create a DocumentStorage instance and add images
-        doc_storage = DocumentStorage()
+        doc_storage = LabelStorage()
         doc_storage.add_image(self.sample_image_path_1)
         doc_storage.add_image(self.sample_image_path_2)
 

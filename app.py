@@ -1,7 +1,9 @@
 import os
+from http  import HTTPStatus
 from dotenv import load_dotenv
+from auth import Token
 from werkzeug.utils import secure_filename
-from backend import DocumentStorage, OCR, GPT
+from backend import OCR, GPT, LabelStorage
 from flask import Flask, request, render_template
 from flask_cors import CORS
 
@@ -29,50 +31,57 @@ OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
 OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
 language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY)
 
-# Document storage
-document_storage = DocumentStorage()
-
 @app.route('/')
 def main_page():
     return render_template('index.html')
 
-@app.route('/upload', methods=['POST'])
-def upload_image():
-    if 'file' not in request.files:
-        return "No file part", 400
-    
-    file = request.files['file']
-    if file.filename == '':
-        return "No selected file", 400
-    
-    if file:
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-
-        # Add image to document storage
-        document_storage.add_image(file_path)
-        
-        return "File uploaded successfully", 200
-
-@app.route('/analyze', methods=['GET'])
+# Example request
+# curl -X POST http://localhost:5000/analyze \
+#     -H "Authorization: Basic <your_encoded_credentials>" \
+#     -F "images=@/path/to/image1.jpg" \
+#     -F "images=@/path/to/image2.jpg"
+@app.route('/analyze', methods=['POST'])
 def analyze_document():
-    document = document_storage.get_document()
-    if not document:
-        return "No documents to analyze", 400
+    files = request.files.getlist('images')
     
-    # For simplicity, only analyze the first document
+    # The authorization scheme is still unsure.
+    #
+    # Current format: user_id:session_id
+    # Initialize a token instance from the request authorization header
+    auth_header = request.headers.get("Authorization")
+    # Currently we are not using the token. It might change in the future.
+    Token(auth_header) if request.authorization else Token()
+    
+    # Initialize the storage for the user
+    label_storage = LabelStorage()
+
+    for file in files:
+        if file:
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+            
+            # Add image to label storage
+            label_storage.add_image(file_path)
+
+    document = label_storage.get_document()
+    if not document:
+        return "No documents to analyze", HTTPStatus.BAD_REQUEST
+    
     result = ocr.extract_text(document=document)
 
     # Generate form from extracted text
+    # Send the JSON if we have more token.
+    # form = language_model.generate_form(result_json)
     form = language_model.generate_form(result.content)
-    
-    document_storage.clear()
+
+    # Clear the label cache
+    label_storage.clear()
 
     return app.response_class(
         response=form,
-        status=200,
-        mimetype='application/json'
+        status=HTTPStatus.OK,
+        mimetype="application/json"
     )
 
 if __name__ == "__main__":
