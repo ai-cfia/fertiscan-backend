@@ -16,22 +16,22 @@ Keys:
 - "fertiliser_volume"
 - "warranty"
 - "fertiliser_npk" (format: "number-number-number")
-- "precautions_en" (array of strings)
+- "precautions_en"
 - "instructions_en" (array of strings)
 - "micronutrients_en" (array of objects with "name" and "percentage")
 - "organic_ingredients_en" (array of objects with "name" and "percentage")
 - "inert_ingredients_en" (array of strings)
 - "specifications_en" (array of objects with "humidity", "pH", and "solubility")
-- "cautions_en" (array of strings)
-- "first_aid_en" (array of strings)
-- "precautions_fr" (array of strings)
+- "cautions_en"
+- "first_aid_en"
+- "precautions_fr"
 - "instructions_fr" (array of strings)
 - "micronutrients_fr" (array of objects with "name" and "percentage")
 - "organic_ingredients_fr" (array of objects with "name" and "percentage")
 - "inert_ingredients_fr" (array of strings)
 - "specifications_fr" (array of objects with "humidity", "pH", and "solubility")
-- "cautions_fr" (array of strings)
-- "first_aid_fr" (array of strings)
+- "cautions_fr"
+- "first_aid_fr"
 - "fertiliser_guaranteed_analysis" (array of objects with "nutrient" and "percentage")
 
 Requirements:
@@ -39,10 +39,11 @@ Requirements:
 - The content of all keys with the suffix `_en` must be in English, including their subkeys.
 - The content of all keys with the suffix `_fr` must be in French, including their subkeys.
 - Translation of the text is prohibited.
+- Each key must be unique. There cannot be any duplicated key.
 - You are prohibited from generating any text that is not part of the JSON.
 - You are prohibited from adding keys that are not specified.
 - For all keys: if no associated information is found, assign an empty string "".
-- The response for each key must contain the complete text associated with it. The use of '...' is prohibited.
+- When you identify the fertiliser weight attempt to fill both fertiliser_weight_kg and fertiliser_weight_lb.
 - When a section of text is similar to "Analyse minimum garantie" or its English translation, it should be placed in the `fertiliser_guaranteed_analysis` key with the specified format.
 - Ensure that `fertiliser_registration_number` includes a recognizable registration format, typically involving a series of letters and numbers.
 - Validate that `fertiliser_npk` is in the correct "number-number-number" format where each number represents a percentage of Nitrogen, Phosphorus, and Potassium respectively.

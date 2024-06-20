@@ -49,8 +49,8 @@ class TestLanguageModel(unittest.TestCase):
 
         self.assertIn("fertiliser_npk", result_json)
 
-        self.assertIn("fertiliser_weight", result_json)
-        self.assertEqual(result_json["fertiliser_weight"], "20kg")
+        self.assertIn("fertiliser_weight_kg", result_json)
+        self.assertEqual(result_json["fertiliser_weight_kg"], "20kg")
 
         # Check that the expected fields are "null" for missing data
         self.assertIn("manufacturer_address", result_json)

@@ -5,10 +5,14 @@ from openai.types.chat.completion_create_params import ResponseFormat
 MODELS_WITH_RESPONSE_FORMAT = ["ailab-llm"]
 
 class ProduceLabelForm(dspy.Signature):
-    """You are a fertilizer label inspector working for the Canadian Food Inspection Agency. Your task is to classify all information present in the provided text using the specified keys. Your response should be accurate, formatted in JSON, and contain all the text from the provided text without modifications."""
+    """
+    You are a fertilizer label inspector working for the Canadian Food Inspection Agency. 
+    Your task is to classify all information present in the provided text using the specified keys.
+    Your response should be accurate, formatted in JSON, and contain all the text from the provided text without modifications.
+    """
     
-    text = dspy.InputField(desc="The text of fertilizer label extracted using an OCR.")
-    specification = dspy.InputField(desc="Follow this specification.")
+    text = dspy.InputField(desc="The text of the fertilizer label extracted using OCR.")
+    specification = dspy.InputField(desc="The specification containing the fields to highlight and their requirements.")
     form = dspy.OutputField(desc="A complete JSON with all fields occupied. Do not return any note or additional text that isn't in the JSON.")
 
 class GPT:
@@ -20,7 +24,7 @@ class GPT:
 
         response_format = None
         if deployment in MODELS_WITH_RESPONSE_FORMAT:
-            response_format = ResponseFormat(type='json_object')   
+            response_format = { "type": 'json_object'}   
 
         self.dspy_client = dspy.AzureOpenAI(
             api_base=api_endpoint,
@@ -40,5 +44,5 @@ class GPT:
         signature = dspy.ChainOfThought(ProduceLabelForm)
         prediction = signature(specification=system_prompt, text=prompt)
 
-        # print(prediction)
+        print(prediction)
         return prediction.form

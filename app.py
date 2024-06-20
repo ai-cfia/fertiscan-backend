@@ -1,4 +1,5 @@
 import os
+import json
 from http  import HTTPStatus
 from dotenv import load_dotenv
 from auth import Token
@@ -85,11 +86,17 @@ def analyze_document():
     # Clear the label cache
     label_storage.clear()
 
-    return app.response_class(
-        response=form,
-        status=HTTPStatus.OK,
-        mimetype="application/json"
-    )
+    # Check the conformity of the JSON.
+    try:
+        json.load(form)
+        return app.response_class(
+            response=form,
+            status=HTTPStatus.OK,
+            mimetype="application/json"
+        )
+    except json.JSONEncoder:
+        return "Error in the encoding of the JSON", HTTPStatus.INTERNAL_SERVER_ERROR
+
 
 if __name__ == "__main__":
     app.run(debug=True)
