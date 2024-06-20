@@ -1,7 +1,7 @@
 import os
 import logging
 from dotenv import load_dotenv
-from backend.document_storage import DocumentStorage
+from backend.label import LabelStorage
 from backend.ocr import OCR
 from backend.gpt import GPT
 from backend import save_text_to_file
@@ -60,8 +60,8 @@ def process_ocr(ocr_engines: Dict[str, OCR]) -> None:
                 continue
 
             try:
-                document_storage.add_image(os.path.join(INPUT_IMAGES_PATH, img))
-                document = document_storage.get_document(format="pdf")
+                label_storage.add_image(os.path.join(INPUT_IMAGES_PATH, img))
+                document = label_storage.get_document(format="pdf")
 
                 result = ocr_engine.extract_text(document=document)
                 save_text_to_file(result.content, output_filepath)
@@ -73,7 +73,7 @@ def process_ocr(ocr_engines: Dict[str, OCR]) -> None:
                     exc_info=True,
                 )
             finally:
-                document_storage.images = []
+                label_storage.images = []
 
 
 def process_llm(ocr_engines: Dict[str, OCR], llm_models: Dict[str, GPT]) -> None:
@@ -115,7 +115,7 @@ def process_llm(ocr_engines: Dict[str, OCR], llm_models: Dict[str, GPT]) -> None
 if __name__ == "__main__":
     try:
         validate_env_vars()
-        document_storage = DocumentStorage()
+        label_storage = LabelStorage()
 
         document_intelligence = OCR(
             api_endpoint=DOCUMENT_INTELLIGENCE_API_ENDPOINT,
