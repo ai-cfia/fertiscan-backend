@@ -1,8 +1,11 @@
 import os
 import dspy
-from openai.types.chat.completion_create_params import ResponseFormat
+# from openai.types.chat.completion_create_params import ResponseFormat
 
-MODELS_WITH_RESPONSE_FORMAT = ["ailab-llm"]
+# Constants
+MODELS_WITH_RESPONSE_FORMAT = [
+    "ailab-llm"
+]  # List of models that support the response_format option
 
 class ProduceLabelForm(dspy.Signature):
     """
@@ -36,7 +39,8 @@ class GPT:
         )
 
     def generate_form(self, prompt):
-        prompt_file = open(os.getenv('PROMPT_PATH'))
+
+        prompt_file = open(os.getenv("PROMPT_PATH"))
         system_prompt = prompt_file.read()
         prompt_file.close()
 
@@ -44,5 +48,5 @@ class GPT:
         signature = dspy.ChainOfThought(ProduceLabelForm)
         prediction = signature(specification=system_prompt, text=prompt)
 
-        print(prediction)
+        # print(prediction)
         return prediction.form
