@@ -71,14 +71,18 @@ def analyze_document():
         return "No documents to analyze", HTTPStatus.NO_CONTENT
     
     result = ocr.extract_text(document=document)
+    # Logs the results from document intelligence
+    now = datetime.now()
+    if not os.path.exists('./.logs'):
+        os.mkdir('./.logs')
+    save_text_to_file(result.content, "./.logs/"+now.__str__()+".md") 
 
     # Generate form from extracted text
     # Send the JSON if we have more token.
     # form = language_model.generate_form(result_json)
     form = language_model.generate_form(result.content)
 
-    # Logs the results from document intelligence
-    now = datetime.now()
+    # Logs the results from GPT
     if not os.path.exists('./.logs'):
         os.mkdir('./.logs')
     save_text_to_file(form, "./.logs/"+now.__str__()+".json") 
@@ -88,15 +92,14 @@ def analyze_document():
 
     # Check the conformity of the JSON.
     try:
-        json.load(form)
+        json.loads(form)
         return app.response_class(
             response=form,
             status=HTTPStatus.OK,
             mimetype="application/json"
         )
-    except json.JSONEncoder:
+    except json.JSONDecodeError:
         return "Error in the encoding of the JSON", HTTPStatus.INTERNAL_SERVER_ERROR
 
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)
