@@ -1,5 +1,4 @@
 import os
-import json
 from dotenv import load_dotenv
 from auth import Token, create_label_id
 from werkzeug.utils import secure_filename
