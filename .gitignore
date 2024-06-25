@@ -5,6 +5,10 @@ __pycache__/
 
 # Samples
 samples/*
+.logs/
+
+# Logs
+.logs
 
 # Logs
 .logs
@@ -174,4 +178,4 @@ cython_debug/
 #.idea/
 
 # Testing artifacts
-end_to_end_pipeline_artifacts   
+end_to_end_pipeline_artifacts
