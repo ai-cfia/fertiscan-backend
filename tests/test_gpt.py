@@ -3,6 +3,7 @@ import unittest
 import json
 from tests import levenshtein_similarity
 from dotenv import load_dotenv
+from backend.form import FertiliserForm
 from backend.gpt import GPT
 
 class TestLanguageModel(unittest.TestCase):
@@ -77,7 +78,7 @@ class TestLanguageModel(unittest.TestCase):
         En cas de contact avec les yeux, rincer immédiatement à grande eau et consulter un médecin.
         """
     
-    def check_json(self, extracted_info: str):
+    def check_json(self, extracted_info):
         expected_json = {
             "company_name": "GreenGrow Fertilizers Inc.",
             "company_address": "123 Greenway Blvd, Springfield, IL 62701, USA",
@@ -149,6 +150,9 @@ class TestLanguageModel(unittest.TestCase):
         # Check if all keys are present
         for key in expected_json.keys():
             assert key in extracted_info, f"Key '{key}' is missing in the extracted information"
+
+        # Check if the json matches the format
+        FertiliserForm(**expected_json)
 
         # Check if values match
         for key, expected_value in expected_json.items():

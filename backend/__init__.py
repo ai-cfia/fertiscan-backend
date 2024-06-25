@@ -1,6 +1,7 @@
 from .label import LabelStorage  # noqa: F401
 from .ocr import OCR  # noqa: F401
 from .gpt import GPT  # noqa: F401
+from .form import FertiliserForm  # noqa: F401
 import requests
           
 def curl_file(url:str, path: str):
