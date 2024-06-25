@@ -1,6 +1,6 @@
 import os
 import dspy
-# from openai.types.chat.completion_create_params import ResponseFormat
+from openai.types.chat.completion_create_params import ResponseFormat
 
 # Constants
 MODELS_WITH_RESPONSE_FORMAT = [
@@ -27,14 +27,19 @@ class GPT:
 
         response_format = None
         if deployment in MODELS_WITH_RESPONSE_FORMAT:
-            response_format = { "type": 'json_object'}   
+            response_format = ResponseFormat(type='json_object')
+
+        max_token = 12000
+        if deployment == 'ailab-llm':
+            max_token = 3500
+
 
         self.dspy_client = dspy.AzureOpenAI(
             api_base=api_endpoint,
             api_key=api_key,
-            model=deployment,
+            deployment_id=deployment,
             api_version="2024-02-01",
-            max_tokens=12000,
+            max_tokens=max_token,
             response_format=response_format,
         )
 
