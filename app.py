@@ -99,7 +99,7 @@ def analyze_document():
             status=HTTPStatus.OK,
             mimetype="application/json"
         )
-    except Exception as err:  # noqa: E722
+    except Exception as err:
         return str(err), HTTPStatus.INTERNAL_SERVER_ERROR
 
 if __name__ == "__main__":
