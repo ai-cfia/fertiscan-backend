@@ -3,6 +3,7 @@ import json
 from http  import HTTPStatus
 from dotenv import load_dotenv
 from auth import Token
+from backend.form import FertiliserForm
 from werkzeug.utils import secure_filename
 from backend import OCR, GPT, LabelStorage, save_text_to_file
 from datetime import datetime
@@ -80,26 +81,26 @@ def analyze_document():
     # Generate form from extracted text
     # Send the JSON if we have more token.
     # form = language_model.generate_form(result_json)
-    form = language_model.generate_form(result.content)
+    raw_form = language_model.generate_form(result.content)
 
     # Logs the results from GPT
     if not os.path.exists('./.logs'):
         os.mkdir('./.logs')
-    save_text_to_file(form, "./.logs/"+now.__str__()+".json") 
+    save_text_to_file(raw_form, "./.logs/"+now.__str__()+".json") 
 
     # Clear the label cache
     label_storage.clear()
 
     # Check the conformity of the JSON.
     try:
-        json.loads(form)
+        form = FertiliserForm(**json.loads(raw_form))
         return app.response_class(
-            response=form,
+            response=form.model_dump_json(indent=2),
             status=HTTPStatus.OK,
             mimetype="application/json"
         )
-    except json.JSONDecodeError:
-        return "Error in the encoding of the JSON", HTTPStatus.INTERNAL_SERVER_ERROR
+    except Exception as err:  # noqa: E722
+        return str(err), HTTPStatus.INTERNAL_SERVER_ERROR
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)

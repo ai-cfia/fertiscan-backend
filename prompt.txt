@@ -44,9 +44,7 @@ Requirements:
 - You are prohibited from adding keys that are not specified in "keys".
 - For all keys: if no associated information is found, assign an empty string "".
 - Identical keys cannot have the same associated value.
-- Keys named `percentage`, `fertiliser_weight_kg`, `pH`, and `fertiliser_weight_lb` can only contain integers or floats.
 - When you identify the fertiliser weight attempt to fill both fertiliser_weight_kg and fertiliser_weight_lb.
-- When a section of text is similar to "Analyse minimum garantie" or its English translation, it should be placed in the `fertiliser_guaranteed_analysis` key with the specified format.
 - Ensure that `fertiliser_registration_number` includes a recognizable registration format, typically involving a series of letters and numbers.
 - Validate that `fertiliser_npk` is in the correct "number-number-number" format where each number represents a percentage of Nitrogen, Phosphorus, and Potassium respectively.
 - For textual keys (e.g., precautions, instructions, warnings), ensure the text is comprehensive and retains original formatting as much as possible.
