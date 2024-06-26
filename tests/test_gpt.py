@@ -115,7 +115,7 @@ class TestLanguageModel(unittest.TestCase):
             ],
             "inert_ingredients_en": ["Clay", "Sand", "Perlite"],
             "specifications_en": [
-                {"humidity": "10%", "pH": "6.5", "solubility": "100%"}
+                {"humidity": "10%", "ph": "6.5", "solubility": "100%"}
             ],
             "cautions_en": "Wear protective gloves when handling.",
             "first_aid_en": "In case of contact with eyes, rinse immediately with plenty of water and seek medical advice.",
@@ -137,7 +137,7 @@ class TestLanguageModel(unittest.TestCase):
             ],
             "inert_ingredients_fr": ["Argile", "Sable", "Perlite"],
             "specifications_fr": [
-                {"humidity": "10%", "pH": "6.5", "solubility": "100%"}
+                {"humidity": "10%", "ph": "6.5", "solubility": "100%"}
             ],
             "cautions_fr": "Porter des gants de protection lors de la manipulation.",
             "first_aid_fr": "En cas de contact avec les yeux, rincer immédiatement à grande eau et consulter un médecin.",

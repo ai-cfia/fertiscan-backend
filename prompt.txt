@@ -21,7 +21,7 @@ Keys:
 - "micronutrients_en" (array of objects with "name" and "percentage")
 - "organic_ingredients_en" (array of objects with "name" and "percentage")
 - "inert_ingredients_en" (array of strings)
-- "specifications_en" (array of objects with "humidity", "pH", and "solubility")
+- "specifications_en" (array of objects with "humidity", "ph", and "solubility")
 - "cautions_en"
 - "first_aid_en"
 - "precautions_fr"
@@ -29,7 +29,7 @@ Keys:
 - "micronutrients_fr" (array of objects with "name" and "percentage")
 - "organic_ingredients_fr" (array of objects with "name" and "percentage")
 - "inert_ingredients_fr" (array of strings)
-- "specifications_fr" (array of objects with "humidity", "pH", and "solubility")
+- "specifications_fr" (array of objects with "humidity", "ph", and "solubility")
 - "cautions_fr"
 - "first_aid_fr"
 - "fertiliser_guaranteed_analysis" (array of objects with "nutrient" and "percentage")

@@ -15,7 +15,7 @@ class OrganicIngredient(BaseModel):
 
 class Specification(BaseModel):
     humidity: Optional[str] = Field(..., alias='humidity')
-    ph: Optional[str] = Field(..., alias='pH')
+    ph: Optional[str] = Field(..., alias='ph')
     solubility: str
 
 class FertiliserForm(BaseModel):
