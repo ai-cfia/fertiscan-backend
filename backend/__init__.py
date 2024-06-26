@@ -3,7 +3,7 @@ from .ocr import OCR  # noqa: F401
 from .gpt import GPT  # noqa: F401
 from .form import FertiliserForm  # noqa: F401
 import requests
-          
+
 def curl_file(url:str, path: str):
     img_data = requests.get(url).content
     with open(path, 'wb') as handler:

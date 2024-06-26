@@ -5,10 +5,7 @@ __pycache__/
 
 # Samples
 samples/*
-.logs/
-
-# Logs
-.logs
+logs/
 
 # VS Code
 .vscode
