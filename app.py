@@ -88,11 +88,16 @@ def analyze_document():
         # Logs the results from GPT
         save_text_to_file(raw_form, f"./logs/{now}.json")
 
+        # Check the conformity of the JSON
+        form = FertiliserForm(**json.loads(raw_form))
+
         # Clear the label cache
         label_storage.clear()
 
-        # Check the conformity of the JSON
-        form = FertiliserForm(**json.loads(raw_form))
+        # Delete the logs if there's no error
+        os.remove(f"./logs/{now}.md")        
+        os.remove(f"./logs/{now}.json")
+
         return app.response_class(
             response=form.model_dump_json(indent=2),
             status=HTTPStatus.OK,
