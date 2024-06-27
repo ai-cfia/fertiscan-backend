@@ -8,6 +8,8 @@ flask-cors
 
 openai
 
+dspy
+
 reportlab
 
 # Test dependencies

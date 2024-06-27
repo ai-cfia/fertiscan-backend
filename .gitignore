@@ -10,9 +10,6 @@ samples/*
 # Logs
 .logs
 
-# Logs
-.logs
-
 # VS Code
 .vscode
 

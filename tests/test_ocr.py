@@ -1,25 +1,10 @@
 import os
 import unittest
-import Levenshtein
 from backend import curl_file, save_text_to_file
 from dotenv import load_dotenv
 from backend.ocr import OCR
 from backend.label import LabelStorage
-
-def levenshtein_similarity(str1, str2):
-    # Calculate the Levenshtein distance
-    distance = Levenshtein.distance(str1, str2)
-    
-    # Determine the maximum possible length
-    max_len = max(len(str1), len(str2))
-    
-    if max_len == 0:
-        return 100.0  # If both strings are empty, they are identical
-    
-    # Calculate the similarity as a percentage
-    similarity_percentage = (1 - (distance / max_len)) * 100
-    
-    return similarity_percentage
+from tests import levenshtein_similarity
 
 class TestOCR(unittest.TestCase):
     def setUp(self):
