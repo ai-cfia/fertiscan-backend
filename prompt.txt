@@ -1,50 +1,47 @@
 Keys:
-- "company_name"
-- "company_address"
-- "company_website"
-- "company_phone_number"
-- "manufacturer_name"
-- "manufacturer_address"
-- "manufacturer_website"
-- "manufacturer_phone_number"
-- "fertiliser_name"
-- "fertiliser_registration_number"
-- "fertiliser_lot_number"
-- "fertiliser_weight_kg"
-- "fertiliser_weight_lb"
-- "fertiliser_density"
-- "fertiliser_volume"
-- "fertiliser_npk" (format: "number-number-number")
-- "warranty"
-- "cautions_en"  (array of strings)
-- "instructions_en" (array of strings)
-- "micronutrients_en" (array of objects with "name" and "percentage")
-- "organic_ingredients_en" (array of objects with "name" and "percentage")
-- "inert_ingredients_en" (array of strings)
-- "specifications_en" (array of objects with "humidity", "ph", and "solubility")
-- "first_aid_en"  (array of strings)
-- "cautions_fr" (array of strings)
-- "instructions_fr" (array of strings)
-- "micronutrients_fr" (array of objects with "name" and "percentage")
-- "organic_ingredients_fr" (array of objects with "name" and "percentage")
-- "inert_ingredients_fr" (array of strings)
-- "specifications_fr" (array of objects with "humidity", "ph", and "solubility")
-- "first_aid_fr" (array of strings)
-- "fertiliser_guaranteed_analysis" (array of objects with "nutrient" and "percentage")
+"company_name"
+"company_address"
+"company_website"
+"company_phone_number"
+"manufacturer_name"
+"manufacturer_address"
+"manufacturer_website"
+"manufacturer_phone_number"
+"fertiliser_name"
+"fertiliser_registration_number"
+"fertiliser_lot_number"
+"fertiliser_weight_kg"
+"fertiliser_weight_lb"
+"fertiliser_density"
+"fertiliser_volume"
+"fertiliser_npk" (format: "number-number-number")
+"warranty"
+"cautions_en"  (array of strings)
+"instructions_en" (array of strings)
+"micronutrients_en" (array of objects with "name" and "percentage")
+"organic_ingredients_en" (array of objects with "name" and "percentage")
+"inert_ingredients_en" (array of strings)
+"specifications_en" (array of objects with "humidity", "ph", and "solubility")
+"first_aid_en"  (array of strings)
+"cautions_fr" (array of strings)
+"instructions_fr" (array of strings)
+"micronutrients_fr" (array of objects with "name" and "percentage")
+"organic_ingredients_fr" (array of objects with "name" and "percentage")
+"inert_ingredients_fr" (array of strings)
+"specifications_fr" (array of objects with "humidity", "ph", and "solubility")
+"first_aid_fr" (array of strings)
+"fertiliser_guaranteed_analysis" (array of objects with "nutrient" and "percentage")
 
 Requirements:
-- The `fertiliser_npk` key must always be in the format "number-number-number".
-- The content of all keys with the suffix `_en` must be in English, including their subkeys.
-- The content of all keys with the suffix `_fr` must be in French, including their subkeys.
-- Translation of the text is prohibited.
-- Each key must be unique. There cannot be any duplicated key.
-- You are prohibited from generating any text that is not part of the JSON.
-- You are prohibited from adding keys that are not specified in "keys".
-- For all keys: if no associated information is found, assign an empty string "".
-- Identical keys cannot have the same associated value.
-- When you identify the fertiliser weight attempt to fill both fertiliser_weight_kg and fertiliser_weight_lb.
-- Ensure that `fertiliser_registration_number` includes a recognizable registration format, typically involving a series of letters and numbers.
-- Validate that `fertiliser_npk` is in the correct "number-number-number" format where each number represents a percentage of Nitrogen, Phosphorus, and Potassium respectively.
-- For textual keys (e.g., precautions, instructions, warnings), ensure the text is comprehensive and retains original formatting as much as possible.
-- For `fertiliser_guaranteed_analysis`, accurately extract nutrient names and quantities, ensuring each entry has both "nutrient" and "quantity" fields filled.
-- Copy the details of the company if no information on the manufacturer is available.
+The content of keys with the suffix _en must be in English.
+The content of keys with the suffix _fr must be in French.
+Each key must be unique with no duplicated keys.
+The fertiliser_npk key must always be in the format "number-number-number".
+Translation of the text is prohibited.
+You are prohibited from generating any text that is not part of the JSON.
+You are prohibited from adding keys that are not specified in "keys".
+For all keys: if no associated information is found, assign an empty string "".
+When you identify the fertiliser weight, attempt to fill both fertiliser_weight_kg and fertiliser_weight_lb.
+Ensure that fertiliser_registration_number includes a recognizable registration format, typically involving a series of letters and numbers.
+Fields percentage, fertiliser_weight_kg, fertiliser_weight_lb, fertiliser_density, pH, humidity, and solubility must contain a float, either a whole number or a decimal. They may optionally end with '%', 'kg', or 'lb' as appropriate.
+For fertiliser_guaranteed_analysis, accurately extract nutrient names and quantities, ensuring each entry has both "nutrient" and "quantity" fields filled.

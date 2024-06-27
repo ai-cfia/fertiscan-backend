@@ -36,7 +36,6 @@ class FertiliserForm(BaseModel):
     fertiliser_volume: Optional[str] = None
     warranty: Optional[str] = ""
     fertiliser_npk: str = Field(..., pattern=r'^(\d+-\d+-\d+)?$')
-    pres_en: Optional[str] = None
     instructions_en: List[str] = []
     micronutrients_en: List[Micronutrient] = []
     organic_ingredients_en: List[OrganicIngredient] = []
