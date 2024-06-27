@@ -14,24 +14,22 @@ Keys:
 - "fertiliser_weight_lb"
 - "fertiliser_density"
 - "fertiliser_volume"
-- "warranty"
 - "fertiliser_npk" (format: "number-number-number")
-- "precautions_en"
+- "warranty"
+- "cautions_en"  (array of strings)
 - "instructions_en" (array of strings)
 - "micronutrients_en" (array of objects with "name" and "percentage")
 - "organic_ingredients_en" (array of objects with "name" and "percentage")
 - "inert_ingredients_en" (array of strings)
 - "specifications_en" (array of objects with "humidity", "ph", and "solubility")
-- "cautions_en"
-- "first_aid_en"
-- "precautions_fr"
+- "first_aid_en"  (array of strings)
+- "cautions_fr" (array of strings)
 - "instructions_fr" (array of strings)
 - "micronutrients_fr" (array of objects with "name" and "percentage")
 - "organic_ingredients_fr" (array of objects with "name" and "percentage")
 - "inert_ingredients_fr" (array of strings)
 - "specifications_fr" (array of objects with "humidity", "ph", and "solubility")
-- "cautions_fr"
-- "first_aid_fr"
+- "first_aid_fr" (array of strings)
 - "fertiliser_guaranteed_analysis" (array of objects with "nutrient" and "percentage")
 
 Requirements:

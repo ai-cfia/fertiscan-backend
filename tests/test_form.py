@@ -23,22 +23,26 @@ class TestFertiliserForm(unittest.TestCase):
             "fertiliser_volume": "20L",
             "warranty": "1 year",
             "fertiliser_npk": "10-10-10",
-            "precaution_en": "Keep out of reach of children.",
             "instructions_en": ["Apply evenly.", "Water after application."],
             "micronutrients_en": [{"name": "Zinc", "percentage": "0.05"}],
             "organic_ingredients_en": [{"name": "Compost", "percentage": "40"}],
             "inert_ingredients_en": ["Sand"],
             "specifications_en": [{"humidity": "5", "ph": "6.5", "solubility": "high"}],
-            "cautions_en": "Wear gloves.",
-            "first_aid_en": "Rinse eyes with water.",
-            "precaution_fr": "Garder hors de portée des enfants.",
+            "cautions_en": [
+                "Wear gloves.",
+                "Keep out of reach of children.",
+            ],
+            "first_aid_en": ["Rinse eyes with water."],
+            "cautions_fr": [
+                "Portez des gants.",
+                "Garder hors de portée des enfants.",
+            ],
             "instructions_fr": ["Appliquer uniformément.", "Arroser après application."],
             "micronutrients_fr": [{"name": "Zinc", "percentage": "0.05"}],
             "organic_ingredients_fr": [{"name": "Compost", "percentage": "40"}],
             "inert_ingredients_fr": ["Sable"],
             "specifications_fr": [{"humidity": "5", "ph": "6.5", "solubility": "haute"}],
-            "cautions_fr": "Portez des gants.",
-            "first_aid_fr": "Rincer les yeux avec de l'eau.",
+            "first_aid_fr": ["Rincer les yeux avec de l'eau."],
             "fertiliser_guaranteed_analysis": [{"nutrient": "Nitrogen", "percentage": "10"}]
         }
 

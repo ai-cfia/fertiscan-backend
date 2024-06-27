@@ -1,5 +1,6 @@
 import os
 import dspy
+from dspy import Prediction
 from openai.types.chat.completion_create_params import ResponseFormat
 
 # Constants
@@ -43,8 +44,7 @@ class GPT:
             response_format=response_format,
         )
 
-    def generate_form(self, prompt):
-
+    def generate_form(self, prompt) -> Prediction:
         prompt_file = open(os.getenv("PROMPT_PATH"))
         system_prompt = prompt_file.read()
         prompt_file.close()
@@ -54,4 +54,4 @@ class GPT:
         prediction = signature(specification=system_prompt, text=prompt)
 
         # print(prediction)
-        return prediction.form
+        return prediction

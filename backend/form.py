@@ -36,22 +36,21 @@ class FertiliserForm(BaseModel):
     fertiliser_volume: Optional[str] = None
     warranty: Optional[str] = ""
     fertiliser_npk: str = Field(..., pattern=r'^(\d+-\d+-\d+)?$')
-    precautions_en: Optional[str] = None
+    pres_en: Optional[str] = None
     instructions_en: List[str] = []
     micronutrients_en: List[Micronutrient] = []
     organic_ingredients_en: List[OrganicIngredient] = []
     inert_ingredients_en: List[str] = []
     specifications_en: List[Specification] = []
-    cautions_en: Optional[str] = None
-    first_aid_en: Optional[str] = None
-    precautions_fr: Optional[str] = None
+    cautions_en: List[str] = None
+    first_aid_en: List[str] = None
     instructions_fr: List[str] = []
     micronutrients_fr: List[Micronutrient] = []
     organic_ingredients_fr: List[OrganicIngredient] = []
     inert_ingredients_fr: List[str] = []
     specifications_fr: List[Specification] = []
-    cautions_fr: Optional[str] = None
-    first_aid_fr: Optional[str] = None
+    cautions_fr: List[str] = None
+    first_aid_fr: List[str] = None
     fertiliser_guaranteed_analysis: List[NutrientAnalysis] = []
 
     class Config:

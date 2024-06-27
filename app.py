@@ -83,19 +83,21 @@ def analyze_document():
         save_text_to_file(result.content, f"./logs/{now}.md")
 
         # Generate form from extracted text
-        raw_form = language_model.generate_form(result.content)
+        prediction = language_model.generate_form(result.content)
 
         # Logs the results from GPT
-        save_text_to_file(raw_form, f"./logs/{now}.json")
+        save_text_to_file(prediction.form, f"./logs/{now}.json")
+        save_text_to_file(prediction.rationale, f"./logs/{now}.txt")
 
         # Check the conformity of the JSON
-        form = FertiliserForm(**json.loads(raw_form))
+        form = FertiliserForm(**json.loads(prediction.form))
 
         # Clear the label cache
         label_storage.clear()
 
         # Delete the logs if there's no error
-        os.remove(f"./logs/{now}.md")        
+        os.remove(f"./logs/{now}.md")   
+        os.remove(f"./logs/{now}.txt")     
         os.remove(f"./logs/{now}.json")
 
         return app.response_class(
