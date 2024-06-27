@@ -89,14 +89,14 @@ class TestLanguageModel(unittest.TestCase):
             "manufacturer_website": "www.agrotechindustries.com",
             "manufacturer_phone_number": "+1 416 555 0123",
             "fertiliser_name": "SuperGrow 20-20-20",
-            "fertiliser_registration_number": "F12345678",
-            "fertiliser_lot_number": "L987654321",
-            "fertiliser_weight_kg": "25 kg",
-            "fertiliser_weight_lb": "55 lb",
-            "fertiliser_density": "1.2 g/cm³",
-            "fertiliser_volume": "20.8 L",
+            "registration_number": "F12345678",
+            "lot_number": "L987654321",
+            "weight_kg": "25 kg",
+            "weight_lb": "55 lb",
+            "density": "1.2 g/cm³",
+            "volume": "20.8 L",
             "warranty": "Guaranteed analysis of nutrients.",
-            "fertiliser_npk": "20-20-20",
+            "npk": "20-20-20",
             "instructions_en": [
                 "Dissolve 50g in 10L of water.",
                 "Apply every 2 weeks.",
@@ -145,7 +145,7 @@ class TestLanguageModel(unittest.TestCase):
                 {"humidity": "10%", "ph": "6.5", "solubility": "100%"}
             ],
             "first_aid_fr": ["En cas de contact avec les yeux, rincer immédiatement à grande eau et consulter un médecin."],
-            "fertiliser_guaranteed_analysis": [
+            "guaranteed_analysis": [
                 {"nutrient": "Total Nitrogen (N)", "percentage": "20%"},
                 {"nutrient": "Available Phosphate (P2O5)", "percentage": "20%"},
                 {"nutrient": "Soluble Potash (K2O)", "percentage": "20%"}

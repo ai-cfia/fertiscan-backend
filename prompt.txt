@@ -8,13 +8,13 @@ Keys:
 "manufacturer_website"
 "manufacturer_phone_number"
 "fertiliser_name"
-"fertiliser_registration_number"
-"fertiliser_lot_number"
-"fertiliser_weight_kg"
-"fertiliser_weight_lb"
-"fertiliser_density"
-"fertiliser_volume"
-"fertiliser_npk" (format: "number-number-number")
+"registration_number"
+"lot_number"
+"weight_kg"
+"weight_lb"
+"density"
+"volume"
+"npk" (format: "number-number-number")
 "warranty"
 "cautions_en"  (array of strings)
 "instructions_en" (array of strings)
@@ -30,7 +30,7 @@ Keys:
 "inert_ingredients_fr" (array of strings)
 "specifications_fr" (array of objects with "humidity", "ph", and "solubility")
 "first_aid_fr" (array of strings)
-"fertiliser_guaranteed_analysis" (array of objects with "nutrient" and "percentage")
+"guaranteed_analysis" (array of objects with "nutrient" and "percentage")
 
 Requirements:
 The content of keys with the suffix _en must be in English.

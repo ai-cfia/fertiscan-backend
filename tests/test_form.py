@@ -15,14 +15,14 @@ class TestFertiliserForm(unittest.TestCase):
             "manufacturer_website": "http://manufacturer.com",
             "manufacturer_phone_number": "+0987654321",
             "fertiliser_name": "Super Fertilizer",
-            "fertiliser_registration_number": "ABC12345",
-            "fertiliser_lot_number": "LOT67890",
-            "fertiliser_weight_kg": "50kg",
-            "fertiliser_weight_lb": "110lb",
-            "fertiliser_density": "1.2",
-            "fertiliser_volume": "20L",
+            "registration_number": "ABC12345",
+            "lot_number": "LOT67890",
+            "weight_kg": "50kg",
+            "weight_lb": "110lb",
+            "density": "1.2",
+            "volume": "20L",
             "warranty": "1 year",
-            "fertiliser_npk": "10-10-10",
+            "npk": "10-10-10",
             "instructions_en": ["Apply evenly.", "Water after application."],
             "micronutrients_en": [{"name": "Zinc", "percentage": "0.05"}],
             "organic_ingredients_en": [{"name": "Compost", "percentage": "40"}],
@@ -43,15 +43,15 @@ class TestFertiliserForm(unittest.TestCase):
             "inert_ingredients_fr": ["Sable"],
             "specifications_fr": [{"humidity": "5", "ph": "6.5", "solubility": "haute"}],
             "first_aid_fr": ["Rincer les yeux avec de l'eau."],
-            "fertiliser_guaranteed_analysis": [{"nutrient": "Nitrogen", "percentage": "10"}]
+            "guaranteed_analysis": [{"nutrient": "Nitrogen", "percentage": "10"}]
         }
 
         form = FertiliserForm(**valid_data)
         self.assertIsInstance(form, FertiliserForm)
 
-    def test_invalid_fertiliser_npk(self):
+    def test_invalid_npk(self):
         invalid_data = {
-            "fertiliser_npk": "10-10",
+            "npk": "10-10",
         }
         with self.assertRaises(ValidationError):
             FertiliserForm(**invalid_data)
@@ -63,23 +63,23 @@ class TestFertiliserForm(unittest.TestCase):
         with self.assertRaises(ValidationError):
             FertiliserForm(**invalid_data)
 
-    def test_invalid_fertiliser_weight_kg(self):
+    def test_invalid_weight_kg(self):
         invalid_data = {
-            "fertiliser_weight_kg": "50pounds",
+            "weight_kg": "50pounds",
         }
         with self.assertRaises(ValidationError):
             FertiliserForm(**invalid_data)
 
-    def test_invalid_fertiliser_weight_lb(self):
+    def test_invalid_weight_lb(self):
         invalid_data = {
-            "fertiliser_weight_lb": "110kg",
+            "weight_lb": "110kg",
         }
         with self.assertRaises(ValidationError):
             FertiliserForm(**invalid_data)
 
-    def test_invalid_fertiliser_density(self):
+    def test_invalid_density(self):
         invalid_data = {
-            "fertiliser_density": "density",
+            "density": "density",
         }
         with self.assertRaises(ValidationError):
             FertiliserForm(**invalid_data)

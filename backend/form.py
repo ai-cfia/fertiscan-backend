@@ -27,15 +27,15 @@ class FertiliserForm(BaseModel):
     manufacturer_address: Optional[str] = ""
     manufacturer_website: Optional[str] = ""
     manufacturer_phone_number: Optional[str] = ""
-    fertiliser_name: Optional[str] = ""
-    fertiliser_registration_number: Optional[str] = ""
-    fertiliser_lot_number: Optional[str] = ""
-    fertiliser_weight_kg: Optional[str] = None
-    fertiliser_weight_lb: Optional[str] = None
-    fertiliser_density: Optional[str] = None
-    fertiliser_volume: Optional[str] = None
+    name: Optional[str] = ""
+    registration_number: Optional[str] = ""
+    lot_number: Optional[str] = ""
+    weight_kg: Optional[str] = None
+    weight_lb: Optional[str] = None
+    density: Optional[str] = None
+    volume: Optional[str] = None
     warranty: Optional[str] = ""
-    fertiliser_npk: str = Field(..., pattern=r'^(\d+-\d+-\d+)?$')
+    npk: str = Field(..., pattern=r'^(\d+-\d+-\d+)?$')
     instructions_en: List[str] = []
     micronutrients_en: List[Micronutrient] = []
     organic_ingredients_en: List[OrganicIngredient] = []
@@ -50,7 +50,7 @@ class FertiliserForm(BaseModel):
     specifications_fr: List[Specification] = []
     cautions_fr: List[str] = None
     first_aid_fr: List[str] = None
-    fertiliser_guaranteed_analysis: List[NutrientAnalysis] = []
+    guaranteed_analysis: List[NutrientAnalysis] = []
 
     class Config:
         populate_by_name = True
