@@ -4,7 +4,7 @@ from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 
-class DocumentStorage:
+class LabelStorage:
     def __init__(self):
         self.images = []
 
@@ -47,7 +47,12 @@ class DocumentStorage:
         pdf_buffer.seek(0)
 
         return pdf_buffer
+    
+    def clear(self):
+        for image_path in self.images:
+            os.remove(image_path)
 
+        self.images = []
 
     def get_document(self, format='pdf') -> bytes:
         # Ensure there are images to merge
@@ -65,8 +70,3 @@ class DocumentStorage:
             raise ValueError("Unknown document format output.")
 
         return output.getvalue()
-
-
-def save_bytes_to_file(image_bytes: bytes, output_path: str):
-    with open(output_path, 'wb') as output_file:
-        output_file.write(image_bytes)

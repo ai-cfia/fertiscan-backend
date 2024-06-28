@@ -60,6 +60,7 @@ AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint
 AZURE_API_KEY=your_azure_form_recognizer_key
 AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint
 AZURE_OPENAI_API_KEY=your_azure_openai_key
+
 PROMPT_PATH=path/to/file
 UPLOAD_PATH=path/to/file
 FRONTEND_URL=http://url.to_frontend/
@@ -67,5 +68,4 @@ FRONTEND_URL=http://url.to_frontend/
 
 ## API Endpoints
 
-- `POST /upload`: Upload an image to be analyzed.
-- `GET /analyze`: Analyze the uploaded image and returns the form.
+- `POST /analyze`: Analyze the images and returns the form.

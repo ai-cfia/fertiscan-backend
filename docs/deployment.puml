@@ -1,0 +1,38 @@
+@startuml Deployment
+
+header 09/05/2024
+
+title FertiScan - Deployment
+
+node MyPhone <<Device>> as A {
+    node "Android" <<OS>> {
+        node Chrome <<Web Browser>> {
+            component "FertiScan Web" as C
+        }
+    }
+}
+
+cloud Azure <<Cloud Provider>> {
+    database SQL
+
+
+
+    node "Azure Runtime" <<Runtime Environment>> {
+        component FertiScan <<http://fertiscan.gc.ca>> as S
+
+        node Container {
+            component "AzureOpenAI" as LLM
+        }
+
+        node "Document Intelligence" {
+            component "Prebuilt-Layout" as D
+        }
+    }
+}
+
+S -- C : HTTP
+S -- [LLM] : REST
+S -- [D] : REST
+S -- [SQL]
+
+@enduml
