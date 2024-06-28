@@ -1,22 +1,46 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 class NutrientAnalysis(BaseModel):
     nutrient: str
     percentage: str
 
+    @field_validator('percentage', mode='before')
+    def convert_percentage(cls, v):
+        if isinstance(v, (int, float)):
+            return f"{v}"
+        return v
+
 class Micronutrient(BaseModel):
     name: str
     percentage: str
+
+    @field_validator('percentage', mode='before', check_fields=True)
+    def convert_percentage(cls, v):
+        if isinstance(v, (int, float)):
+            return f"{v}"
+        return v
 
 class OrganicIngredient(BaseModel):
     name: str
     percentage: str
 
+    @field_validator('percentage', mode='before', check_fields=True)
+    def convert_percentage(cls, v):
+        if isinstance(v, (int, float)):
+            return f"{v}"
+        return v
+
 class Specification(BaseModel):
     humidity: Optional[str] = Field(..., alias='humidity')
     ph: Optional[str] = Field(..., alias='ph')
     solubility: str
+
+    @field_validator('humidity', 'ph', 'solubility', mode='before', check_fields=True)
+    def convert_specification_values(cls, v):
+        if isinstance(v, (int, float)):
+            return str(v)
+        return v
 
 class FertiliserForm(BaseModel):
     company_name: Optional[str] = ""
@@ -51,6 +75,12 @@ class FertiliserForm(BaseModel):
     cautions_fr: List[str] = None
     first_aid_fr: List[str] = None
     guaranteed_analysis: List[NutrientAnalysis] = []
+
+    @field_validator('weight_kg', 'weight_lb', 'density', 'volume', mode='before', check_fields=True)
+    def convert_values(cls, v):
+        if isinstance(v, (int, float)):
+            return str(v)
+        return v
 
     class Config:
         populate_by_name = True
