@@ -24,6 +24,4 @@ ENV FRONTEND_URL=${FRONTEND_URL:-http://url.to_frontend/}
 
 EXPOSE 5000
 
-COPY . . 
-
 CMD ["python", "app.py"]
