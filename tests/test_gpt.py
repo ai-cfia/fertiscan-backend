@@ -89,15 +89,14 @@ class TestLanguageModel(unittest.TestCase):
             "manufacturer_website": "www.agrotechindustries.com",
             "manufacturer_phone_number": "+1 416 555 0123",
             "fertiliser_name": "SuperGrow 20-20-20",
-            "fertiliser_registration_number": "F12345678",
-            "fertiliser_lot_number": "L987654321",
-            "fertiliser_weight_kg": "25 kg",
-            "fertiliser_weight_lb": "55 lb",
-            "fertiliser_density": "1.2 g/cm³",
-            "fertiliser_volume": "20.8 L",
+            "registration_number": "F12345678",
+            "lot_number": "L987654321",
+            "weight_kg": "25 kg",
+            "weight_lb": "55 lb",
+            "density": "1.2 g/cm³",
+            "volume": "20.8 L",
             "warranty": "Guaranteed analysis of nutrients.",
-            "fertiliser_npk": "20-20-20",
-            "precautions_en": "Keep out of reach of children. Avoid contact with skin and eyes.",
+            "npk": "20-20-20",
             "instructions_en": [
                 "Dissolve 50g in 10L of water.",
                 "Apply every 2 weeks.",
@@ -117,9 +116,15 @@ class TestLanguageModel(unittest.TestCase):
             "specifications_en": [
                 {"humidity": "10%", "ph": "6.5", "solubility": "100%"}
             ],
-            "cautions_en": "Wear protective gloves when handling.",
-            "first_aid_en": "In case of contact with eyes, rinse immediately with plenty of water and seek medical advice.",
-            "precautions_fr": "Tenir hors de portée des enfants. Éviter le contact avec la peau et les yeux.",
+            "cautions_en": [
+                "Wear protective gloves when handling.",
+                "Keep out of reach of children. Avoid contact with skin and eyes."
+            ],
+            "first_aid_en": ["In case of contact with eyes, rinse immediately with plenty of water and seek medical advice."],
+            "cautions_fr": [
+                "Tenir hors de portée des enfants. Éviter le contact avec la peau et les yeux.",
+                "Porter des gants de protection lors de la manipulation.",
+            ],
             "instructions_fr": [
                 "Dissoudre 50g dans 10L d'eau.",
                 "Appliquer toutes les 2 semaines.",
@@ -139,9 +144,8 @@ class TestLanguageModel(unittest.TestCase):
             "specifications_fr": [
                 {"humidity": "10%", "ph": "6.5", "solubility": "100%"}
             ],
-            "cautions_fr": "Porter des gants de protection lors de la manipulation.",
-            "first_aid_fr": "En cas de contact avec les yeux, rincer immédiatement à grande eau et consulter un médecin.",
-            "fertiliser_guaranteed_analysis": [
+            "first_aid_fr": ["En cas de contact avec les yeux, rincer immédiatement à grande eau et consulter un médecin."],
+            "guaranteed_analysis": [
                 {"nutrient": "Total Nitrogen (N)", "percentage": "20%"},
                 {"nutrient": "Available Phosphate (P2O5)", "percentage": "20%"},
                 {"nutrient": "Soluble Potash (K2O)", "percentage": "20%"}
@@ -159,9 +163,9 @@ class TestLanguageModel(unittest.TestCase):
             assert levenshtein_similarity(str(extracted_info[key]), str(expected_value)) > 0.9, f"Value for key '{key}' does not match. Expected '{expected_value}', got '{extracted_info[key]}'"
 
     def test_generate_form_gpt(self):
-        result = self.gpt.generate_form(self.prompt)
-        print(result)
-        result_json = json.loads(result)
+        prediction = self.gpt.generate_form(self.prompt)
+        print(prediction.form)
+        result_json = json.loads(prediction.form)
         self.check_json(result_json)
 
 

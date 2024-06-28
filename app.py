@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 from http import HTTPStatus
 from dotenv import load_dotenv
 from auth import Token
@@ -13,6 +14,18 @@ from flask_cors import CORS
 
 # Load environment variables
 load_dotenv()
+
+# Set up logging
+log_file_path = './logs/app.log'
+if not os.path.exists(os.path.dirname(log_file_path)):
+    os.makedirs(os.path.dirname(log_file_path))
+
+logging.basicConfig(
+    filename=log_file_path,
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Ensure the directory for uploaded images exists
 UPLOAD_FOLDER = os.getenv('UPLOAD_PATH')
@@ -34,7 +47,7 @@ ocr = OCR(api_endpoint=API_ENDPOINT, api_key=API_KEY)
 # Configuration for OpenAI GPT-4
 OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
 OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
-language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY)
+language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment="ailab-llm")
 
 @app.route('/')
 def main_page():
@@ -67,31 +80,39 @@ def analyze_document():
 
         # Logs the results from document intelligence
         now = datetime.now()
-        if not os.path.exists('./.logs'):
-            os.mkdir('./.logs')
-        save_text_to_file(result.content, f"./.logs/{now}.md")
+        save_text_to_file(result.content, f"./logs/{now}.md")
 
         # Generate form from extracted text
-        raw_form = language_model.generate_form(result.content)
+        prediction = language_model.generate_form(result.content)
 
         # Logs the results from GPT
-        save_text_to_file(raw_form, f"./.logs/{now}.json")
+        save_text_to_file(prediction.form, f"./logs/{now}.json")
+        save_text_to_file(prediction.rationale, f"./logs/{now}.txt")
+
+        # Check the conformity of the JSON
+        form = FertiliserForm(**json.loads(prediction.form))
 
         # Clear the label cache
         label_storage.clear()
 
-        # Check the conformity of the JSON
-        form = FertiliserForm(**json.loads(raw_form))
+        # Delete the logs if there's no error
+        os.remove(f"./logs/{now}.md")   
+        os.remove(f"./logs/{now}.txt")     
+        os.remove(f"./logs/{now}.json")
+
         return app.response_class(
             response=form.model_dump_json(indent=2),
             status=HTTPStatus.OK,
             mimetype="application/json"
         )
     except ValueError as err:
+        logger.error(f"document: {err}")
         return jsonify(error=str(err)), HTTPStatus.BAD_REQUEST
     except HttpResponseError as err:
+        logger.error(f"document_intelligence: {err.message}")
         return jsonify(error=err.message), err.status_code
     except Exception as err:
+        logger.error(f"json_parse: {err}")
         return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 @app.errorhandler(404)
