@@ -21,22 +21,12 @@ class TestFertiliserForm(unittest.TestCase):
         except ValidationError as e:
             self.fail(f"Validation error: {e}")
 
-        self.assertEqual(form.company_name, "ABC Company")
-        self.assertEqual(form.fertiliser_name, "Super Fertiliser")
-        self.assertEqual(form.npk, "10-5-5")
-        self.assertEqual(form.instructions_en, ["Use as directed"])
-        self.assertEqual(len(form.micronutrients_en), 1)
-        self.assertEqual(form.micronutrients_en[0].nutrient, "Iron")
-        self.assertEqual(form.micronutrients_en[0].value, "2")
-        self.assertEqual(form.micronutrients_en[0].unit, "%")
-        self.assertEqual(len(form.specifications_en), 1)
-        self.assertEqual(form.specifications_en[0].humidity, "Low")
-        self.assertEqual(form.specifications_en[0].ph, "7")
-        self.assertEqual(form.specifications_en[0].solubility, "High")
-        self.assertEqual(len(form.guaranteed_analysis), 1)
-        self.assertEqual(form.guaranteed_analysis[0].nutrient, "Nitrogen")
-        self.assertEqual(form.guaranteed_analysis[0].value, "10")
-        self.assertEqual(form.guaranteed_analysis[0].unit, "%")
+        raw_form = form.model_dump()
+
+        # Check if values match
+        for key, expected_value in data.items():
+            value = raw_form[key]
+            self.assertEqual(expected_value, value, f"Value for key '{key}' does not match. Expected '{expected_value}', got '{value}'")
 
     def test_invalid_npk_format(self):
         invalid_data = {
