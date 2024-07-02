@@ -1,5 +1,5 @@
 import unittest
-from backend import Token, create_label_id, check_user
+from auth import Token, create_label_id, check_user
 
 class TestToken(unittest.TestCase):
     
