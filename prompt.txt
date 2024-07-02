@@ -19,15 +19,15 @@ Keys:
 "warranty"
 "cautions_en"  (array of strings)
 "instructions_en" (array of strings)
-"micronutrients_en" (array of objects with "name" and "percentage")
-"organic_ingredients_en" (array of objects with "name" and "percentage")
+"micronutrients_en" (array of objects with "nutrient", "value", and "unit")
+"organic_ingredients_en" (array of objects with "nutrient", "value", and "unit")
 "inert_ingredients_en" (array of strings)
 "specifications_en" (array of objects with "humidity", "ph", and "solubility")
 "first_aid_en"  (array of strings)
 "cautions_fr" (array of strings)
 "instructions_fr" (array of strings)
-"micronutrients_fr" (array of objects with "name" and "percentage")
-"organic_ingredients_fr" (array of objects with "name" and "percentage")
+"micronutrients_fr" (array of objects with "nutrient", "value", and "unit")
+"organic_ingredients_fr" (array of objects with "nutrient", "value", and "unit")
 "inert_ingredients_fr" (array of strings)
 "specifications_fr" (array of objects with "humidity", "ph", and "solubility")
 "first_aid_fr" (array of strings)
@@ -42,4 +42,3 @@ The JSON must contain exclusively keys specified in "keys".
 When you identify the fertiliser weight, attempt to fill both weight_kg and weight_lb.
 Ensure that registration_number includes a recognizable registration format, typically involving a series of letters and numbers.
 Fields percentage, weight_kg, weight_lb, density, pH, humidity, and solubility must contain a float, either a whole number or a decimal. They may optionally end with '%', 'kg', or 'lb' as appropriate.
-For guaranteed_analysis, accurately extract nutrient names and quantities, ensuring each entry has both "nutrient" and "quantity" fields filled.

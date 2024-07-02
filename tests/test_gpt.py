@@ -81,76 +81,63 @@ class TestLanguageModel(unittest.TestCase):
     def check_json(self, extracted_info):
         expected_json = {
             "company_name": "GreenGrow Fertilizers Inc.",
-            "company_address": "123 Greenway Blvd, Springfield, IL 62701, USA",
+            "company_address": "123 Greenway Blvd, Springfield IL 62701 USA",
             "company_website": "www.greengrowfertilizers.com",
             "company_phone_number": "+1 800 555 0199",
             "manufacturer_name": "AgroTech Industries Ltd.",
-            "manufacturer_address": "456 Industrial Park Rd, Oakville, ON L6H 5V4, Canada",
+            "manufacturer_address": "456 Industrial Park Rd, Oakville ON L6H 5V4 Canada",
             "manufacturer_website": "www.agrotechindustries.com",
             "manufacturer_phone_number": "+1 416 555 0123",
             "fertiliser_name": "SuperGrow 20-20-20",
             "registration_number": "F12345678",
             "lot_number": "L987654321",
-            "weight_kg": "25 kg",
-            "weight_lb": "55 lb",
+            "weight_kg": "25",
+            "weight_lb": "55",
             "density": "1.2 g/cm³",
             "volume": "20.8 L",
-            "warranty": "Guaranteed analysis of nutrients.",
             "npk": "20-20-20",
-            "instructions_en": [
-                "Dissolve 50g in 10L of water.",
-                "Apply every 2 weeks.",
-                "Store in a cool, dry place."
-            ],
+            "warranty": "Guaranteed analysis of nutrients.",
+            "cautions_en": ["Keep out of reach of children.", "Avoid contact with skin and eyes."],
+            "instructions_en": ["1. Dissolve 50g in 10L of water.", "2. Apply every 2 weeks.", "3. Store in a cool, dry place."],
             "micronutrients_en": [
-                {"name": "Iron (Fe)", "percentage": "0.10%"},
-                {"name": "Zinc (Zn)", "percentage": "0.05%"},
-                {"name": "Manganese (Mn)", "percentage": "0.05%"}
+                {"nutrient": "Iron (Fe)", "value": "0.10", "unit": "%"},
+                {"nutrient": "Zinc (Zn)", "value": "0.05", "unit": "%"},
+                {"nutrient": "Manganese (Mn)", "value": "0.05", "unit": "%"}
             ],
             "organic_ingredients_en": [
-                {"name": "Bone meal", "percentage": "5%"},
-                {"name": "Seaweed extract", "percentage": "3%"},
-                {"name": "Humic acid", "percentage": "2%"}
+                {"nutrient": "Bone meal", "value": "5", "unit": "%"},
+                {"nutrient": "Seaweed extract", "value": "3", "unit": "%"},
+                {"nutrient": "Humic acid", "value": "2", "unit": "%"}
             ],
             "inert_ingredients_en": ["Clay", "Sand", "Perlite"],
             "specifications_en": [
-                {"humidity": "10%", "ph": "6.5", "solubility": "100%"}
-            ],
-            "cautions_en": [
-                "Wear protective gloves when handling.",
-                "Keep out of reach of children. Avoid contact with skin and eyes."
+                {"humidity": "10", "ph": "6.5", "solubility": "100"}
             ],
             "first_aid_en": ["In case of contact with eyes, rinse immediately with plenty of water and seek medical advice."],
-            "cautions_fr": [
-                "Tenir hors de portée des enfants. Éviter le contact avec la peau et les yeux.",
-                "Porter des gants de protection lors de la manipulation.",
-            ],
-            "instructions_fr": [
-                "Dissoudre 50g dans 10L d'eau.",
-                "Appliquer toutes les 2 semaines.",
-                "Conserver dans un endroit frais et sec."
-            ],
+            "cautions_fr": ["Tenir hors de portée des enfants.", "Éviter le contact avec la peau et les yeux."],
+            "instructions_fr": ["1. Dissoudre 50g dans 10L d'eau.", "2. Appliquer toutes les 2 semaines.", "3. Conserver dans un endroit frais et sec."],
             "micronutrients_fr": [
-                {"name": "Fer (Fe)", "percentage": "0.10%"},
-                {"name": "Zinc (Zn)", "percentage": "0.05%"},
-                {"name": "Manganèse (Mn)", "percentage": "0.05%"}
+                {"nutrient": "Fer (Fe)", "value": "0.10", "unit": "%"},
+                {"nutrient": "Zinc (Zn)", "value": "0.05", "unit": "%"},
+                {"nutrient": "Manganèse (Mn)", "value": "0.05", "unit": "%"}
             ],
             "organic_ingredients_fr": [
-                {"name": "Farine d'os", "percentage": "5%"},
-                {"name": "Extrait d'algues", "percentage": "3%"},
-                {"name": "Acide humique", "percentage": "2%"}
+                {"nutrient": "Farine d'os", "value": "5", "unit": "%"},
+                {"nutrient": "Extrait d'algues", "value": "3", "unit": "%"},
+                {"nutrient": "Acide humique", "value": "2", "unit": "%"}
             ],
             "inert_ingredients_fr": ["Argile", "Sable", "Perlite"],
             "specifications_fr": [
-                {"humidity": "10%", "ph": "6.5", "solubility": "100%"}
+                {"humidity": "10", "ph": "6.5", "solubility": "100"}
             ],
             "first_aid_fr": ["En cas de contact avec les yeux, rincer immédiatement à grande eau et consulter un médecin."],
             "guaranteed_analysis": [
-                {"nutrient": "Total Nitrogen (N)", "percentage": "20%"},
-                {"nutrient": "Available Phosphate (P2O5)", "percentage": "20%"},
-                {"nutrient": "Soluble Potash (K2O)", "percentage": "20%"}
+                {"nutrient": "Total Nitrogen (N)", "value": "20", "unit": "%"},
+                {"nutrient": "Available Phosphate (P2O5)", "value": "20", "unit": "%"},
+                {"nutrient": "Soluble Potash (K2O)", "value": "20", "unit": "%"}
             ]
         }
+
         # Check if all keys are present
         for key in expected_json.keys():
             assert key in extracted_info, f"Key '{key}' is missing in the extracted information"

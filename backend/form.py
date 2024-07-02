@@ -1,34 +1,16 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator
 
-class NutrientAnalysis(BaseModel):
+
+class NutrientValue(BaseModel):
     nutrient: str
-    percentage: str
+    value: str
+    unit: str
 
-    @field_validator('percentage', mode='before')
-    def convert_percentage(cls, v):
+    @field_validator('value', mode='before', check_fields=True)
+    def convert_value(cls, v):
         if isinstance(v, (int, float)):
-            return f"{v}"
-        return v
-
-class Micronutrient(BaseModel):
-    name: str
-    percentage: str
-
-    @field_validator('percentage', mode='before', check_fields=True)
-    def convert_percentage(cls, v):
-        if isinstance(v, (int, float)):
-            return f"{v}"
-        return v
-
-class OrganicIngredient(BaseModel):
-    name: str
-    percentage: str
-
-    @field_validator('percentage', mode='before', check_fields=True)
-    def convert_percentage(cls, v):
-        if isinstance(v, (int, float)):
-            return f"{v}"
+            return str(v)
         return v
 
 class Specification(BaseModel):
@@ -61,20 +43,20 @@ class FertiliserForm(BaseModel):
     warranty: Optional[str] = ""
     npk: str = Field(..., pattern=r'^(\d+-\d+-\d+)?$')
     instructions_en: List[str] = []
-    micronutrients_en: List[Micronutrient] = []
-    organic_ingredients_en: List[OrganicIngredient] = []
+    micronutrients_en: List[NutrientValue] = []
+    organic_ingredients_en: List[NutrientValue] = []
     inert_ingredients_en: List[str] = []
     specifications_en: List[Specification] = []
     cautions_en: List[str] = None
     first_aid_en: List[str] = None
     instructions_fr: List[str] = []
-    micronutrients_fr: List[Micronutrient] = []
-    organic_ingredients_fr: List[OrganicIngredient] = []
+    micronutrients_fr: List[NutrientValue] = []
+    organic_ingredients_fr: List[NutrientValue] = []
     inert_ingredients_fr: List[str] = []
     specifications_fr: List[Specification] = []
     cautions_fr: List[str] = None
     first_aid_fr: List[str] = None
-    guaranteed_analysis: List[NutrientAnalysis] = []
+    guaranteed_analysis: List[NutrientValue] = []
 
     @field_validator('weight_kg', 'weight_lb', 'density', 'volume', mode='before', check_fields=True)
     def convert_values(cls, v):
