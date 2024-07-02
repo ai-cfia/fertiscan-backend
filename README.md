@@ -4,10 +4,10 @@ FertiScan helps inspectors analyze and process fertiliser labels by extracting t
 
 ## Overview
 
-This repository containts backend is a Flask-based server designed to work with the [frontend](https://github.com/ai-cfia/fertiscan-frontend/). It handles image uploads, document analysis using [OCR](https://en.wikipedia.org/wiki/Optical_character_recognition), and form generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
+This repository containts backend is a Flask-based server designed to work with the [frontend](https://github.com/ai-cfia/fertiscan-frontend/).
+It handles image uploads, document analysis using [OCR](https://en.wikipedia.org/wiki/Optical_character_recognition), and form generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
 
 ![workflow](<./out/docs/workflow_dss/FertiScan Sequence Diagram.png>)
-
 
 ## Setup for Development
 
@@ -65,7 +65,7 @@ This repository containts backend is a Flask-based server designed to work with 
 
 Create a `.env` file from [.env.template](./.env.template) with your API keys and paths.
 
-```
+```ini
 AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint
 AZURE_API_KEY=your_azure_form_recognizer_key
 AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint
