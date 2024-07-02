@@ -1,0 +1,4 @@
+[run]
+omit =
+    */end_to_end_pipeline.py
+    */app.py
