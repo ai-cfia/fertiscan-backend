@@ -51,7 +51,7 @@ class FertiliserForm(BaseModel):
     manufacturer_address: Optional[str] = ""
     manufacturer_website: Optional[str] = ""
     manufacturer_phone_number: Optional[str] = ""
-    name: Optional[str] = ""
+    fertiliser_name: Optional[str] = ""
     registration_number: Optional[str] = ""
     lot_number: Optional[str] = ""
     weight_kg: Optional[str] = None
