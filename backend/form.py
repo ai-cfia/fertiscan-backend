@@ -2,6 +2,8 @@ import re
 from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator
 
+class npkError(ValueError):
+    pass
 
 class NutrientValue(BaseModel):
     nutrient: str
@@ -70,7 +72,7 @@ class FertiliserForm(BaseModel):
         if v is not None:
             pattern = re.compile(r'^\d+-\d+-\d+$')
             if not pattern.match(v):
-                raise ValueError('npk must be in the format "number-number-number"')
+                raise npkError('npk must be in the format "number-number-number"')
         return v
 
     class Config:
