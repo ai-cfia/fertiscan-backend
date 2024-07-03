@@ -1,13 +1,16 @@
 # fertiscan-backend
 
-FertiScan helps inspectors analyze and process fertiliser labels by extracting text and generating structured forms.
+FertiScan helps inspectors analyze and process fertilizer labels by extracting text 
+and generating structured forms.
 
 ## Overview
 
-This repository containts backend is a Flask-based server designed to work with the [frontend](https://github.com/ai-cfia/fertiscan-frontend/).
-It handles image uploads, document analysis using [OCR](https://en.wikipedia.org/wiki/Optical_character_recognition), and form generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
+This repository contains the backend for FertiScan, a Flask-based server designed to 
+work with the [frontend](https://github.com/ai-cfia/fertiscan-frontend/). It handles 
+image uploads, document analysis using [OCR](https://en.wikipedia.org/wiki/Optical_character_recognition), 
+and form generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
 
-![workflow](<./out/docs/workflow_dss/FertiScan Sequence Diagram.png>)
+![workflow](./out/docs/workflow_dss/FertiScan%20Sequence%20Diagram.png)
 
 ## Setup for Development
 
@@ -80,4 +83,4 @@ FRONTEND_URL=http://url.to_frontend/
 
 - `POST /analyze`: Upload images for analysis and get the results as a JSON form.
 
-![analysis](<./out/docs/analyze_dss/Analyze DSS.png>)
+![analysis](./out/docs/analyze_dss/Analyze%20DSS.png)
