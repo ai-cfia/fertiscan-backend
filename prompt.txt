@@ -15,7 +15,7 @@ Keys:
 "density"
 "volume"
 "npk" (format: "number-number-number")
-"guaranteed_analysis" (array of objects with "nutrient" and "percentage")
+"guaranteed_analysis" (array of objects with "nutrient", "value", and "unit")
 "warranty"
 "cautions_en"  (array of strings)
 "instructions_en" (array of strings)
@@ -36,9 +36,7 @@ Requirements:
 The content of keys with the suffix _en must be in English.
 The content of keys with the suffix _fr must be in French.
 Translation of the text is prohibited.
-For all keys: if no associated information is found or that information is N/A, leave it empty.
 You are prohibited from generating any text that is not part of the JSON.
 The JSON must contain exclusively keys specified in "keys".
 When you identify the fertiliser weight, attempt to fill both weight_kg and weight_lb.
 Ensure that registration_number includes a recognizable registration format, typically involving a series of letters and numbers.
-Fields percentage, weight_kg, weight_lb, density, pH, humidity, and solubility must contain a float, either a whole number or a decimal. They may optionally end with '%', 'kg', or 'lb' as appropriate.

@@ -1,11 +1,12 @@
+import re
 from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator
 
 
 class NutrientValue(BaseModel):
     nutrient: str
-    value: str
-    unit: str
+    value: Optional[str]
+    unit: Optional[str]
 
     @field_validator('value', mode='before', check_fields=True)
     def convert_value(cls, v):
@@ -16,7 +17,7 @@ class NutrientValue(BaseModel):
 class Specification(BaseModel):
     humidity: Optional[str] = Field(..., alias='humidity')
     ph: Optional[str] = Field(..., alias='ph')
-    solubility: str
+    solubility: Optional[str]
 
     @field_validator('humidity', 'ph', 'solubility', mode='before', check_fields=True)
     def convert_specification_values(cls, v):
@@ -41,7 +42,7 @@ class FertiliserForm(BaseModel):
     density: Optional[str] = None
     volume: Optional[str] = None
     warranty: Optional[str] = ""
-    npk: str = Field(..., pattern=r'^(\d+-\d+-\d+)?$')
+    npk: Optional[str] = Field(None)
     instructions_en: List[str] = []
     micronutrients_en: List[NutrientValue] = []
     organic_ingredients_en: List[NutrientValue] = []
@@ -62,6 +63,14 @@ class FertiliserForm(BaseModel):
     def convert_values(cls, v):
         if isinstance(v, (int, float)):
             return str(v)
+        return v
+    
+    @field_validator('npk', mode='before')
+    def validate_npk(cls, v):
+        if v is not None:
+            pattern = re.compile(r'^\d+-\d+-\d+$')
+            if not pattern.match(v):
+                raise ValueError('npk must be in the format "number-number-number"')
         return v
 
     class Config:
