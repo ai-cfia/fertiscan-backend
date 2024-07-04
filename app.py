@@ -18,7 +18,7 @@ load_dotenv()
 # Set up logging
 log_file_path = './logs/app.log'
 if not os.path.exists(os.path.dirname(log_file_path)):
-    os.makedirs(os.path.dirname(log_file_path))
+    os.mkdir(os.path.dirname(log_file_path))
 
 logging.basicConfig(
     filename=log_file_path,
