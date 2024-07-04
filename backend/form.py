@@ -43,23 +43,23 @@ class FertiliserForm(BaseModel):
     weight_lb: Optional[str] = None
     density: Optional[str] = None
     volume: Optional[str] = None
-    warranty: Optional[str] = ""
     npk: Optional[str] = Field(None)
+    guaranteed_analysis: List[NutrientValue] = []
+    warranty: Optional[str] = ""
+    cautions_en: List[str] = None
     instructions_en: List[str] = []
     micronutrients_en: List[NutrientValue] = []
     organic_ingredients_en: List[NutrientValue] = []
     inert_ingredients_en: List[str] = []
     specifications_en: List[Specification] = []
-    cautions_en: List[str] = None
     first_aid_en: List[str] = None
+    cautions_fr: List[str] = None
     instructions_fr: List[str] = []
     micronutrients_fr: List[NutrientValue] = []
     organic_ingredients_fr: List[NutrientValue] = []
     inert_ingredients_fr: List[str] = []
     specifications_fr: List[Specification] = []
-    cautions_fr: List[str] = None
     first_aid_fr: List[str] = None
-    guaranteed_analysis: List[NutrientValue] = []
 
     @field_validator('weight_kg', 'weight_lb', 'density', 'volume', mode='before', check_fields=True)
     def convert_values(cls, v):
