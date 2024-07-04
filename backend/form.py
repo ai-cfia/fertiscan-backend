@@ -70,7 +70,7 @@ class FertiliserForm(BaseModel):
     @field_validator('npk', mode='before')
     def validate_npk(cls, v):
         if v is not None:
-            pattern = re.compile(r'^\d+-\d+-\d+$')
+            pattern = re.compile(r'^(\d+(\.\d+)?-\d+(\.\d+)?-\d+(\.\d+)?)?$')
             if not pattern.match(v):
                 raise npkError('npk must be in the format "number-number-number"')
         return v

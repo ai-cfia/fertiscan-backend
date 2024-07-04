@@ -3,7 +3,6 @@ from pydantic import ValidationError
 from backend import FertiliserForm
 
 class TestFertiliserForm(unittest.TestCase):
-
     def test_valid_fertiliser_form(self):
         data = {
             "company_name": "ABC Company",
@@ -42,5 +41,20 @@ class TestFertiliserForm(unittest.TestCase):
         with self.assertRaises(ValidationError):
             FertiliserForm(**invalid_data)
 
+    def test_valid_npk_format(self):
+        data = {
+            "company_name": "ABC Company",
+            "fertiliser_name": "Super Fertiliser",
+            "npk": "10.5-20-30",  # invalid npk format
+            "instructions_en": ["Use as directed"],
+            "micronutrients_en": [{"nutrient": "Iron", "value": "2", "unit": "%"}],
+            "specifications_en": [{"humidity": "Low", "ph": "7", "solubility": "High"}],
+            "guaranteed_analysis": [{"nutrient": "Nitrogen", "value": "10", "unit": "%"}]
+        }
+
+        try:
+            FertiliserForm(**data)
+        except ValidationError as e:
+            self.fail(f"Validation error: {e}")
 if __name__ == '__main__':
     unittest.main()
