@@ -12,12 +12,12 @@ class ProduceLabelForm(dspy.Signature):
     """
     You are a fertilizer label inspector working for the Canadian Food Inspection Agency. 
     Your task is to classify all information present in the provided text using the specified keys.
-    Your response should be accurate, formatted in JSON, and contain all the text from the provided text without modifications.
+    Your response should be accurate, formatted in JSON, and contain all the text from the provided text.
     """
     
     text = dspy.InputField(desc="The text of the fertilizer label extracted using OCR.")
     specification = dspy.InputField(desc="The specification containing the fields to highlight and their requirements.")
-    form = dspy.OutputField(desc="A complete JSON with all fields occupied. Do not return any note or additional text that isn't in the JSON.")
+    form = dspy.OutputField(desc="Only a complete JSON.")
 
 class GPT:
     def __init__(self, api_endpoint, api_key, deployment="ailab-gpt-35-turbo-16k"):
