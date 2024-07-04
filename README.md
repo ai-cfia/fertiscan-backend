@@ -5,8 +5,8 @@ and generating structured forms.
 
 ## Overview
 
-This repository contains the backend for FertiScan, a Flask-based server designed to
-work with the [frontend](https://github.com/ai-cfia/fertiscan-frontend/). It handles
+This repository contains the backend for FertiScan, a Flask-based server
+designed to work with the [frontend](https://github.com/ai-cfia/fertiscan-frontend/). It handles
 image uploads, document analysis using [OCR](https://en.wikipedia.org/wiki/Optical_character_recognition),
 and form generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
 
