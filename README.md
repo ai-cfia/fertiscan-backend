@@ -73,6 +73,7 @@ AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint
 AZURE_API_KEY=your_azure_form_recognizer_key
 AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint
 AZURE_OPENAI_API_KEY=your_azure_openai_key
+AZURE_OPENAI_DEPLOYMENT=your_azure_openai_deployment
 
 PROMPT_PATH=path/to/file
 UPLOAD_PATH=path/to/file
