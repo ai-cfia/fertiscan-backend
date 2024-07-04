@@ -47,7 +47,8 @@ ocr = OCR(api_endpoint=API_ENDPOINT, api_key=API_KEY)
 # Configuration for OpenAI GPT-4
 OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
 OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
-language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment="ailab-llm")
+OPENAI_API_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT')
+language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment=OPENAI_API_DEPLOYMENT)
 
 @app.route('/')
 def main_page():
