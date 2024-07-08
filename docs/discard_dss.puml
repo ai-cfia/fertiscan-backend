@@ -6,20 +6,25 @@ hide empty members
 hide footbox
 
 actor "Client" as C
-participant FertiScan as F <<http:localhost:5000>>
+participant Frontend as FE
+participant FertiScan as BE <<http:localhost:5000>>
+participant DataStore as DS
 database SQL as DB
 
-C -> F: POST /discard label_id
-note over F
+C -> FE: discard_form()
+FE -> BE: POST /discard/label_id
+note over BE
   The label_id of the
   form you want to discard.
 end note
-F -> F: query = create_discard_query()
-F -> DB: result = execute_query(query)
-alt result is success
-  C <<-- F: //Successfully discarded, 200//
+BE -> DS: discard_form() 
+DS -> DB: execute_query(query)
+DS <<-- DB: //SQL_CODE//
+BE <<-- DS: //SQL_CODE, HTTP_CODE//
+alt HTTP_CODE is success
+  FE <<-- BE: //Successfully discarded, 200//
 else
-  C <<-- F: //Database error, 500//
+  FE <<-- BE: //Database error, 500//
 end
 
 @enduml

@@ -1,0 +1,41 @@
+@startuml FertiScan Sequence Diagram
+header 05/07/2024
+
+title FertiScan Submit Form
+hide empty members
+hide footbox
+
+actor "Client" as C
+participant Frontend as FE
+participant FertiScan as BE <<http:localhost:5000>>
+participant DataStore as DS
+database SQL as DB
+
+C -> FE: submit_form()
+FE -> BE: POST /submit JSON
+note over BE
+  Authorization: Basic (email as user_id)
+  Content: JSON (Form)
+end note
+alt form.confirm == true
+  BE -> DS: submit_final_form()
+  note left
+    the final version of 
+    the form.
+  end note
+else
+  BE -> DS: submit_update_form()
+  note left
+    Update the given form.
+  end note
+end
+DS -> DB: execute_query()
+DS <<-- DB: //SQL_CODE//
+BE <<-- DS: //label_id, HTTP_CODE//
+alt HTTP_CODE is success
+  FE <<-- BE: //label_id, 200//
+else
+  FE <<-- BE: //Database error, HTTP_CODE//
+end
+
+@enduml
