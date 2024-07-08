@@ -73,4 +73,3 @@ FRONTEND_URL=http://url.to_frontend/
 - `POST /analyze`: Analyze the images and returns the form.
 - `POST /submit`: Send a form to the database.
 - `POST /discard`: Remove all transient states of a form from the database.
-
