@@ -13,7 +13,7 @@ database SQL as DB
 
 C -> FE: discard_form()
 FE -> BE: POST /discard/label_id
-note over BE
+note right BE
   The label_id of the
   form you want to discard.
 end note
