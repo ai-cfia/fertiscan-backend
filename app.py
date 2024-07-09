@@ -55,6 +55,39 @@ language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, d
 def main_page():
     return render_template('index.html')
 
+@app.route('/submit', methods=['POST'])
+def submit():
+    # Extract Authorization header
+    auth_header = request.headers.get('Authorization')
+    try:
+        token = Token(auth_header)
+    except Exception as err:
+        logger.error(f"json_parse: {err}")
+        return jsonify(error=str(err)), HTTPStatus.BAD_REQUEST
+
+    # Extract user_id from Authorization header
+    user_id = token.user_id  # Assumes format 'Basic user_id'
+
+    # Extract Content-Type header
+    content_type = request.headers.get('Content-Type')
+    if content_type != 'application/json':
+        return "Content-Type must be application/json", 400
+
+    # Parse JSON body
+    data = request.json
+
+    # Branch based on 'confirm' value
+    if data.confirm:
+        # Perform actions for the final form.
+        return jsonify({"message": "Confirmed", "user_id": user_id, "action": "confirm"}), HTTPStatus.SERVICE_UNAVAILABLE
+    else:
+        # Perform actions for a transient form.
+        return jsonify({"message": "Not confirmed", "user_id": user_id, "action": "not_confirm"}), HTTPStatus.SERVICE_UNAVAILABLE
+
+@app.route('/discard/<label_id>', methods=['POST'])
+def discard_label(label_id):
+    return "Unimplemented!", HTTPStatus.SERVICE_UNAVAILABLE
+
 @app.route('/analyze', methods=['POST'])
 def analyze_document():
     try:
