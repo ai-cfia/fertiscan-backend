@@ -5,22 +5,19 @@ title FertiScan Discard Form
 hide empty members
 hide footbox
 
-actor "Client" as C
-participant Frontend as FE
 participant FertiScan as BE <<http:localhost:5000>>
 participant DataStore as DS
 database SQL as DB
 
-C -> FE: discard_form()
-FE -> BE: DELETE /forms/form_id
+-> BE: DELETE /forms/form_id
 BE -> DS: discard_form() 
 DS -> DB: execute_query(query)
 DS <<-- DB: //SQL_CODE//
 BE <<-- DS: //message, HTTP_CODE//
 alt HTTP_CODE is success
-  FE <<-- BE: //Successfully discarded, 200//
+  <<-- BE: //Successfully discarded, 200//
 else
-  FE <<-- BE: //message, 500//
+  <<-- BE: //message, 500//
 end
 
 @enduml

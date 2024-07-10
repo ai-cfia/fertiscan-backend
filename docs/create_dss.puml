@@ -5,14 +5,11 @@ title FertiScan Create Form
 hide empty members
 hide footbox
 
-actor "Client" as C
-participant Frontend as FE
 participant FertiScan as BE <<http:localhost:5000>>
 participant DataStore as DS
 database SQL as DB
 
-C -> FE: create_form()
-FE -> BE: POST /forms
+-> BE: POST /forms
 note right BE
   Authorization: Basic (email as user_id)
   Content: JSON (Form)
@@ -26,7 +23,7 @@ DS -> DB: execute_query()
 DS <<-- DB: //SQL_CODE//
 BE <<-- DS: //JSON, HTTP_CODE//
 alt HTTP_CODE is success
-  FE <<-- BE: //JSON, 200//
+  <<-- BE: //JSON, 200//
   note right
     {
         "message": "...",
@@ -34,7 +31,7 @@ alt HTTP_CODE is success
     }
   end note
 else
-  FE <<-- BE: //Database error, HTTP_CODE//
+  <<-- BE: //Database error, HTTP_CODE//
 end
 
 @enduml

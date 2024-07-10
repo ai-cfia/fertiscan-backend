@@ -5,11 +5,9 @@ title FertiScan Document Analysis Workflow
 hide empty members
 hide footbox
 
-actor "Client" as C
-participant Frontend as FE
+participant Client as FE
 participant FertiScan as BE <<http:localhost:5000>>
 
-C -> FE: analyze()
 FE -> BE: POST /analyze
 note right BE
   Multiple images can be sent

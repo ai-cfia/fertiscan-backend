@@ -5,20 +5,17 @@ title FertiScan Discard Form
 hide empty members
 hide footbox
 
-actor "Client" as C
-participant Frontend as FE
 participant FertiScan as BE <<http:localhost:5000>>
 participant DataStore as DS
 database SQL as DB
 
-C -> FE: get_form()
-FE -> BE: GET /forms/form_id
+-> BE: GET /forms/form_id
 BE -> DS: get_form() 
 DS -> DB: execute_query(query)
 DS <<-- DB: //SQL_CODE//
 BE <<-- DS: //JSON, HTTP_CODE//
 alt HTTP_CODE is success
-  FE <<-- BE: //JSON, 200//
+  <<-- BE: //JSON, 200//
   note right
     The form as stored in the database.
 
@@ -27,7 +24,7 @@ alt HTTP_CODE is success
     given by /analyze.
   end note
 else
-  FE <<-- BE: //message, 500//
+  <<-- BE: //message, 500//
 end
 
 @enduml

@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-import random
+import uuid
 
 from http import HTTPStatus
 from dotenv import load_dotenv
@@ -66,20 +66,20 @@ def verify_password(user_id, password):
 @app.route('/forms', methods=['POST'])
 @auth.login_required
 def create_form():
-    form_id = random.randint(0, 2**32 - 1)
+    form_id = uuid.uuid4()
     return jsonify({"message": "Form created successfully", "form_id": form_id}), HTTPStatus.CREATED
 
-@app.route('/forms/<int:form_id>', methods=['PUT'])
+@app.route('/forms/<form_id>', methods=['PUT'])
 @auth.login_required
 def update_form(form_id):
     return "Not yet implemented!", HTTPStatus.SERVICE_UNAVAILABLE
 
-@app.route('/forms/<int:form_id>', methods=['DELETE'])
+@app.route('/forms/<form_id>', methods=['DELETE'])
 @auth.login_required
 def discard_form(form_id):
     return "Not yet implemented!", HTTPStatus.SERVICE_UNAVAILABLE
 
-@app.route('/forms/<int:form_id>', methods=['GET'])
+@app.route('/forms/<form_id>', methods=['GET'])
 @auth.login_required
 def get_form(form_id):
     return "Not yet implemented!", HTTPStatus.SERVICE_UNAVAILABLE

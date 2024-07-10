@@ -5,14 +5,11 @@ title FertiScan Update Form
 hide empty members
 hide footbox
 
-actor "Client" as C
-participant Frontend as FE
 participant FertiScan as BE <<http:localhost:5000>>
 participant DataStore as DS
 database SQL as DB
 
-C -> FE: submit_form()
-FE -> BE: PUT /forms/form_id
+-> BE: PUT /forms/form_id
 note right BE
   Authorization: Basic (email as user_id)
   Content: JSON (Form)
@@ -33,9 +30,9 @@ DS -> DB: execute_query()
 DS <<-- DB: //SQL_CODE//
 BE <<-- DS: //message, HTTP_CODE//
 alt HTTP_CODE is success
-  FE <<-- BE: //message, 200//
+  <<-- BE: //message, 200//
 else
-  FE <<-- BE: //Database error, HTTP_CODE//
+  <<-- BE: //Database error, HTTP_CODE//
 end
 
 @enduml
