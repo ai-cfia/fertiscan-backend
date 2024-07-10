@@ -11,14 +11,21 @@ participant FertiScan as BE <<http:localhost:5000>>
 participant DataStore as DS
 database SQL as DB
 
-C -> FE: discard_form()
-FE -> BE: DELETE /forms/form_id
-BE -> DS: discard_form() 
+C -> FE: get_form()
+FE -> BE: GET /forms/form_id
+BE -> DS: get_form() 
 DS -> DB: execute_query(query)
 DS <<-- DB: //SQL_CODE//
-BE <<-- DS: //message, HTTP_CODE//
+BE <<-- DS: //JSON, HTTP_CODE//
 alt HTTP_CODE is success
-  FE <<-- BE: //Successfully discarded, 200//
+  FE <<-- BE: //JSON, 200//
+  note right
+    The form as stored in the database.
+
+    Note: It does not have
+    the same format as the one
+    given by /analyze.
+  end note
 else
   FE <<-- BE: //message, 500//
 end

@@ -72,12 +72,17 @@ def create_form():
 @app.route('/forms/<int:form_id>', methods=['PUT'])
 @auth.login_required
 def update_form(form_id):
-    return jsonify({"message": "Form updated successfully"}), HTTPStatus.OK
+    return "Not yet implemented!", HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/forms/<int:form_id>', methods=['DELETE'])
 @auth.login_required
 def discard_form(form_id):
-    return "Form discarded successfully", HTTPStatus.OK
+    return "Not yet implemented!", HTTPStatus.SERVICE_UNAVAILABLE
+
+@app.route('/forms/<int:form_id>', methods=['GET'])
+@auth.login_required
+def get_form(form_id):
+    return "Not yet implemented!", HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/analyze', methods=['POST'])
 def analyze_document():
