@@ -1,9 +1,11 @@
 import os
 import json
 import logging
+import random
+
 from http import HTTPStatus
 from dotenv import load_dotenv
-from auth import Token
+from flask_httpauth import HTTPBasicAuth
 from backend.form import FertiliserForm
 from azure.core.exceptions import HttpResponseError
 from werkzeug.utils import secure_filename
@@ -40,6 +42,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 cors = CORS(app, resources={"*", FRONTEND_URL})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
+auth = HTTPBasicAuth()
+
 # Configuration for Azure Form Recognizer
 API_ENDPOINT = os.getenv('AZURE_API_ENDPOINT')
 API_KEY = os.getenv('AZURE_API_KEY')
@@ -55,38 +59,25 @@ language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, d
 def main_page():
     return render_template('index.html')
 
-@app.route('/submit', methods=['POST'])
-def submit():
-    # Extract Authorization header
-    auth_header = request.headers.get('Authorization')
-    try:
-        token = Token(auth_header)
-    except Exception as err:
-        logger.error(f"json_parse: {err}")
-        return jsonify(error=str(err)), HTTPStatus.BAD_REQUEST
+@auth.verify_password
+def verify_password(user_id, password):
+    return user_id
 
-    # Extract user_id from Authorization header
-    user_id = token.user_id  # Assumes format 'Basic user_id'
+@app.route('/forms', methods=['POST'])
+@auth.login_required
+def create_form():
+    form_id = random.randint(0, 2**32 - 1)
+    return jsonify({"message": "Form created successfully", "form_id": form_id}), HTTPStatus.CREATED
 
-    # Extract Content-Type header
-    content_type = request.headers.get('Content-Type')
-    if content_type != 'application/json':
-        return "Content-Type must be application/json", 400
+@app.route('/forms/<int:form_id>', methods=['PUT'])
+@auth.login_required
+def update_form(form_id):
+    return jsonify({"message": "Form updated successfully"}), HTTPStatus.OK
 
-    # Parse JSON body
-    data = request.json
-
-    # Branch based on 'confirm' value
-    if data.confirm:
-        # Perform actions for the final form.
-        return jsonify({"message": "Confirmed", "user_id": user_id, "action": "confirm"}), HTTPStatus.SERVICE_UNAVAILABLE
-    else:
-        # Perform actions for a transient form.
-        return jsonify({"message": "Not confirmed", "user_id": user_id, "action": "not_confirm"}), HTTPStatus.SERVICE_UNAVAILABLE
-
-@app.route('/discard/<label_id>', methods=['POST'])
-def discard_label(label_id):
-    return "Unimplemented!", HTTPStatus.SERVICE_UNAVAILABLE
+@app.route('/forms/<int:form_id>', methods=['DELETE'])
+@auth.login_required
+def discard_form(form_id):
+    return "Form discarded successfully", HTTPStatus.OK
 
 @app.route('/analyze', methods=['POST'])
 def analyze_document():
@@ -96,10 +87,6 @@ def analyze_document():
         if not files:
             raise ValueError("No files provided for analysis")
 
-        # The authorization scheme is still unsure.
-        auth_header = request.headers.get("Authorization")
-        Token(auth_header) if request.authorization else Token()
-        
         # Initialize the storage for the user
         label_storage = LabelStorage()
 

@@ -14,7 +14,10 @@ participant "OpenAI" as O<<GPT-4>>
 end box
 
 C -> F: analyze()
-F -> B: GET /analyze
+F -> B: POST /analyze
+note right
+    "images=@/path/to/file"
+end note
 alt Document uploaded
 B -> D: POST /prebuilt-layout:analyze
 note right
@@ -29,12 +32,7 @@ A form with all the
 information needed
 by the inspector.
 end note
-F <<-- B: return Response
-F -> F: GET /form
-note right
-Open the page where the
-form will be displayed
-end note
+F <<-- B: return JSON
 else No document uploaded
 F <<-- B: //No documents to analyze, 400// 
 end

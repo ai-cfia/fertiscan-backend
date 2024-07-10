@@ -1,7 +1,7 @@
 @startuml FertiScan Sequence Diagram
 header 10/07/2024
 
-title FertiScan Update Form
+title FertiScan Create Form
 hide empty members
 hide footbox
 
@@ -11,29 +11,28 @@ participant FertiScan as BE <<http:localhost:5000>>
 participant DataStore as DS
 database SQL as DB
 
-C -> FE: submit_form()
-FE -> BE: PUT /forms/form_id
+C -> FE: create_form()
+FE -> BE: POST /forms
 note right BE
   Authorization: Basic (email as user_id)
   Content: JSON (Form)
 end note
-alt form.confirm == true
-  BE -> DS: submit_final_form()
-  note left
-    the final version of 
-    the form.
-  end note
-else
-  BE -> DS: submit_update_form()
-  note left
-    Update the given form.
-  end note
-end
+BE -> DS: create_form()
+note left
+    Creates a new unconfirmed
+    form in the backend for the user.
+end note
 DS -> DB: execute_query()
 DS <<-- DB: //SQL_CODE//
-BE <<-- DS: //message, HTTP_CODE//
+BE <<-- DS: //JSON, HTTP_CODE//
 alt HTTP_CODE is success
-  FE <<-- BE: //message, 200//
+  FE <<-- BE: //JSON, 200//
+  note right
+    {
+        "message": "...",
+        "form_id": "<form_id>"
+    }
+  end note
 else
   FE <<-- BE: //Database error, HTTP_CODE//
 end

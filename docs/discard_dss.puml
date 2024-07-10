@@ -12,15 +12,11 @@ participant DataStore as DS
 database SQL as DB
 
 C -> FE: discard_form()
-FE -> BE: POST /discard/label_id
-note right BE
-  The label_id of the
-  form you want to discard.
-end note
+FE -> BE: DELETE /forms/form_id
 BE -> DS: discard_form() 
 DS -> DB: execute_query(query)
 DS <<-- DB: //SQL_CODE//
-BE <<-- DS: //SQL_CODE, HTTP_CODE//
+BE <<-- DS: //message, HTTP_CODE//
 alt HTTP_CODE is success
   FE <<-- BE: //Successfully discarded, 200//
 else
