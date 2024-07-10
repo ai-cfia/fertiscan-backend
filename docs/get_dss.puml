@@ -10,6 +10,9 @@ participant DataStore as DS
 database SQL as DB
 
 -> BE: GET /forms/form_id
+note right BE
+  Authorization: Basic
+end note
 BE -> DS: get_form() 
 DS -> DB: execute_query(query)
 DS <<-- DB: //SQL_CODE//

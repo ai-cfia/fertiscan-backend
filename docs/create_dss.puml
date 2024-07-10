@@ -11,7 +11,7 @@ database SQL as DB
 
 -> BE: POST /forms
 note right BE
-  Authorization: Basic (email as user_id)
+  Authorization: Basic
   Content: JSON (Form)
 end note
 BE -> DS: create_form()

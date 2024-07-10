@@ -10,6 +10,9 @@ participant DataStore as DS
 database SQL as DB
 
 -> BE: DELETE /forms/form_id
+note right BE
+  Authorization: Basic
+end note
 BE -> DS: discard_form() 
 DS -> DB: execute_query(query)
 DS <<-- DB: //SQL_CODE//
