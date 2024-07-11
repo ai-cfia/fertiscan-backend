@@ -1,0 +1,38 @@
+@startuml Analyze DSS
+header 22/05/2024
+
+title FertiScan Document Analysis
+hide empty members
+hide footbox
+
+participant FertiScan as BE <<http:localhost:5000>>
+box Azure #LightBlue
+participant "Document Intelligence" as D
+participant "OpenAI" as O<<GPT-4>>
+end box
+
+-> BE: POST /analyze
+note right
+    "images=@/path/to/file"
+end note
+alt Document uploaded
+BE -> D: POST /prebuilt-layout:analyze
+note right
+Extracts the content
+of the document.
+end note
+BE <<-- D: return AnalyzeResult
+BE -> O: POST /completions
+BE <<-- O: return JSON
+note left
+A form with all the
+information needed
+by the inspector.
+end note
+<<-- BE: return JSON
+else No document uploaded
+<<-- BE: //No documents to analyze, 400// 
+end
+
+
+@enduml

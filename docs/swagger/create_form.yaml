@@ -1,0 +1,16 @@
+Create a new instance of a form in the database.
+---
+security:
+  - basicAuth: []
+responses:
+  201:
+    description: "Form created successfully"
+    schema:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Form created successfully"
+        form_id:
+          type: string
+          format: uuid

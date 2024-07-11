@@ -1,0 +1,18 @@
+swagger: '2.0'
+info:
+  title: FertiScan
+  description: A document analysis assistant for inspectors.
+  version: 1.0.0
+  termsOfService: http://example.com/terms/
+  contact:
+    email: support@example.com
+  license:
+    name: MIT
+    url: http://opensource.org/licenses/MIT
+basePath: /
+schemes:
+  - http
+  - https
+securityDefinitions:
+  basicAuth:
+    type: basic

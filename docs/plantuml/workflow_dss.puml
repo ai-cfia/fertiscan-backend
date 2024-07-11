@@ -1,0 +1,36 @@
+@startuml FertiScan Sequence Diagram
+header 12/06/2024
+
+title FertiScan Document Analysis Workflow
+hide empty members
+hide footbox
+
+participant Client as FE
+participant FertiScan as BE <<http:localhost:5000>>
+
+FE -> BE: POST /analyze
+note right BE
+  Multiple images can be sent
+  over the same request.
+end note
+BE -> BE: analyze()
+FE <<-- BE: //JSON, 200//
+note left FE
+  All the data
+  extracted from the
+  fertiliser label.
+end note
+FE -> FE: create_form
+FE -> BE: POST forms/
+note right BE
+  Add the form
+  to the database.
+end note
+FE <<-- BE: //JSON, 200//
+note left FE
+  {
+      "message": "...",
+      "form_id": "<form_id>"
+  }  
+end note
+@enduml

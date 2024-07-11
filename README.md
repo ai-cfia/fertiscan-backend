@@ -1,65 +1,80 @@
 # fertiscan-backend
 
-A flask-based backend for FertiScan.
+FertiScan helps inspectors analyze and process fertilizer labels by extracting text
+and generating structured forms.
+
+## Overview
+
+This repository contains the backend for FertiScan, a Flask-based server
+designed to work with the [frontend](https://github.com/ai-cfia/fertiscan-frontend/).
+It handles image uploads, document analysis using [OCR](https://en.wikipedia.org/wiki/Optical_character_recognition),
+and form generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
+
+![workflow](./out/workflow_dss/FertiScan%20Sequence%20Diagram.png)
 
 ## Setup for Development
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.8+
 - [pip](https://pip.pypa.io/en/stable/installation/)
 - [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html)
 - Azure Document Intelligence and OpenAI API keys
 
-### Running
+### Running Locally
 
-#### Locally
+1. Clone the repository:
 
-```sh
-cd fertiscan-backend
-pip install -r requirements.txt
-python ./app.py
-```
+    ```sh
+    git clone https://github.com/ai-cfia/fertiscan-backend.git
+    cd fertiscan-backend
+    ```
 
-#### With docker
+2. Install dependencies:
 
-1. Build the docker image
+    ```sh
+    pip install -r requirements.txt
+    ```
 
-    ```bash
+3. Start the server:
+
+    ```sh
+    python ./app.py
+    ```
+
+### Running with Docker
+
+1. Build the Docker image:
+
+    ```sh
     docker build -t fertiscan-backend \
-    --build-arg ARG_AZURE_API_ENDPOINT=your_actual_azure_form_recognizer_endpoint \
-    --build-arg ARG_AZURE_API_KEY=your_actual_azure_form_recognizer_key \
-    --build-arg ARG_AZURE_OPENAI_API_ENDPOINT=your_actual_azure_openai_endpoint \
-    --build-arg ARG_AZURE_OPENAI_API_KEY=your_actual_azure_openai_key \
-    --build-arg ARG_PROMPT_PATH=actual_path/to/prompt_file \
-    --build-arg ARG_UPLOAD_PATH=actual_path/to/upload_file \
+    --build-arg ARG_AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint \
+    --build-arg ARG_AZURE_API_KEY=your_azure_form_recognizer_key \
+    --build-arg ARG_AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint \
+    --build-arg ARG_AZURE_OPENAI_API_KEY=your_azure_openai_key \
+    --build-arg ARG_PROMPT_PATH=path/to/prompt_file \
+    --build-arg ARG_UPLOAD_PATH=path/to/upload_file \
     --build-arg ARG_FRONTEND_URL=http://url.to_frontend/ \
     .
     ```
 
-2. Run the docker image
+2. Run the Docker container:
 
-    ```bash
+    ```sh
     docker run -p 5000:5000 fertiscan-backend
     ```
 
-3. Test the application
-
-Go to `http://localhost:5000` and test the application.
-
-#### With docker-compose
-
-Coming soon...
-
 ### Environment Variables
 
-Create a `.env` file in the root directory from `.env.template`:
+Create a `.env` file from [.env.template](./.env.template).
 
-```plaintext
+```ini
 AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint
 AZURE_API_KEY=your_azure_form_recognizer_key
 AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint
 AZURE_OPENAI_API_KEY=your_azure_openai_key
+AZURE_OPENAI_DEPLOYMENT=your_azure_openai_deployment
+
 PROMPT_PATH=path/to/file
 UPLOAD_PATH=path/to/file
 FRONTEND_URL=http://url.to_frontend/
@@ -67,5 +82,25 @@ FRONTEND_URL=http://url.to_frontend/
 
 ## API Endpoints
 
-- `POST /upload`: Upload an image to be analyzed.
-- `GET /analyze`: Analyze the uploaded image and returns the form.
+The [Swagger UI](https://swagger.io/tools/swagger-ui/) for
+the API of FertiScan is available at `/apidocs`.
+
+- `POST /analyze`: Upload images for analysis and get the results as a JSON form.
+
+![create](./out/analyze_dss/Analyze%20DSS.png)
+
+- `POST /forms`: Create a new form attributed the user to the database.
+
+![create](./out/create_form_dss/FertiScan%20Sequence%20Diagram.png)
+
+- `PUT /forms`: Send the latest state of a form to the database.
+
+![submit](./out/submit_form_dss/FertiScan%20Sequence%20Diagram.png)
+
+- `DELETE /forms`: Remove all transient states of a form.
+
+![discard](./out/discard_form_dss/FertiScan%20Sequence%20Diagram.png)
+
+- `GET /forms`: Retreive the latest state of a form from the database
+
+![discard](./out/get_form_dss/FertiScan%20Sequence%20Diagram.png)
