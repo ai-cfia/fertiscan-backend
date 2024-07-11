@@ -1,0 +1,30 @@
+Analyzes a document by performing OCR and generating a form.
+The form is a JSON with all the key informations of a fertiliser label.
+---
+consumes:
+  - multipart/form-data
+parameters:
+  - name: images
+    in: formData
+    type: file
+    required: true
+    description: "Images to analyze"
+responses:
+  200:
+    description: "Document analyzed successfully"
+    schema:
+      type: object
+  400:
+    description: "Bad Request"
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
+  500:
+    description: "Internal Server Error"
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
