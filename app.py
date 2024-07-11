@@ -13,6 +13,7 @@ from backend import OCR, GPT, LabelStorage, save_text_to_file
 from datetime import datetime
 from flask import Flask, request, render_template, jsonify
 from flask_cors import CORS
+from flasgger import Swagger, swag_from
 
 # Load environment variables
 load_dotenv()
@@ -42,6 +43,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 cors = CORS(app, resources={"*", FRONTEND_URL})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
+# Swagger UI
+swagger = Swagger(app, template_file='docs/swagger/template.yaml')
 auth = HTTPBasicAuth()
 
 # Configuration for Azure Form Recognizer
@@ -59,32 +62,42 @@ language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, d
 def main_page():
     return render_template('index.html')
 
+@app.route('/ping', methods=['GET'])
+@swag_from('docs/swagger/ping.yaml')
+def ping():
+    return jsonify({"message": "Service is alive"}), 200
+
 @auth.verify_password
 def verify_password(user_id, password):
     return user_id
 
 @app.route('/forms', methods=['POST'])
 @auth.login_required
+@swag_from('docs/swagger/create_form.yaml')
 def create_form():
     form_id = uuid.uuid4()
     return jsonify({"message": "Form created successfully", "form_id": form_id}), HTTPStatus.CREATED
 
 @app.route('/forms/<form_id>', methods=['PUT'])
 @auth.login_required
+@swag_from('docs/swagger/update_form.yaml')
 def update_form(form_id):
-    return "Not yet implemented!", HTTPStatus.SERVICE_UNAVAILABLE
+    return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/forms/<form_id>', methods=['DELETE'])
 @auth.login_required
+@swag_from('docs/swagger/discard_form.yaml')
 def discard_form(form_id):
-    return "Not yet implemented!", HTTPStatus.SERVICE_UNAVAILABLE
+    return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/forms/<form_id>', methods=['GET'])
 @auth.login_required
+@swag_from('docs/swagger/get_form.yaml')
 def get_form(form_id):
-    return "Not yet implemented!", HTTPStatus.SERVICE_UNAVAILABLE
+    return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/analyze', methods=['POST'])
+@swag_from('docs/swagger/analyze_document.yaml')
 def analyze_document():
     try:
         files = request.files.getlist('images')

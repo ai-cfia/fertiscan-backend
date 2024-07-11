@@ -1,0 +1,20 @@
+Discards a form a user was working on.
+This is will remove all transient states of the form from the database.
+---
+security:
+  - basicAuth: []
+parameters:
+  - name: form_id
+    in: path
+    type: string
+    required: true
+    description: "ID of the form to discard"
+responses:
+  503:
+    description: "Not yet implemented!"
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Not yet implemented!"

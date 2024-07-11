@@ -14,5 +14,9 @@ flask_httpauth
 
 reportlab
 
+setuptools
+
+flasgger==0.9.7b2
+
 # Test dependencies
 Levenshtein
