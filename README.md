@@ -82,6 +82,8 @@ FRONTEND_URL=http://url.to_frontend/
 
 ## API Endpoints
 
+The [Swagger UI](https://swagger.io/tools/swagger-ui/) for the API of FertiScan is available at `/apidocs`.
+
 - `POST /analyze`: Upload images for analysis and get the results as a JSON form.
 
 ![create](./out/analyze_dss/Analyze%20DSS.png)
