@@ -16,7 +16,7 @@ reportlab
 
 setuptools
 
-flasgger==0.9.7b2
+flasgger==0.9.7.2.dev2
 
 # Test dependencies
 Levenshtein
