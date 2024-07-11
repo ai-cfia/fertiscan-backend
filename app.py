@@ -62,6 +62,11 @@ language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, d
 def main_page():
     return render_template('index.html')
 
+@app.route('/ping', methods=['GET'])
+@swag_from('docs/swagger/ping.yaml')
+def ping():
+    return jsonify({"message": "Service is alive"}), 200
+
 @auth.verify_password
 def verify_password(user_id, password):
     return user_id
