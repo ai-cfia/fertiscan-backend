@@ -10,6 +10,8 @@ openai
 
 dspy
 
+flask_httpauth
+
 reportlab
 
 # Test dependencies

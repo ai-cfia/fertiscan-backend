@@ -84,4 +84,16 @@ FRONTEND_URL=http://url.to_frontend/
 
 - `POST /analyze`: Upload images for analysis and get the results as a JSON form.
 
-![analysis](./out/docs/analyze_dss/Analyze%20DSS.png)
+![create](./out/docs/analyze_dss/Analyze%20DSS.png)
+
+- `POST /forms`: Create a new form attributed the user to the database.
+
+![submit](./out/docs/create_dss/FertiScan%20Sequence%20Diagram.png)
+
+- `PUT /forms`: Send the latest state of a form to the database.
+
+![submit](./out/docs/submit_dss/FertiScan%20Sequence%20Diagram.png)
+
+- `DELETE /forms`: Remove all transient states of a form.
+
+![discard](./out/docs/discard_dss/FertiScan%20Sequence%20Diagram.png)

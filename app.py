@@ -1,9 +1,11 @@
 import os
 import json
 import logging
+import uuid
+
 from http import HTTPStatus
 from dotenv import load_dotenv
-from auth import Token
+from flask_httpauth import HTTPBasicAuth
 from backend.form import FertiliserForm
 from azure.core.exceptions import HttpResponseError
 from werkzeug.utils import secure_filename
@@ -40,6 +42,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 cors = CORS(app, resources={"*", FRONTEND_URL})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
+auth = HTTPBasicAuth()
+
 # Configuration for Azure Form Recognizer
 API_ENDPOINT = os.getenv('AZURE_API_ENDPOINT')
 API_KEY = os.getenv('AZURE_API_KEY')
@@ -55,6 +59,31 @@ language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, d
 def main_page():
     return render_template('index.html')
 
+@auth.verify_password
+def verify_password(user_id, password):
+    return user_id
+
+@app.route('/forms', methods=['POST'])
+@auth.login_required
+def create_form():
+    form_id = uuid.uuid4()
+    return jsonify({"message": "Form created successfully", "form_id": form_id}), HTTPStatus.CREATED
+
+@app.route('/forms/<form_id>', methods=['PUT'])
+@auth.login_required
+def update_form(form_id):
+    return "Not yet implemented!", HTTPStatus.SERVICE_UNAVAILABLE
+
+@app.route('/forms/<form_id>', methods=['DELETE'])
+@auth.login_required
+def discard_form(form_id):
+    return "Not yet implemented!", HTTPStatus.SERVICE_UNAVAILABLE
+
+@app.route('/forms/<form_id>', methods=['GET'])
+@auth.login_required
+def get_form(form_id):
+    return "Not yet implemented!", HTTPStatus.SERVICE_UNAVAILABLE
+
 @app.route('/analyze', methods=['POST'])
 def analyze_document():
     try:
@@ -63,10 +92,6 @@ def analyze_document():
         if not files:
             raise ValueError("No files provided for analysis")
 
-        # The authorization scheme is still unsure.
-        auth_header = request.headers.get("Authorization")
-        Token(auth_header) if request.authorization else Token()
-        
         # Initialize the storage for the user
         label_storage = LabelStorage()
 

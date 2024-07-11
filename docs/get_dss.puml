@@ -1,0 +1,33 @@
+@startuml FertiScan Sequence Diagram
+header 05/07/2024
+
+title FertiScan Discard Form
+hide empty members
+hide footbox
+
+participant FertiScan as BE <<http:localhost:5000>>
+participant DataStore as DS
+database SQL as DB
+
+-> BE: GET /forms/form_id
+note right BE
+  Authorization: Basic
+end note
+BE -> DS: get_form() 
+DS -> DB: execute_query(query)
+DS <<-- DB: //SQL_CODE//
+BE <<-- DS: //JSON, HTTP_CODE//
+alt HTTP_CODE is success
+  <<-- BE: //JSON, 200//
+  note right
+    The form as stored in the database.
+
+    Note: It does not have
+    the same format as the one
+    given by /analyze.
+  end note
+else
+  <<-- BE: //message, 500//
+end
+
+@enduml

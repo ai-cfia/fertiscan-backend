@@ -37,6 +37,8 @@ class TestFertiliserForm(unittest.TestCase):
             FertiliserForm(npk="10.5-20.5-30")
             FertiliserForm(npk="10.5-0.5-30.1")
             FertiliserForm(npk="0-20.5-30.1")
+            FertiliserForm(npk="0-20.5-1")
+            FertiliserForm(npk="20.5-1-30.1")
         except ValidationError as e:
             self.fail(f"Validation error: {e}")
             

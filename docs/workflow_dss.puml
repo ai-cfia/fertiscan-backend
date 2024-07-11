@@ -5,19 +5,32 @@ title FertiScan Document Analysis Workflow
 hide empty members
 hide footbox
 
-actor "Client" as C
-participant FertiScan as F <<http:localhost:5000>>
+participant Client as FE
+participant FertiScan as BE <<http:localhost:5000>>
 
-C -> F: POST /analyze "images=@/path/to/file"
-note over F
+FE -> BE: POST /analyze
+note right BE
   Multiple images can be sent
   over the same request.
 end note
-alt no images
-  C <<-- F: //No documents to analyze, 400//
-else
-  F -> F: analyze()  
-  C <<-- F: //JSON, 200//
-end
-
+BE -> BE: analyze()
+FE <<-- BE: //JSON, 200//
+note left FE
+  All the data
+  extracted from the
+  fertiliser label.
+end note
+FE -> FE: create_form
+FE -> BE: POST forms/
+note right BE
+  Add the form
+  to the database.
+end note
+FE <<-- BE: //JSON, 200//
+note left FE
+  {
+      "message": "...",
+      "form_id": "<form_id>"
+  }  
+end note
 @enduml
