@@ -149,10 +149,10 @@ def analyze_document():
         logger.error(f"document: {err}")
         return jsonify(error=str(err)), HTTPStatus.BAD_REQUEST
     except HttpResponseError as err:
-        logger.error(f"document_intelligence: {err.message}")
+        logger.error(f"azure: {err.message}")
         return jsonify(error=err.message), err.status_code
     except Exception as err:
-        logger.error(f"json_parse: {err}")
+        logger.error(err)
         return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 @app.errorhandler(404)
