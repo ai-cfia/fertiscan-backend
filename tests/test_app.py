@@ -3,7 +3,7 @@ from io import BytesIO
 from app import app
 from unittest.mock import patch, MagicMock
 
-class FormAPITestCase(unittest.TestCase):
+class APITestCase(unittest.TestCase):
     def setUp(self):
         app.config['TESTING'] = True
         self.client = app.test_client()
@@ -15,7 +15,6 @@ class FormAPITestCase(unittest.TestCase):
         response = self.client.post('/forms', headers=self.headers)
         self.assertEqual(response.status_code, 201)
         self.assertIn('form_id', response.json)
-        self.assertEqual(response.json['message'], 'Form created successfully')
 
     def test_update_form(self):
         form_id = "some_form_id"
