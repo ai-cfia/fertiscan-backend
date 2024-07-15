@@ -5,11 +5,15 @@ from unittest.mock import patch, MagicMock
 
 class APITestCase(unittest.TestCase):
     def setUp(self):
-        app.config['TESTING'] = True
+        app.testing = True
         self.client = app.test_client()
         self.headers = {
             'Authorization': 'Basic ' + 'user1:password1'
         }
+
+    def test_ping(self):
+        response = self.client.get('/ping', headers=self.headers)
+        self.assertEqual(response.status_code, 200)
 
     def test_create_form(self):
         response = self.client.post('/forms', headers=self.headers)

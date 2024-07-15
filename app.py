@@ -59,7 +59,7 @@ OPENAI_API_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT')
 language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment=OPENAI_API_DEPLOYMENT)
 
 @app.route('/')
-def main_page():
+def main_page(): # pragma: no cover
     return render_template('index.html')
 
 @app.route('/ping', methods=['GET'])
@@ -156,11 +156,11 @@ def analyze_document():
         return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 @app.errorhandler(404)
-def not_found(error):
+def not_found(error): # pragma: no cover
     return jsonify(error="Not Found"), HTTPStatus.NOT_FOUND
 
 @app.errorhandler(500)
-def internal_error(error):
+def internal_error(error): # pragma: no cover
     return jsonify(error=str(error)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 if __name__ == "__main__":
