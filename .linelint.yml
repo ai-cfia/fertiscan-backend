@@ -1,0 +1,7 @@
+exclude:
+  - "**/__pycache__/**"
+  - "uploads/**"
+  - "logs/**"
+  - "out/**"
+  - "samples/**"
+  - "docs/**"
