@@ -36,9 +36,6 @@ FRONTEND_URL = os.getenv('FRONTEND_URL')
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-# CORS configuration limited to the frontend URL
-cors = CORS(app, resources={"*", FRONTEND_URL})
-app.config['CORS_HEADERS'] = 'Content-Type'
 
 # Swagger UI
 swagger = Swagger(app, template_file='docs/swagger/template.yaml')
@@ -138,4 +135,7 @@ def internal_error(error): # pragma: no cover
     return jsonify(error=str(error)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 if __name__ == "__main__":
+    # CORS configuration limited to the frontend URL
+    cors = CORS(app, resources={r"*": {"origins": FRONTEND_URL}})
+    app.config['CORS_HEADERS'] = 'Content-Type'
     app.run(host='0.0.0.0', debug=True)

@@ -9,6 +9,7 @@ class APITestCase(unittest.TestCase):
     def setUp(self):
         app.testing = True
         self.headers = {
+            'Content-Type': 'application/json',
             'Authorization': 'Basic ' + 'user1:password1'
         }
 
