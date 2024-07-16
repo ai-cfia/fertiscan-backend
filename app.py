@@ -6,14 +6,13 @@ import uuid
 from http import HTTPStatus
 from dotenv import load_dotenv
 from flask_httpauth import HTTPBasicAuth
-from backend.form import FertiliserForm
 from azure.core.exceptions import HttpResponseError
 from werkzeug.utils import secure_filename
-from backend import OCR, GPT, LabelStorage, save_text_to_file
 from datetime import datetime
 from flask import Flask, request, render_template, jsonify
 from flask_cors import CORS
 from flasgger import Swagger, swag_from
+from pipeline import OCR, GPT, LabelStorage, save_text_to_file, FertiliserForm
 
 # Load environment variables
 load_dotenv()
