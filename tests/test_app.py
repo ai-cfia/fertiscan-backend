@@ -12,28 +12,33 @@ class APITestCase(unittest.TestCase):
         }
 
     def test_ping(self):
-        response = self.client.get('/ping', headers=self.headers)
-        self.assertEqual(response.status_code, 200)
+        with app.app_context():
+            response = self.client.get('/ping', headers=self.headers)
+            self.assertEqual(response.status_code, 200)
 
     def test_create_form(self):
-        response = self.client.post('/forms', headers=self.headers)
-        self.assertEqual(response.status_code, 201)
-        self.assertIn('form_id', response.json)
+        with app.app_context():
+            response = self.client.post('/forms', headers=self.headers)
+            self.assertEqual(response.status_code, 201)
+            self.assertIn('form_id', response.json)
 
     def test_update_form(self):
-        form_id = "some_form_id"
-        response = self.client.put(f'/forms/{form_id}', headers=self.headers, json={"form_data": {"key": "value"}})
-        self.assertEqual(response.status_code, 503)  # Service Unavailable
+        with app.app_context():
+            form_id = "some_form_id"
+            response = self.client.put(f'/forms/{form_id}', headers=self.headers, json={"form_data": {"key": "value"}})
+            self.assertEqual(response.status_code, 503)  # Service Unavailable
 
     def test_discard_form(self):
-        form_id = "some_form_id"
-        response = self.client.delete(f'/forms/{form_id}', headers=self.headers)
-        self.assertEqual(response.status_code, 503)  # Service Unavailable
+        with app.app_context():
+            form_id = "some_form_id"
+            response = self.client.delete(f'/forms/{form_id}', headers=self.headers)
+            self.assertEqual(response.status_code, 503)  # Service Unavailable
 
     def test_get_form(self):
-        form_id = "some_form_id"
-        response = self.client.get(f'/forms/{form_id}', headers=self.headers)
-        self.assertEqual(response.status_code, 503)  # Service Unavailable
+        with app.app_context():
+            form_id = "some_form_id"
+            response = self.client.get(f'/forms/{form_id}', headers=self.headers)
+            self.assertEqual(response.status_code, 503)  # Service Unavailable
 
     def test_analyze_document_no_files(self):
         response = self.client.post('/analyze', headers=self.headers)
@@ -73,6 +78,9 @@ class APITestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 500)
         self.assertIn('error', response.json)
+    def tearDown(self):
+        """Executed after reach test"""
+        app.testing = False
 
 if __name__ == '__main__':
     unittest.main()
