@@ -1,7 +1,7 @@
 ---  
 name: Feature/Enhancement request  
 about: Suggest an idea for this project  
-title: As a [stakeholder], I want to [description of the enhancement].  
+title: As a [stakeholder], I want to [description of the desired outcome].  
 labels: enhancement  
 assignees: ""  
 ---  
