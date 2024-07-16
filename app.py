@@ -1,5 +1,4 @@
 import os
-import json
 import logging
 import uuid
 
@@ -8,11 +7,10 @@ from dotenv import load_dotenv
 from flask_httpauth import HTTPBasicAuth
 from azure.core.exceptions import HttpResponseError
 from werkzeug.utils import secure_filename
-from datetime import datetime
 from flask import Flask, request, render_template, jsonify
 from flask_cors import CORS
 from flasgger import Swagger, swag_from
-from pipeline import OCR, GPT, LabelStorage, save_text_to_file, FertiliserForm
+from pipeline import OCR, GPT, LabelStorage, analyze
 
 # Load environment variables
 load_dotenv()
@@ -55,7 +53,7 @@ ocr = OCR(api_endpoint=API_ENDPOINT, api_key=API_KEY)
 OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
 OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
 OPENAI_API_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT')
-language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment=OPENAI_API_DEPLOYMENT)
+gpt = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment=OPENAI_API_DEPLOYMENT)
 
 @app.route('/')
 def main_page(): # pragma: no cover
@@ -114,30 +112,7 @@ def analyze_document():
                 file.save(file_path)
                 label_storage.add_image(file_path)
 
-        document = label_storage.get_document()
-        result = ocr.extract_text(document=document)
-
-        # Logs the results from document intelligence
-        now = datetime.now()
-        save_text_to_file(result.content, f"./logs/{now}.md")
-
-        # Generate form from extracted text
-        prediction = language_model.generate_form(result.content)
-
-        # Logs the results from GPT
-        save_text_to_file(prediction.form, f"./logs/{now}.json")
-        save_text_to_file(prediction.rationale, f"./logs/{now}.txt")
-
-        # Check the conformity of the JSON
-        form = FertiliserForm(**json.loads(prediction.form))
-
-        # Clear the label cache
-        label_storage.clear()
-
-        # Delete the logs if there's no error
-        os.remove(f"./logs/{now}.md")   
-        os.remove(f"./logs/{now}.txt")     
-        os.remove(f"./logs/{now}.json")
+        form = analyze(label_storage, ocr, gpt)
 
         return app.response_class(
             response=form.model_dump_json(indent=2),
