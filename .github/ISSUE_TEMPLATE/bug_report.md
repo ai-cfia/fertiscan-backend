@@ -8,8 +8,8 @@ assignees: ""
 
 ## Description  
 
-**Bug Summary:** [Provide a brief but clear summary of the bug. Add visuals like  
-screenshots and GIFs if possible.]  
+**Bug Summary:** [Provide a brief but clear summary of the bug. Add visuals  
+like screenshots and GIFs if possible.]  
 
 **Steps to Reproduce:**  
 [Outline the steps to reproduce the bug, being as detailed as possible.]  
