@@ -9,6 +9,6 @@ reportlab
 setuptools
 flasgger==0.9.7b2
 # Add the fertiscan-pipeline package from GitHub
-git+https://github.com/ai-cfia/fertiscan-gpt.git@01-migration-pipeline
+git+https://github.com/ai-cfia/fertiscan-pipeline.git@main
 # Test dependencies
 Levenshtein
