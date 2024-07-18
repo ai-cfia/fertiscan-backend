@@ -6,12 +6,20 @@
 
 The `/analyze` route serves to:
 
-- **Upload and Process Documents**: Allows clients to upload images of documents for analysis.
-- **Extract and Structure Data**: Utilizes Azure Document Intelligence to extract text and layout information from the uploaded documents.
-- **Generate Forms**: Uses OpenAI's GPT-4 to generate a structured JSON form containing all the necessary information extracted from the document.
-- **Provide Responses**: Returns the generated form to the client, facilitating the inspection and validation processes by providing all relevant data in a structured format.
+- **Upload and Process Documents**: Allows clients to upload
+ images of documents for analysis.
+- **Extract and Structure Data**: Utilizes Azure Document Intelligence to
+ extract text and layout information from the uploaded documents.
+- **Generate Forms**: Uses OpenAI's GPT-4 to generate a structured JSON
+ form containing all the necessary information extracted from the document.
+- **Provide Responses**: Returns the generated form to the client,
+ facilitating the inspection and validation processes
+ by providing all relevant data in a structured format.
 
-In essence, the `/analyze` route automates the extraction and structuring of data from documents, significantly simplifying the workflow for users who need to process and analyze document content.
+In essence, the `/analyze` route automates the
+ extraction and structuring of data from documents, significantly
+ simplifying the workflow for
+ users who need to process and analyze document content.
 
 ## Deployment
 
@@ -29,7 +37,8 @@ In essence, the `/analyze` route automates the extraction and structuring of dat
 
 ### Database
 
-- **Description**: The database where the information on fertiliser and labels is stored.
+- **Description**: The database where the
+ information on fertiliser and labels is stored.
 - **Repository**: <https://github.com/ai-cfia/nachet-datastore/>
 
 ## API Endpoints
