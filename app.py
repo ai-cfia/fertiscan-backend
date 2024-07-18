@@ -1,19 +1,16 @@
 import os
-import json
 import logging
 import uuid
 
 from http import HTTPStatus
 from dotenv import load_dotenv
 from flask_httpauth import HTTPBasicAuth
-from backend.form import FertiliserForm
 from azure.core.exceptions import HttpResponseError
 from werkzeug.utils import secure_filename
-from backend import OCR, GPT, LabelStorage, save_text_to_file
-from datetime import datetime
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flasgger import Swagger, swag_from
+from pipeline import OCR, GPT, LabelStorage, analyze
 
 # Load environment variables
 load_dotenv()
@@ -39,9 +36,6 @@ FRONTEND_URL = os.getenv('FRONTEND_URL')
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-# CORS configuration limited to the frontend URL
-cors = CORS(app, resources={"*", FRONTEND_URL})
-app.config['CORS_HEADERS'] = 'Content-Type'
 
 # Swagger UI
 swagger = Swagger(app, template_file='docs/swagger/template.yaml')
@@ -56,11 +50,7 @@ ocr = OCR(api_endpoint=API_ENDPOINT, api_key=API_KEY)
 OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
 OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
 OPENAI_API_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT')
-language_model = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment=OPENAI_API_DEPLOYMENT)
-
-@app.route('/')
-def main_page():
-    return render_template('index.html')
+gpt = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment=OPENAI_API_DEPLOYMENT)
 
 @app.route('/ping', methods=['GET'])
 @swag_from('docs/swagger/ping.yaml')
@@ -115,30 +105,7 @@ def analyze_document():
                 file.save(file_path)
                 label_storage.add_image(file_path)
 
-        document = label_storage.get_document()
-        result = ocr.extract_text(document=document)
-
-        # Logs the results from document intelligence
-        now = datetime.now()
-        save_text_to_file(result.content, f"./logs/{now}.md")
-
-        # Generate form from extracted text
-        prediction = language_model.generate_form(result.content)
-
-        # Logs the results from GPT
-        save_text_to_file(prediction.form, f"./logs/{now}.json")
-        save_text_to_file(prediction.rationale, f"./logs/{now}.txt")
-
-        # Check the conformity of the JSON
-        form = FertiliserForm(**json.loads(prediction.form))
-
-        # Clear the label cache
-        label_storage.clear()
-
-        # Delete the logs if there's no error
-        os.remove(f"./logs/{now}.md")   
-        os.remove(f"./logs/{now}.txt")     
-        os.remove(f"./logs/{now}.json")
+        form = analyze(label_storage, ocr, gpt)
 
         return app.response_class(
             response=form.model_dump_json(indent=2),
@@ -149,19 +116,22 @@ def analyze_document():
         logger.error(f"document: {err}")
         return jsonify(error=str(err)), HTTPStatus.BAD_REQUEST
     except HttpResponseError as err:
-        logger.error(f"document_intelligence: {err.message}")
+        logger.error(f"azure: {err.message}")
         return jsonify(error=err.message), err.status_code
     except Exception as err:
-        logger.error(f"json_parse: {err}")
+        logger.error(err)
         return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 @app.errorhandler(404)
-def not_found(error):
+def not_found(error): # pragma: no cover
     return jsonify(error="Not Found"), HTTPStatus.NOT_FOUND
 
 @app.errorhandler(500)
-def internal_error(error):
+def internal_error(error): # pragma: no cover
     return jsonify(error=str(error)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 if __name__ == "__main__":
+    # CORS configuration limited to the frontend URL
+    cors = CORS(app, resources={"*", FRONTEND_URL})
+    app.config['CORS_HEADERS'] = 'Content-Type'
     app.run(host='0.0.0.0', debug=True)

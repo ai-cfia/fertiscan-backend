@@ -4,6 +4,11 @@ WORKDIR /app
 
 COPY . .
 
+RUN apt-get update && \
+    apt-get install -y git && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 ARG ARG_AZURE_API_ENDPOINT
@@ -20,8 +25,12 @@ ENV AZURE_OPENAI_API_ENDPOINT=${ARG_AZURE_OPENAI_API_ENDPOINT:-your_azure_openai
 ENV AZURE_OPENAI_API_KEY=${ARG_AZURE_OPENAI_API_KEY:-your_azure_openai_key}
 ENV PROMPT_PATH=${ARG_PROMPT_PATH:-path/to/file}
 ENV UPLOAD_PATH=${ARG_UPLOAD_PATH:-path/to/file}
-ENV FRONTEND_URL=${FRONTEND_URL:-http://url.to_frontend/}
+ENV FRONTEND_URL=${ARG_FRONTEND_URL:-http://url.to_frontend/}
 
 EXPOSE 5000
+
+RUN chown -R 1000:1000 /app
+
+USER 1000
 
 CMD ["python", "app.py"]
