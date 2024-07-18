@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from flask_httpauth import HTTPBasicAuth
 from azure.core.exceptions import HttpResponseError
 from werkzeug.utils import secure_filename
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flasgger import Swagger, swag_from
 from pipeline import OCR, GPT, LabelStorage, analyze
@@ -51,10 +51,6 @@ OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
 OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
 OPENAI_API_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT')
 gpt = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment=OPENAI_API_DEPLOYMENT)
-
-@app.route('/')
-def main_page(): # pragma: no cover
-    return render_template('index.html')
 
 @app.route('/ping', methods=['GET'])
 @swag_from('docs/swagger/ping.yaml')
