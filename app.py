@@ -52,10 +52,6 @@ OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
 OPENAI_API_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT')
 gpt = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment=OPENAI_API_DEPLOYMENT)
 
-@app.route('/')
-def main_page(): # pragma: no cover
-    return render_template('index.html')
-
 @app.route('/ping', methods=['GET'])
 @swag_from('docs/swagger/ping.yaml')
 def ping():
