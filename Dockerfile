@@ -1,5 +1,7 @@
 FROM python:3.10-slim
 
+RUN groupadd -r fertiscangroup && useradd -r -g fertiscangroup fertiscanuser 
+
 WORKDIR /app
 
 COPY . .
@@ -23,5 +25,9 @@ ENV UPLOAD_PATH=${ARG_UPLOAD_PATH:-path/to/file}
 ENV FRONTEND_URL=${FRONTEND_URL:-http://url.to_frontend/}
 
 EXPOSE 5000
+
+RUN chown -R fertiscanuser:fertiscangroup /app
+
+USER fertiscanuser
 
 CMD ["python", "app.py"]
