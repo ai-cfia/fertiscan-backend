@@ -2,7 +2,6 @@ azure-ai-documentintelligence==1.0.0b3
 flask
 python-dotenv
 flask-cors
-openai
 dspy
 flask_httpauth
 reportlab
