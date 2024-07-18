@@ -1,13 +1,7 @@
-azure-ai-documentintelligence==1.0.0b3
 flask
 python-dotenv
 flask-cors
-dspy
 flask_httpauth
-reportlab
-setuptools
 flasgger==0.9.7.1
 # Add the fertiscan-pipeline package from GitHub
 git+https://github.com/ai-cfia/fertiscan-pipeline.git@main
-# Test dependencies
-Levenshtein
