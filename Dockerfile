@@ -1,10 +1,5 @@
 FROM python:3.11-slim
 
-RUN getent group fertiscangroup || groupadd -r fertiscangroup && \
-    id -u fertiscanuser &>/dev/null || useradd -r -g fertiscangroup fertiscanuser 
-
-RUN groupadd -r fertiscangroup && useradd -r -g fertiscangroup fertiscanuser 
-
 WORKDIR /app
 
 COPY . .
@@ -34,8 +29,8 @@ ENV FRONTEND_URL=${ARG_FRONTEND_URL:-http://url.to_frontend/}
 
 EXPOSE 5000
 
-RUN chown -R fertiscanuser:fertiscangroup /app
+RUN chown -R 1000:1000 /app
 
-USER fertiscanuser
+USER 1000
 
 CMD ["python", "app.py"]
