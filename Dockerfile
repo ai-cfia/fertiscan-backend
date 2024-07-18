@@ -1,10 +1,18 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
+
+RUN getent group fertiscangroup || groupadd -r fertiscangroup && \
+    id -u fertiscanuser &>/dev/null || useradd -r -g fertiscangroup fertiscanuser 
 
 RUN groupadd -r fertiscangroup && useradd -r -g fertiscangroup fertiscanuser 
 
 WORKDIR /app
 
 COPY . .
+
+RUN apt-get update && \
+    apt-get install -y git && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -22,7 +30,7 @@ ENV AZURE_OPENAI_API_ENDPOINT=${ARG_AZURE_OPENAI_API_ENDPOINT:-your_azure_openai
 ENV AZURE_OPENAI_API_KEY=${ARG_AZURE_OPENAI_API_KEY:-your_azure_openai_key}
 ENV PROMPT_PATH=${ARG_PROMPT_PATH:-path/to/file}
 ENV UPLOAD_PATH=${ARG_UPLOAD_PATH:-path/to/file}
-ENV FRONTEND_URL=${FRONTEND_URL:-http://url.to_frontend/}
+ENV FRONTEND_URL=${ARG_FRONTEND_URL:-http://url.to_frontend/}
 
 EXPOSE 5000
 
