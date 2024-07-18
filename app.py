@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from flask_httpauth import HTTPBasicAuth
 from azure.core.exceptions import HttpResponseError
 from werkzeug.utils import secure_filename
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flasgger import Swagger, swag_from
 from pipeline import OCR, GPT, LabelStorage, analyze
