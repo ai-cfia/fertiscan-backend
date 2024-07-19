@@ -1,8 +1,10 @@
 import os
 import logging
-import uuid
+import datastore
+import asyncio
 
 from http import HTTPStatus
+import datastore.db
 from dotenv import load_dotenv
 from flask_httpauth import HTTPBasicAuth
 from azure.core.exceptions import HttpResponseError
@@ -14,6 +16,10 @@ from pipeline import OCR, GPT, LabelStorage, analyze
 
 # Load environment variables
 load_dotenv()
+
+# Connect to the databse
+API_ENDPOINT = os.getenv('DB_CONNECTION_STRING')
+conn = datastore.db.connect_db()
 
 # Set up logging
 log_file_path = './logs/app.log'
@@ -69,8 +75,26 @@ def verify_password(user_id, password):
 @auth.login_required
 @swag_from('docs/swagger/create_form.yaml')
 def create_form():
-    form_id = uuid.uuid4()
-    return jsonify({"message": "Form created successfully", "form_id": form_id}), HTTPStatus.CREATED
+    # Database cursor
+    cursor = conn.cursor()
+
+    form = request.json
+    files = request.files.getlist('images')
+
+    # Initialize the storage for the user
+    label_storage = LabelStorage()
+
+    for file in files:
+        if file:
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+            label_storage.add_image(file_path)
+    
+    image = label_storage.get_document(format='png')
+
+    analysis = asyncio.run(datastore.register_analysis(cursor=cursor, container_client='on hold', analysis_dict=form, image=image))
+    return jsonify({"message": "Form created successfully", "form_id": analysis["analysis_id"]}), HTTPStatus.CREATED
 
 @app.route('/forms/<form_id>', methods=['PUT'])
 @auth.login_required
