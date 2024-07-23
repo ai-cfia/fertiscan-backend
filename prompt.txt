@@ -10,10 +10,9 @@ Keys:
 "fertiliser_name"
 "registration_number"
 "lot_number"
-"weight_kg"
-"weight_lb"
-"density"
-"volume"
+"weight" (array of objects with "value", and "unit")
+"density" (an object with "value", and "unit")
+"volume" (an object with "value", and "unit")
 "npk" (format: "number-number-number")
 "guaranteed_analysis" (array of objects with "nutrient", "value", and "unit")
 "warranty"
@@ -36,6 +35,7 @@ Requirements:
 The content of keys with the suffix _en must be in English.
 The content of keys with the suffix _fr must be in French.
 Translation of the text is prohibited.
+Assign to a key strings that matches its given format.
 You are prohibited from generating any text that is not part of the JSON.
 The JSON must contain exclusively keys specified in "keys".
 When you identify the fertiliser weight, attempt to fill both weight_kg and weight_lb.
