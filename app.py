@@ -1,6 +1,5 @@
 import os
 import logging
-import asyncio
 import datastore.db
 
 from http import HTTPStatus
@@ -19,6 +18,14 @@ load_dotenv()
 
 CONNECTION_STRING = datastore.db.FERTISCAN_DB_URL
 conn = datastore.db.connect_db(conn_str=CONNECTION_STRING)
+
+# Create a real database connection
+FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA", "fertiscan_0.0.8")
+FERTISCAN_DB_URL = os.getenv("FERTISCAN_DB_URL")
+conn = datastore.db.connect(FERTISCAN_DB_URL, options=f"-c search_path={FERTISCAN_SCHEMA},public")
+
+# Set the connection string as an environment variable
+connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 
 # Set up logging
 log_file_path = './logs/app.log'
@@ -69,10 +76,22 @@ def verify_password(user_id, password):
 @app.route('/forms', methods=['POST'])
 @auth.login_required
 @swag_from('docs/swagger/create_form.yaml')
-def create_form():
+async def create_form():
     # Database cursor
     cursor = conn.cursor()
 
+    username = auth.username()
+    if username is None:
+        return jsonify(error="Missing username!"), HTTPStatus.BAD_REQUEST
+    
+    # Sample userId from the database
+    user = await datastore.get_user(cursor, username)
+    user_id = user.id
+    container_client = datastore.ContainerClient.from_connection_string(
+        connection_string, container_name=f"user-{user_id}"
+    )
+
+    # Get JSON form from the request
     form = request.json
     if form is None:
         return jsonify(error="Missing fertiliser form!"), HTTPStatus.BAD_REQUEST
@@ -91,7 +110,12 @@ def create_form():
     
     image = label_storage.get_document(format='png')
 
-    analysis = asyncio.run(datastore.register_analysis(cursor=cursor, container_client='on hold', analysis_dict=form, image=image))
+    analysis = await datastore.register_analysis(
+        cursor=cursor,
+        container_client=container_client,
+        analysis_dict=form,
+        image=image
+    )
     return jsonify({"message": "Form created successfully", "form_id": analysis["analysis_id"]}), HTTPStatus.CREATED
 
 @app.route('/forms/<form_id>', methods=['PUT'])
