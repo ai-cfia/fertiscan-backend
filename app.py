@@ -1,6 +1,7 @@
 import os
 import logging
-import uuid
+import asyncio
+import datastore.db
 
 from http import HTTPStatus
 from dotenv import load_dotenv
@@ -14,6 +15,10 @@ from pipeline import OCR, GPT, LabelStorage, analyze
 
 # Load environment variables
 load_dotenv()
+
+
+CONNECTION_STRING = datastore.db.FERTISCAN_DB_URL
+conn = datastore.db.connect_db(conn_str=CONNECTION_STRING)
 
 # Set up logging
 log_file_path = './logs/app.log'
@@ -65,13 +70,38 @@ def verify_password(user_id, password):
 @auth.login_required
 @swag_from('docs/swagger/create_form.yaml')
 def create_form():
-    form_id = uuid.uuid4()
-    return jsonify({"message": "Form created successfully", "form_id": form_id}), HTTPStatus.CREATED
+    # Database cursor
+    cursor = conn.cursor()
+
+    form = request.json
+    if form is None:
+        return jsonify(error="Missing fertiliser form!"), HTTPStatus.BAD_REQUEST
+    
+    files = request.files.getlist('images')
+
+    # Initialize the storage for the user
+    label_storage = LabelStorage()
+
+    for file in files:
+        if file:
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+            label_storage.add_image(file_path)
+    
+    image = label_storage.get_document(format='png')
+
+    analysis = asyncio.run(datastore.register_analysis(cursor=cursor, container_client='on hold', analysis_dict=form, image=image))
+    return jsonify({"message": "Form created successfully", "form_id": analysis["analysis_id"]}), HTTPStatus.CREATED
 
 @app.route('/forms/<form_id>', methods=['PUT'])
 @auth.login_required
 @swag_from('docs/swagger/update_form.yaml')
 def update_form(form_id):
+    form = request.json
+    if form is None:
+        return jsonify(error="Missing fertiliser form!"), HTTPStatus.BAD_REQUEST
+    
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/forms/<form_id>', methods=['DELETE'])
