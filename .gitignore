@@ -10,6 +10,9 @@ logs/
 # VS Code
 .vscode
 
+# Prompt file
+prompt.txt
+
 # Upload folder
 uploads/*
 
