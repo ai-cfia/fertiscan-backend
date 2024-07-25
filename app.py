@@ -178,4 +178,7 @@ if __name__ == "__main__":
     # CORS configuration limited to the frontend URL
     cors = CORS(app, resources={"*", FRONTEND_URL})
     app.config['CORS_HEADERS'] = 'Content-Type'
+
+    # Curl the prompt from the pipeline repository
+    prompt_path = os.getenv('PROMPT_PATH')
     app.run(host='0.0.0.0', debug=True)
