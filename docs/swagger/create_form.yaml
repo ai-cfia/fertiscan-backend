@@ -2,15 +2,54 @@ Create a new instance of a form in the database.
 ---
 security:
   - basicAuth: []
-responses:
-  201:
-    description: "Form created successfully"
-    schema:
-      type: object
-      properties:
-        message:
-          type: string
-          example: "Form created successfully"
-        form_id:
-          type: string
-          format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                form:
+                  type: string
+                  format: json
+                  description: The fertiliser form in JSON format
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: List of images to be uploaded
+      responses:
+        201:
+          description: Form created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Form created successfully"
+                  form_id:
+                    type: string
+                    format: uuid
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Missing username!"
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Internal server error"

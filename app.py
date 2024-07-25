@@ -15,14 +15,10 @@ from pipeline import OCR, GPT, LabelStorage, analyze
 # Load environment variables
 load_dotenv()
 
-
-CONNECTION_STRING = datastore.db.FERTISCAN_DB_URL
-conn = datastore.db.connect_db(conn_str=CONNECTION_STRING)
-
 # Create a real database connection
 FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA", "fertiscan_0.0.8")
 FERTISCAN_DB_URL = os.getenv("FERTISCAN_DB_URL")
-conn = datastore.db.connect(FERTISCAN_DB_URL, options=f"-c search_path={FERTISCAN_SCHEMA},public")
+conn = datastore.db.connect_db(conn_str=FERTISCAN_DB_URL, schema=FERTISCAN_SCHEMA)
 
 # Set the connection string as an environment variable
 connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
