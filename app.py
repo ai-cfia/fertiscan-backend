@@ -1,7 +1,6 @@
 import os
 import logging
 import uuid
-import requests
 
 from http import HTTPStatus
 from dotenv import load_dotenv
@@ -52,14 +51,6 @@ OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
 OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
 OPENAI_API_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT')
 gpt = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment=OPENAI_API_DEPLOYMENT)
-
-def curl_file(url:str, path: str): # pragma: no cover
-    """
-    Pull a file from an URL and save its content.
-    """
-    data = requests.get(url).content
-    with open(path, 'wb') as handler:
-        handler.write(data)
 
 @app.route('/ping', methods=['GET'])
 @swag_from('docs/swagger/ping.yaml')
@@ -143,9 +134,5 @@ if __name__ == "__main__":
     # CORS configuration limited to the frontend URL
     cors = CORS(app, resources={"*", FRONTEND_URL})
     app.config['CORS_HEADERS'] = 'Content-Type'
-
-    # Curl the prompt from the pipeline repository
-    prompt_path = os.getenv('PROMPT_PATH')
-    curl_file('https://raw.githubusercontent.com/ai-cfia/fertiscan-pipeline/main/prompt.txt', prompt_path)
 
     app.run(host='0.0.0.0', debug=True)
