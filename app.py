@@ -134,4 +134,5 @@ if __name__ == "__main__":
     # CORS configuration limited to the frontend URL
     cors = CORS(app, resources={"*", FRONTEND_URL})
     app.config['CORS_HEADERS'] = 'Content-Type'
+
     app.run(host='0.0.0.0', debug=True)
