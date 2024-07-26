@@ -130,17 +130,6 @@ def discard_form(form_id):
 def get_form(form_id):
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
-@app.route('/search', methods=['POST'])
-@auth.login_required
-# TO-DO Add swagger documentation
-def search():
-    # Get JSON search prompt from the request
-    query = request.json
-    if query is None:
-        return jsonify(error="Missing search prompt!"), HTTPStatus.BAD_REQUEST
-    # TO-DO Create a search query object with pydantic.
-    return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
-
 @app.route('/analyze', methods=['POST'])
 @swag_from('docs/swagger/analyze_document.yaml')
 def analyze_document():
