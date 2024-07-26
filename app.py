@@ -2,6 +2,7 @@ import os
 import logging
 import datastore.db
 
+from backend import SearchQuery
 from http import HTTPStatus
 from dotenv import load_dotenv
 from flask_httpauth import HTTPBasicAuth
@@ -128,6 +129,18 @@ def discard_form(form_id):
 @auth.login_required
 @swag_from('docs/swagger/get_form.yaml')
 def get_form(form_id):
+    return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
+
+@app.route('/search', methods=['POST'])
+@auth.login_required
+# TO-DO Add swagger documentation
+def search():
+    # Get JSON search prompt from the request
+    query = request.json
+    if query is None:
+        return jsonify(error="Missing search prompt!"), HTTPStatus.BAD_REQUEST
+    search_query = SearchQuery(**query)
+    # TO-DO Send that search query to the datastore
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/analyze', methods=['POST'])

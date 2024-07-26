@@ -1,0 +1,31 @@
+Search a label in the database using a search query.
+---
+security:
+  - basicAuth: []
+consumes:
+  - application/json
+parameters:
+  - name: query
+    in: body
+    description: "Search query"
+    schema:
+      type: object
+responses:
+  200:
+    description: "Search query executed successfully"
+    schema:
+      type: object
+  400:
+    description: "Bad Request"
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
+  500:
+    description: "Internal Server Error"
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
