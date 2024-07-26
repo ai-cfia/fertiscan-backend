@@ -94,23 +94,17 @@ async def create_form():
     
     files = request.files.getlist('images')
 
-    # Initialize the storage for the user
-    label_storage = LabelStorage()
-
+    # Collect files in a list
+    images = []
     for file in files:
         if file:
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(file_path)
-            label_storage.add_image(file_path)
+            images.append(file.stream.read())
     
-    image = label_storage.get_document(format='png')
-
     analysis = await datastore.register_analysis(
         cursor=cursor,
         container_client=container_client,
         analysis_dict=form,
-        image=image
+        image=images
     )
     return jsonify({"message": "Form created successfully", "form_id": analysis["analysis_id"]}), HTTPStatus.CREATED
 
@@ -134,6 +128,17 @@ def discard_form(form_id):
 @auth.login_required
 @swag_from('docs/swagger/get_form.yaml')
 def get_form(form_id):
+    return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
+
+@app.route('/search', methods=['POST'])
+@auth.login_required
+# TO-DO Add swagger documentation
+def search():
+    # Get JSON search prompt from the request
+    query = request.json
+    if query is None:
+        return jsonify(error="Missing search prompt!"), HTTPStatus.BAD_REQUEST
+    # TO-DO Create a search query object with pydantic.
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/analyze', methods=['POST'])
