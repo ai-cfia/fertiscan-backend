@@ -1,15 +1,15 @@
-Search a label in the database using a search query.
+Search an inspection in the database using a search query.
 ---
 security:
   - basicAuth: []
 consumes:
   - application/json
 parameters:
-  - name: query
-    in: body
-    description: "Search query"
+  - name: user_id
+    in: query
+    description: "The id of the user."
     schema:
-      type: object
+      type: string
 responses:
   200:
     description: "Search query executed successfully"
@@ -22,7 +22,7 @@ responses:
       properties:
         error:
           type: string
-          example: "Missing search prompt!"
+          example: "Missing username!"
   500:
     description: "Internal Server Error"
     schema:

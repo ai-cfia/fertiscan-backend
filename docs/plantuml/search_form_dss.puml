@@ -12,7 +12,6 @@ database SQL as DB
 -> BE: GET /forms/form_id
 note right BE
   Authorization: Basic
-  Content-Type: application/json
   Content: Search Query
 end note
 BE -> DS: search() 

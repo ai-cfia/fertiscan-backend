@@ -1,6 +1,8 @@
 import os
 import logging
 import datastore.db
+import datastore.db.queries
+import datastore.db.queries.inference
 
 from backend import SearchQuery
 from http import HTTPStatus
@@ -129,13 +131,18 @@ def discard_form(form_id):
 @auth.login_required
 @swag_from('docs/swagger/search_form.yaml')
 def search():
-    # Get JSON search prompt from the request
-    query = request.json
-    if query is None:
-        return jsonify(error="Missing search prompt!"), HTTPStatus.BAD_REQUEST
-    search_query = SearchQuery(**query)
+    # Database cursor
+    cursor = conn.cursor()
+
+    user_id = request.args.get('user_id')
+    if user_id is None:
+        return jsonify(error="Missing username!"), HTTPStatus.BAD_REQUEST
+
+    query = SearchQuery(**request.args)
+
     # TO-DO Send that search query to the datastore
-    return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
+    inspections = datastore.db.queries.inspection.get_all_user_inspection(cursor, query.user_id)
+    return jsonify(inspections), HTTPStatus.OK
 
 @app.route('/analyze', methods=['POST'])
 @swag_from('docs/swagger/analyze_document.yaml')
