@@ -2,54 +2,45 @@ Create a new instance of a form in the database.
 ---
 security:
   - basicAuth: []
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                form:
-                  type: string
-                  format: json
-                  description: The fertiliser form in JSON format
-                images:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
-                  description: List of images to be uploaded
-      responses:
-        201:
-          description: Form created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Form created successfully"
-                  form_id:
-                    type: string
-                    format: uuid
-        400:
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Missing username!"
-        500:
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Internal server error"
+consumes:
+  - application/json
+parameters:
+  - name: form
+    in: body
+    required: true
+    schema:
+      type: object
+    description: "The result of the fertiliser analysis."
+  - name: images
+    in: formData
+    type: file
+    required: true
+    description: "The images analysed."  
+responses:
+  201:
+    description: Form created successfully
+    schema:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Form created successfully"
+        form_id:
+          type: string
+          format: uuid
+  400:
+    description: Bad Request
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Missing username!"
+  500:
+    description: Internal Server Error
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Internal server error"

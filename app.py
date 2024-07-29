@@ -127,7 +127,7 @@ def discard_form(form_id):
 
 @app.route('/forms', methods=['GET'])
 @auth.login_required
-@swag_from('docs/swagger/get_form.yaml')
+@swag_from('docs/swagger/search_form.yaml')
 def search():
     # Get JSON search prompt from the request
     query = request.json

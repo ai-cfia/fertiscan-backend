@@ -22,6 +22,7 @@ responses:
       properties:
         error:
           type: string
+          example: "Missing search prompt!"
   500:
     description: "Internal Server Error"
     schema:
@@ -29,3 +30,4 @@ responses:
       properties:
         error:
           type: string
+          example: "Not yet implemented!"
