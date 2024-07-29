@@ -125,16 +125,10 @@ def update_form(form_id):
 def discard_form(form_id):
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
-@app.route('/forms/<form_id>', methods=['GET'])
+@app.route('/forms', methods=['GET'])
 @auth.login_required
 @swag_from('docs/swagger/get_form.yaml')
 def get_form(form_id):
-    return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
-
-@app.route('/search', methods=['POST'])
-@auth.login_required
-# TO-DO Add swagger documentation
-def search():
     # Get JSON search prompt from the request
     query = request.json
     if query is None:
