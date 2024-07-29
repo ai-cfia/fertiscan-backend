@@ -12,7 +12,8 @@ database SQL as DB
 -> BE: POST /forms
 note right BE
   Authorization: Basic
-  Content: JSON (Form)
+  Content-Type: application/json
+  Content: Form
 end note
 BE -> DS: create_form()
 note left

@@ -12,8 +12,10 @@ database SQL as DB
 -> BE: GET /forms/form_id
 note right BE
   Authorization: Basic
+  Content-Type: application/json
+  Content: Search Query
 end note
-BE -> DS: get_form() 
+BE -> DS: search() 
 DS -> DB: execute_query(query)
 DS <<-- DB: //SQL_CODE//
 BE <<-- DS: //JSON, HTTP_CODE//
@@ -22,9 +24,9 @@ alt HTTP_CODE is success
   note right
     The form as stored in the database.
 
-    Note: It does not have
+    Note: It might not have
     the same format as the one
-    given by /analyze.
+    returned by the analysis.
   end note
 else
   <<-- BE: //message, 500//
