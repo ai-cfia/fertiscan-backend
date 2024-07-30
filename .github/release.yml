@@ -1,0 +1,16 @@
+---
+changelog:
+  categories:
+    - title: User stories 👑
+      labels:
+        - epic
+    - title: New features 🎉
+      labels:
+        - enhancement
+        - user-visible
+    - title: Bug fixes 🐛
+      labels:
+        - bug
+    - title: Other Changes
+      labels:
+        - "*"
