@@ -70,6 +70,11 @@ def ping():
 
 @auth.verify_password
 def verify_password(user_id, password):
+    if user_id is None:
+        return jsonify(
+            error="Missing email address!",
+            message="The request is missing the 'email' parameter. Please provide a valid email address to proceed.",
+        ), HTTPStatus.BAD_REQUEST
     return user_id
 
 @app.route('/forms', methods=['POST'])
@@ -134,9 +139,9 @@ def search():
     # Database cursor
     cursor = conn.cursor()
 
+    # We retreive the user_id since its what is used for the login.
+    # Currently it is analogous to the email.
     user_id = request.args.get('user_id')
-    if user_id is None:
-        return jsonify(error="Missing username!"), HTTPStatus.BAD_REQUEST
 
     query = SearchQuery(**request.args)
 
