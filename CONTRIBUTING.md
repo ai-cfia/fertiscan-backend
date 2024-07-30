@@ -31,13 +31,15 @@ This project adheres to the ~~Contributor Covenant~~ Code of Conduct.
 
 ### Reporting Bugs
 
-If you find a bug, please create an issue and provide detailed information about the bug,
- including steps to reproduce it, the expected behavior, and the actual behavior.
+If you find a bug, please create an issue and provide detailed
+information about the bug, including steps to reproduce it,
+the expected behavior, and the actual behavior.
 
 ### Suggesting Enhancements
 
 We welcome suggestions for new features and enhancements.
- Please create an issue to discuss your ideas and explain the benefits and potential use cases.
+ Please create an issue to discuss your ideas and
+ explain the benefits and potential use cases.
 
 ### Submitting Pull Requests
 
