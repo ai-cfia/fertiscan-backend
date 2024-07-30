@@ -66,8 +66,23 @@ def ping():
     return jsonify({"message": "Service is alive"}), 200
 
 @auth.verify_password
-def verify_password(user_id, password):
-    return user_id
+async def verify_password(user_id, password):    
+    if user_id is None:
+        return jsonify(
+            error="Missing email address!",
+            message="The request is missing the 'email' parameter. Please provide a valid email address to proceed.",
+        ), HTTPStatus.BAD_REQUEST
+    
+    cursor = CONN.cursor()
+    user = await datastore.get_user(cursor, user_id)
+    
+    if user is None:
+        return jsonify(
+            error="Unknown user!",
+            message="The email provided does not match with any known user.",
+        ), HTTPStatus.UNAUTHORIZED
+    
+    return user.email
 
 @app.route('/forms', methods=['POST'])
 @auth.login_required
