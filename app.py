@@ -139,10 +139,7 @@ def search():
     # Database cursor
     cursor = conn.cursor()
 
-    # We retreive the user_id since its what is used for the login.
-    # Currently it is analogous to the email.
-    user_id = request.args.get('user_id')
-
+    # The search query used to find the label.
     query = SearchQuery(**request.args)
 
     # TO-DO Send that search query to the datastore
