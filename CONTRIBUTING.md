@@ -122,7 +122,7 @@ FRONTEND_URL=http://url.to_frontend/
 
 ### Git Commit Messages
 
-Follow the [conventional commit](https://www.conventionalcommits.org/en/v1.0.0/) specification.
+<https://www.conventionalcommits.org/en/v1.0.0/>
 
 ## Additional Resources
 
