@@ -21,10 +21,10 @@ load_dotenv()
 # Create a real database connection
 FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA", "fertiscan_0.0.8")
 FERTISCAN_DB_URL = os.getenv("FERTISCAN_DB_URL")
-conn = datastore.db.connect_db(conn_str=FERTISCAN_DB_URL, schema=FERTISCAN_SCHEMA)
+CONN = datastore.db.connect_db(conn_str=FERTISCAN_DB_URL, schema=FERTISCAN_SCHEMA)
 
 # Set the connection string as an environment variable
-connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 
 # Set up logging
 log_file_path = './logs/app.log'
@@ -69,20 +69,30 @@ def ping():
     return jsonify({"message": "Service is alive"}), 200
 
 @auth.verify_password
-def verify_password(user_id, password):
+async def verify_password(user_id, password):    
     if user_id is None:
         return jsonify(
             error="Missing email address!",
             message="The request is missing the 'email' parameter. Please provide a valid email address to proceed.",
         ), HTTPStatus.BAD_REQUEST
-    return user_id
+    
+    cursor = CONN.cursor()
+    user = await datastore.get_user(cursor, user_id)
+    
+    if user is None:
+        return jsonify(
+            error="Unknown user!",
+            message="The email provided does not match with any known user.",
+        ), HTTPStatus.UNAUTHORIZED
+    
+    return user.email
 
 @app.route('/forms', methods=['POST'])
 @auth.login_required
 @swag_from('docs/swagger/create_form.yaml')
 async def create_form():
     # Database cursor
-    cursor = conn.cursor()
+    cursor = CONN.cursor()
 
     username = auth.username()
     if username is None:
@@ -92,7 +102,7 @@ async def create_form():
     user = await datastore.get_user(cursor, username)
     user_id = user.id
     container_client = datastore.ContainerClient.from_connection_string(
-        connection_string, container_name=f"user-{user_id}"
+        CONNECTION_STRING, container_name=f"user-{user_id}"
     )
 
     # Get JSON form from the request
@@ -137,7 +147,7 @@ def discard_form(form_id):
 @swag_from('docs/swagger/search_form.yaml')
 def search():
     # Database cursor
-    cursor = conn.cursor()
+    cursor = CONN.cursor()
 
     # The search query used to find the label.
     query = SearchQuery(**request.args)
