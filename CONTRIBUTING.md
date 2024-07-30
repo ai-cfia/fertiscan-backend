@@ -1,6 +1,8 @@
 # CONTRIBUTING.md
 
-Thank you for your interest in contributing to the FertiScan backend project! Your contributions help make this project better for everyone. This guide will help you get started with contributing.
+Thank you for your interest in contributing to the FertiScan backend project!
+ Your contributions help make this project better for everyone.
+ This guide will help you get started with contributing.
 
 ## Table of Contents
 
@@ -21,17 +23,21 @@ Thank you for your interest in contributing to the FertiScan backend project! Yo
 
 ## Code of Conduct
 
-This project adheres to the ~~Contributor Covenant~~ Code of Conduct. By participating, you are expected to uphold this code. Please report any unacceptable behavior to [insert contact email].
+This project adheres to the ~~Contributor Covenant~~ Code of Conduct.
+ By participating, you are expected to uphold this code.
+  Please report any unacceptable behavior to [insert contact email].
 
 ## How to Contribute
 
 ### Reporting Bugs
 
-If you find a bug, please create an issue and provide detailed information about the bug, including steps to reproduce it, the expected behavior, and the actual behavior.
+If you find a bug, please create an issue and provide detailed information about the bug,
+ including steps to reproduce it, the expected behavior, and the actual behavior.
 
 ### Suggesting Enhancements
 
-We welcome suggestions for new features and enhancements. Please create an issue to discuss your ideas and explain the benefits and potential use cases.
+We welcome suggestions for new features and enhancements.
+ Please create an issue to discuss your ideas and explain the benefits and potential use cases.
 
 ### Submitting Pull Requests
 
