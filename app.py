@@ -1,6 +1,7 @@
 import os
 import logging
 import datastore.db
+import datastore.db.queries.user
 
 from http import HTTPStatus
 from dotenv import load_dotenv
@@ -78,16 +79,17 @@ async def verify_password(user_id, password):
         ), HTTPStatus.BAD_REQUEST
     
     cursor = CONN.cursor()
+
     # Check if the user exists in the database
-    user = await datastore.get_user(cursor, user_id)
+    is_user_id = datastore.db.queries.user.is_a_user_id(cursor, user_id)
     
-    if user is None:
+    if is_user_id:
         return jsonify(
             error="Unknown user!",
             message="The email provided does not match with any known user.",
         ), HTTPStatus.UNAUTHORIZED
     
-    return user.email
+    return user_id
 
 @app.route('/forms', methods=['POST'])
 @auth.login_required
