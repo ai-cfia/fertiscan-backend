@@ -17,7 +17,7 @@ class APITestCase(unittest.TestCase):
         response = test_client.get('/ping', headers=self.headers)
         self.assertEqual(response.status_code, 200)
 
-    def test_create_form(self):
+    async def test_create_form(self):
         response = test_client.post('/forms', headers=self.headers)
         self.assertEqual(response.status_code, 201)
         self.assertIn('form_id', response.json)
@@ -33,8 +33,8 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 503)  # Service Unavailable
 
     def test_get_form(self):
-        form_id = "some_form_id"
-        response = test_client.get(f'/forms/{form_id}', headers=self.headers)
+        headers = { **self.headers, 'label_id': 'some_label_id' }
+        response = test_client.get('/forms', headers=headers)
         self.assertEqual(response.status_code, 503)  # Service Unavailable
 
     def test_analyze_document_no_files(self):

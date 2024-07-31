@@ -1,8 +1,7 @@
 import os
 import logging
 import datastore.db
-import datastore.db.queries
-import datastore.db.queries.inference
+from datastore.db.queries import user, inspection
 
 from backend import SearchQuery
 from http import HTTPStatus
@@ -73,7 +72,7 @@ def ping():
     return jsonify({"message": "Service is alive"}), 200
 
 @auth.verify_password
-async def verify_password(user_id, password):    
+def verify_password(user_id, password):    
     if user_id is None:
         return jsonify(
             error="Missing email address!",
@@ -83,7 +82,13 @@ async def verify_password(user_id, password):
     cursor = CONN.cursor()
 
     # Check if the user exists in the database
-    is_user_id = datastore.db.queries.user.is_a_user_id(cursor, user_id)
+    try:
+        is_user_id = user.is_a_user_id(cursor, user_id)
+    except Exception as e:
+        return jsonify(
+            error="Authentication error!",
+            message=str(e),
+        ), HTTPStatus.INTERNAL_SERVER_ERROR
     
     if is_user_id:
         return jsonify(
@@ -105,8 +110,8 @@ async def create_form():
         return jsonify(error="Missing username!"), HTTPStatus.BAD_REQUEST
     
     # Sample userId from the database
-    user = await datastore.get_user(cursor, username)
-    user_id = user.id
+    db_user = await datastore.get_user(cursor, username)
+    user_id = db_user.id
     container_client = datastore.ContainerClient.from_connection_string(
         CONNECTION_STRING, container_name=f"user-{user_id}"
     )
@@ -156,10 +161,13 @@ def search():
     cursor = CONN.cursor()
 
     # The search query used to find the label.
-    query = SearchQuery(**request.args)
+    user_id = request.args.get('user_id')
+    label_id = request.args.get('label_id')
+    query = SearchQuery(user_id=user_id, label_id=label_id)
+
 
     # TO-DO Send that search query to the datastore
-    inspections = datastore.db.queries.inspection.get_all_user_inspection(cursor, query.user_id)
+    inspections = inspection.get_all_user_inspection(cursor, query.user_id)
     return jsonify(inspections), HTTPStatus.OK
 
 @app.route('/analyze', methods=['POST'])
