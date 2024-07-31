@@ -27,16 +27,20 @@ CONN = datastore.db.connect_db(conn_str=FERTISCAN_DB_URL, schema=FERTISCAN_SCHEM
 CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 
 # Set up logging
-log_file_path = './logs/app.log'
-if not os.path.exists(os.path.dirname(log_file_path)):
-    os.mkdir(os.path.dirname(log_file_path))
+log_dir = os.path.join('.', 'logs')
+log_file_path = os.path.join(log_dir, 'app.log')
 
+# Create the directory if it doesn't exist
+os.makedirs(log_dir, exist_ok=True)
+
+# Set up logging configuration
 logging.basicConfig(
     filename=log_file_path,
     level=logging.INFO,
     force=True,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+
 logger = logging.getLogger(__name__)
 
 # Ensure the directory for uploaded images exists
@@ -77,6 +81,7 @@ async def verify_password(user_id, password):
         ), HTTPStatus.BAD_REQUEST
     
     cursor = CONN.cursor()
+    # Check if the user exists in the database
     user = await datastore.get_user(cursor, user_id)
     
     if user is None:
