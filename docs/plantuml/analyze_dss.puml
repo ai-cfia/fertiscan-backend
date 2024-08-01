@@ -12,7 +12,6 @@ participant "OpenAI" as O<<GPT-4>>
 end box
 
 
-
 -> BE: POST /analyze
 note right
     "images=@/path/to/file"
