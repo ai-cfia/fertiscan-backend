@@ -14,6 +14,7 @@ end box
 
 
 
+
 -> BE: POST /analyze
 note right
     "images=@/path/to/file"
