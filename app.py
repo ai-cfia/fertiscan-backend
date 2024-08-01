@@ -1,7 +1,7 @@
 import os
 import logging
+import asyncio
 import datastore.db
-from datastore.db.queries import user, inspection
 
 from backend import SearchQuery
 from http import HTTPStatus
@@ -13,6 +13,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flasgger import Swagger, swag_from
 from pipeline import OCR, GPT, LabelStorage, analyze
+from datastore.db.queries import user, inspection
 
 # Load environment variables
 load_dotenv()
@@ -101,7 +102,7 @@ def verify_password(user_id, password):
 @app.route('/forms', methods=['POST'])
 @auth.login_required
 @swag_from('docs/swagger/create_form.yaml')
-async def create_form():
+def create_form():
     # Database cursor
     cursor = CONN.cursor()
 
@@ -110,32 +111,37 @@ async def create_form():
         return jsonify(error="Missing username!"), HTTPStatus.BAD_REQUEST
     
     # Sample userId from the database
-    db_user = await datastore.get_user(cursor, username)
-    user_id = db_user.id
-    container_client = datastore.ContainerClient.from_connection_string(
-        CONNECTION_STRING, container_name=f"user-{user_id}"
-    )
+    try:
+        db_user = asyncio.run(datastore.get_user(cursor, username))
+        
+        user_id = db_user.id
+        container_client = datastore.ContainerClient.from_connection_string(
+            CONNECTION_STRING, container_name=f"user-{user_id}"
+        )
 
-    # Get JSON form from the request
-    form = request.json
-    if form is None:
-        return jsonify(error="Missing fertiliser form!"), HTTPStatus.BAD_REQUEST
-    
-    files = request.files.getlist('images')
+        # Get JSON form from the request
+        form = request.json
+        if form is None:
+            return jsonify(error="Missing fertiliser form!"), HTTPStatus.BAD_REQUEST
+        
+        files = request.files.getlist('images')
 
-    # Collect files in a list
-    images = []
-    for file in files:
-        if file:
-            images.append(file.stream.read())
-    
-    analysis = await datastore.register_analysis(
-        cursor=cursor,
-        container_client=container_client,
-        analysis_dict=form,
-        image=images
-    )
-    return jsonify({"message": "Form created successfully", "form_id": analysis["analysis_id"]}), HTTPStatus.CREATED
+        # Collect files in a list
+        images = []
+        for file in files:
+            if file:
+                images.append(file.stream.read())
+        
+        analysis = asyncio.run(datastore.register_analysis(
+            cursor=cursor,
+            container_client=container_client,
+            analysis_dict=form,
+            image=images
+        ))
+        return jsonify({"message": "Form created successfully", "form_id": analysis["analysis_id"]}), HTTPStatus.CREATED
+    except Exception as err:
+        logger.error(f"datastore: {err}")
+        return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 @app.route('/forms/<form_id>', methods=['PUT'])
 @auth.login_required
@@ -167,8 +173,12 @@ def search():
 
 
     # TO-DO Send that search query to the datastore
-    inspections = inspection.get_all_user_inspection(cursor, query.user_id)
-    return jsonify(inspections), HTTPStatus.OK
+    try:
+        inspections = inspection.get_all_user_inspection(cursor, query.user_id)
+        return jsonify(inspections), HTTPStatus.OK
+    except Exception as err:
+        logger.error(f"datastore: {err}")
+        return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 @app.route('/analyze', methods=['POST'])
 @swag_from('docs/swagger/analyze_document.yaml')
@@ -197,7 +207,7 @@ def analyze_document():
             mimetype="application/json"
         )
     except ValueError as err:
-        logger.error(f"document: {err}")
+        logger.error(f"images: {err}")
         return jsonify(error=str(err)), HTTPStatus.BAD_REQUEST
     except HttpResponseError as err:
         logger.error(f"azure: {err.message}")
