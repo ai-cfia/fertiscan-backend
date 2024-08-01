@@ -12,7 +12,6 @@ jobs:
     uses: ai-cfia/github-workflows/.github/workflows/workflow-lint-test-python.yml@main
     secrets: inherit
 
-
   markdown-check:
     uses: ai-cfia/github-workflows/.github/workflows/workflow-markdown-check.yml@main
     secrets: inherit
@@ -27,4 +26,8 @@ jobs:
       container-name: ${{ github.event.repository.name }}
       tag: ${{ github.sha }}
       registry: ghcr.io/ai-cfia
+    secrets: inherit
+  
+  pr-labelling:
+    uses: ai-cfia/github-workflows/.github/workflows/workflow-pr-labelling.yml@135-automate-release-creation-with-changelog
     secrets: inherit
