@@ -72,3 +72,5 @@ Remove all transient states of a form.
 Retrieve the latest state of a form from the database.
 
 ![get](../out/search_form_dss/FertiScan%20Sequence%20Diagram.png)
+
+v1.0.0

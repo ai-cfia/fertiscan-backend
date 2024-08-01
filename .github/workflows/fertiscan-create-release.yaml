@@ -1,0 +1,14 @@
+name: Fertiscan create release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  create-release-build-and-push-to-ghcr:
+    uses: ai-cfia/github-workflows/.github/workflows/workflow-create-release.yml@main
+    with:
+      registry: ghcr.io/ai-cfia
+      artifact-name: ${{ github.event.repository.name }}
+    secrets: inherit
