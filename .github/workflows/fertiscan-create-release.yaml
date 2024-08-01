@@ -7,7 +7,7 @@ on:
 
 jobs:
   create-release-build-and-push-to-ghcr:
-    uses: ai-cfia/github-workflows/.github/workflows/workflow-create-release.yml@135-automate-release-creation-with-changelog
+    uses: ai-cfia/github-workflows/.github/workflows/workflow-create-release.yml@main
     with:
       registry: ghcr.io/ai-cfia
       artifact-name: ${{ github.event.repository.name }}
