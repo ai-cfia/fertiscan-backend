@@ -11,6 +11,7 @@ participant "Document Intelligence" as D
 participant "OpenAI" as O<<GPT-4>>
 end box
 
+
 -> BE: POST /analyze
 note right
     "images=@/path/to/file"
