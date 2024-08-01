@@ -29,5 +29,5 @@ jobs:
     secrets: inherit
   
   pr-labelling:
-    uses: ai-cfia/github-workflows/.github/workflows/workflow-pr-labelling.yml@135-automate-release-creation-with-changelog
+    uses: ai-cfia/github-workflows/.github/workflows/workflow-pr-labelling.yml@main
     secrets: inherit
