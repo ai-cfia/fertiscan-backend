@@ -1,4 +1,4 @@
-# fertiscan-backend
+# Festiscan backend
 
 FertiScan helps inspectors analyze and process fertilizer labels by extracting text
 and generating structured forms.
