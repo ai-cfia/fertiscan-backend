@@ -1,5 +1,6 @@
+import os
 import unittest
-import os, datastore
+import datastore
 
 from io import BytesIO
 from app import app
