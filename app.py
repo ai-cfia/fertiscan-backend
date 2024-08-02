@@ -140,6 +140,7 @@ def create_form():
         ))
         return jsonify({"message": "Form created successfully", "form_id": analysis["analysis_id"]}), HTTPStatus.CREATED
     except Exception as err:
+        CONN.rollback()
         logger.error(f"datastore: {err}")
         return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -163,20 +164,21 @@ def discard_form(form_id):
 @auth.login_required
 @swag_from('docs/swagger/search_form.yaml')
 def search():
-    # Database cursor
-    cursor = CONN.cursor()
-
-    # The search query used to find the label.
-    user_id = request.args.get('user_id')
-    label_id = request.args.get('label_id')
-    query = SearchQuery(user_id=user_id, label_id=label_id)
-
-
-    # TO-DO Send that search query to the datastore
     try:
+        # Database cursor
+        cursor = CONN.cursor()
+
+        # The search query used to find the label.
+        user_id = request.args.get('user_id')
+        label_id = request.args.get('label_id')
+        query = SearchQuery(user_id=user_id, label_id=label_id)
+
+
+        # TO-DO Send that search query to the datastore
         inspections = inspection.get_all_user_inspection(cursor, query.user_id)
         return jsonify(inspections), HTTPStatus.OK
     except Exception as err:
+        CONN.rollback()
         logger.error(f"datastore: {err}")
         return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
