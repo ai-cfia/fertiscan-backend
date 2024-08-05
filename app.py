@@ -29,7 +29,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Ensure the directory for uploaded images exists
-UPLOAD_FOLDER = os.getenv('UPLOAD_PATH')
+UPLOAD_FOLDER = os.getenv('UPLOAD_PATH', 'uploads')
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 FRONTEND_URL = os.getenv('FRONTEND_URL')
