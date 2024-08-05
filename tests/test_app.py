@@ -18,7 +18,7 @@ class APITestCase(unittest.TestCase):
 
     def test_ping(self):
         response = test_client.get('/ping', headers=self.headers)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.json)
 
     def test_conn(self):
         # Create a real database connection
@@ -32,27 +32,27 @@ class APITestCase(unittest.TestCase):
 
     def test_create_form(self):
         response = test_client.post('/forms', headers=self.headers)
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 201, response.json)
         self.assertIn('form_id', response.json)
 
     def test_update_form(self):
         form_id = "some_form_id"
         response = test_client.put(f'/forms/{form_id}', headers=self.headers, json={"form_data": {"key": "value"}})
-        self.assertEqual(response.status_code, 503)  # Service Unavailable
+        self.assertEqual(response.status_code, 503, response.json)  # Service Unavailable
 
     def test_discard_form(self):
         form_id = "some_form_id"
         response = test_client.delete(f'/forms/{form_id}', headers=self.headers)
-        self.assertEqual(response.status_code, 503)  # Service Unavailable
+        self.assertEqual(response.status_code, 503, response.json)  # Service Unavailable
 
     def test_get_form(self):
         headers = { **self.headers, 'label_id': 'some_label_id' }
         response = test_client.get('/forms', headers=headers)
-        self.assertEqual(response.status_code, 503)  # Service Unavailable
+        self.assertEqual(response.status_code, 503, response.json)  # Service Unavailable
 
     def test_analyze_document_no_files(self):
         response = test_client.post('/analyze', headers=self.headers)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 400, response.json)
 
     def test_analyze_invalid_document(self):
         # Create a sample file to upload
@@ -67,7 +67,7 @@ class APITestCase(unittest.TestCase):
         )
 
         # Document Intelligence throws an error
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 500, response.json)
         self.assertIn('error', response.json)
 
     @patch('app.gpt.generate_form')
@@ -86,7 +86,7 @@ class APITestCase(unittest.TestCase):
             data=data
         )
 
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 500, response.json)
         self.assertIn('error', response.json)
     def tearDown(self):
         """Executed after reach test"""
