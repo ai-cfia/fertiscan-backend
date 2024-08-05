@@ -13,8 +13,8 @@ class APITestCase(unittest.TestCase):
             'Authorization': 'Basic ' + 'user1:password1'
         }
 
-    def test_ping(self):
-        response = test_client.get('/ping', headers=self.headers)
+    def test_health(self):
+        response = test_client.get('/health', headers=self.headers)
         self.assertEqual(response.status_code, 200)
 
     def test_create_form(self):
