@@ -8,7 +8,7 @@ from flask_httpauth import HTTPBasicAuth
 from azure.core.exceptions import HttpResponseError
 from werkzeug.utils import secure_filename
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import cross_origin
 from flasgger import Swagger, swag_from
 from pipeline import OCR, GPT, LabelStorage, analyze
 
@@ -50,7 +50,8 @@ ocr = OCR(api_endpoint=API_ENDPOINT, api_key=API_KEY)
 OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
 OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
 OPENAI_API_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT')
-gpt = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment=OPENAI_API_DEPLOYMENT)
+gpt = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment_id=OPENAI_API_DEPLOYMENT)
+
 
 @app.route('/ping', methods=['GET'])
 @swag_from('docs/swagger/ping.yaml')
@@ -63,6 +64,7 @@ def verify_password(user_id, password):
 
 @app.route('/forms', methods=['POST'])
 @auth.login_required
+@cross_origin(origins=FRONTEND_URL)
 @swag_from('docs/swagger/create_form.yaml')
 def create_form():
     form_id = uuid.uuid4()
@@ -91,7 +93,7 @@ def get_form(form_id):
 def analyze_document():
     try:
         files = request.files.getlist('images')
-        
+
         if not files:
             raise ValueError("No files provided for analysis")
 
@@ -131,8 +133,4 @@ def internal_error(error): # pragma: no cover
     return jsonify(error=str(error)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 if __name__ == "__main__":
-    # CORS configuration limited to the frontend URL
-    cors = CORS(app, resources={"*", FRONTEND_URL})
-    app.config['CORS_HEADERS'] = 'Content-Type'
-
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='localhost', debug=True)
