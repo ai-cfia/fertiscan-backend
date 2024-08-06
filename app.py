@@ -173,7 +173,6 @@ def search():
         label_id = request.args.get('label_id')
         query = SearchQuery(user_id=user_id, label_id=label_id)
 
-
         # TO-DO Send that search query to the datastore
         inspections = inspection.get_all_user_inspection(cursor, query.user_id)
         return jsonify(inspections), HTTPStatus.OK
