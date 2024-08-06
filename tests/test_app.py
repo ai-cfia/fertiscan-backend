@@ -3,7 +3,7 @@ import unittest
 import datastore
 
 from io import BytesIO
-from app import app
+from app import app, CONN
 from unittest.mock import patch, MagicMock
 
 test_client = app.test_client()
@@ -90,6 +90,7 @@ class APITestCase(unittest.TestCase):
         self.assertIn('error', response.json)
     def tearDown(self):
         """Executed after reach test"""
+        CONN.rollback()
         app.testing = False
 
 if __name__ == '__main__':

@@ -65,7 +65,7 @@ ocr = OCR(api_endpoint=API_ENDPOINT, api_key=API_KEY)
 OPENAI_API_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
 OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
 OPENAI_API_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT')
-gpt = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment=OPENAI_API_DEPLOYMENT)
+gpt = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment_id=OPENAI_API_DEPLOYMENT)
 
 @app.route('/ping', methods=['GET'])
 @swag_from('docs/swagger/ping.yaml')
