@@ -23,9 +23,8 @@ Thank you for your interest in contributing to the FertiScan backend project!
 
 ## Code of Conduct
 
-This project adheres to the ~~Contributor Covenant~~ [Code of Conduct](https://www.canada.ca/fr/gouvernement/systeme/gouvernement-numerique/normes-numeriques-gouvernement-canada.html).
+This project adheres to the [Code of Conduct](https://www.canada.ca/fr/gouvernement/systeme/gouvernement-numerique/normes-numeriques-gouvernement-canada.html).
  By participating, you are expected to uphold this code.
-  ~~Please report any unacceptable behavior to [insert contact email]~~.
 
 ## How to Contribute
 
