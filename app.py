@@ -144,15 +144,38 @@ def create_form():
         logger.error(f"datastore: {err}")
         return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
-@app.route('/forms/<form_id>', methods=['PUT'])
+@app.route('/forms/<inspection_id>', methods=['PUT'])
 @auth.login_required
 @swag_from('docs/swagger/update_form.yaml')
-def update_form(form_id):
-    form = request.json
-    if form is None:
-        return jsonify(error="Missing fertiliser form!"), HTTPStatus.BAD_REQUEST
+def update_form(inspection_id):
+   # Database cursor
+    cursor = CONN.cursor()
+
+    username = auth.username()
+    if username is None:
+        return jsonify(error="Missing username!"), HTTPStatus.BAD_REQUEST
     
-    return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
+    # Sample userId from the database
+    try:
+        # Get JSON form from the request
+        inspection = request.json
+        if inspection is None:
+            return jsonify(error="Missing fertiliser form!"), HTTPStatus.BAD_REQUEST
+        
+        inspection = request.json
+        
+        inspection = asyncio.run(datastore.update_inspection(
+            cursor=cursor,
+            inspection_id,
+            username,
+            inspection # Might need to change to match the schema 
+        ))
+        return jsonify({"message": "Form successfully updated!", "inspection": inspection}), HTTPStatus.OK
+    except Exception as err:
+        CONN.rollback()
+        logger.error(f"datastore: {err}")
+        return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
+
 
 @app.route('/forms/<form_id>', methods=['DELETE'])
 @auth.login_required
