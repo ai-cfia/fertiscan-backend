@@ -132,7 +132,7 @@ def create_form():
             if file:
                 images.append(file.stream.read())
         
-        analysis = asyncio.run(datastore.register_analysis(
+        analysis = asyncio.run(datastore.fertiscan.register_analysis(
             cursor=cursor,
             container_client=container_client,
             analysis_dict=form,
@@ -164,7 +164,7 @@ def update_form(inspection_id):
         
         inspection = request.json
         
-        inspection = asyncio.run(datastore.update_inspection(
+        inspection = asyncio.run(datastore.fertiscan.update_inspection(
             cursor=cursor,
             inspection_id,
             username,
