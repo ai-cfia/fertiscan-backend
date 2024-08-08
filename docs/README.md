@@ -39,9 +39,13 @@ In essence, the `/analyze` route automates the
 
 - **Description**: The database where the
  information on fertiliser and labels is stored.
-- **Repository**: <https://github.com/ai-cfia/nachet-datastore/>
+- **Repository**: <https://github.com/ai-cfia/ailab-datastore/>
 
 ## API Endpoints
+
+### `GET /health`
+
+Check if the service is still alive.
 
 ### `POST /analyze`
 
