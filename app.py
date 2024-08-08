@@ -29,7 +29,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Ensure the directory for uploaded images exists
-UPLOAD_FOLDER = os.getenv('UPLOAD_PATH')
+UPLOAD_FOLDER = os.getenv('UPLOAD_PATH', 'uploads')
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 FRONTEND_URL = os.getenv('FRONTEND_URL')
@@ -52,10 +52,9 @@ OPENAI_API_KEY = os.getenv('AZURE_OPENAI_KEY')
 OPENAI_API_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT')
 gpt = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment_id=OPENAI_API_DEPLOYMENT)
 
-
-@app.route('/ping', methods=['GET'])
-@cross_origin(origins=FRONTEND_URL)
+@app.route('/health', methods=['GET'])
 @swag_from('docs/swagger/ping.yaml')
+@cross_origin(origins='*')
 def ping():
     return jsonify({"message": "Service is alive"}), 200
 
@@ -93,7 +92,7 @@ def get_form(form_id):
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/analyze', methods=['POST'])
-@cross_origin(origins=FRONTEND_URL)
+@cross_origin(origins='*')
 @swag_from('docs/swagger/analyze_document.yaml')
 def analyze_document():
     try:
