@@ -64,7 +64,7 @@ def verify_password(user_id, password):
 
 @app.route('/forms', methods=['POST'])
 @auth.login_required
-@cross_origin(origins=FRONTEND_URL)
+@cross_origin(origins='*')
 @swag_from('docs/swagger/create_form.yaml')
 def create_form():
     form_id = uuid.uuid4()
