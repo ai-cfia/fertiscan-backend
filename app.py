@@ -165,7 +165,7 @@ def update_form(inspection_id):
         inspection = request.json
         
         inspection = asyncio.run(datastore.fertiscan.update_inspection(
-            cursor=cursor,
+            cursor,
             inspection_id,
             username,
             inspection # Might need to change to match the schema 
