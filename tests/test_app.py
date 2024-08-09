@@ -57,7 +57,7 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 500)
         self.assertIn('error', response.json)
 
-    @patch('app.gpt.generate_form')
+    @patch('app.gpt.create_inspection')
     @patch('app.ocr.extract_text')
     def test_analyze_document_gpt_error(self, mock_ocr, mock_gpt):
         mock_ocr.return_value = MagicMock(content="OCR result")
