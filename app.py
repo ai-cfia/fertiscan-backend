@@ -24,7 +24,7 @@ logging.basicConfig(
     filename=log_file_path,
     level=logging.INFO,
     force=True,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    inspectionat='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
@@ -61,29 +61,29 @@ def ping():
 def verify_password(user_id, password):
     return user_id
 
-@app.route('/forms', methods=['POST'])
+@app.route('/inspections', methods=['POST'])
 @auth.login_required
-@swag_from('docs/swagger/create_form.yaml')
-def create_form():
-    form_id = uuid.uuid4()
-    return jsonify({"message": "Form created successfully", "form_id": form_id}), HTTPStatus.CREATED
+@swag_from('docs/swagger/create_inspection.yaml')
+def create_inspection():
+    inspection_id = uuid.uuid4()
+    return jsonify({"message": "Form created successfully", "inspection_id": inspection_id}), HTTPStatus.CREATED
 
-@app.route('/forms/<form_id>', methods=['PUT'])
+@app.route('/inspections/<inspection_id>', methods=['PUT'])
 @auth.login_required
-@swag_from('docs/swagger/update_form.yaml')
-def update_form(form_id):
+@swag_from('docs/swagger/update_inspection.yaml')
+def update_inspection(inspection_id):
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
-@app.route('/forms/<form_id>', methods=['DELETE'])
+@app.route('/inspections/<inspection_id>', methods=['DELETE'])
 @auth.login_required
-@swag_from('docs/swagger/discard_form.yaml')
-def discard_form(form_id):
+@swag_from('docs/swagger/discard_inspection.yaml')
+def discard_inspection(inspection_id):
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
-@app.route('/forms/<form_id>', methods=['GET'])
+@app.route('/inspections/<inspection_id>', methods=['GET'])
 @auth.login_required
-@swag_from('docs/swagger/get_form.yaml')
-def get_form(form_id):
+@swag_from('docs/swagger/get_inspection.yaml')
+def get_inspection(inspection_id):
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/analyze', methods=['POST'])
@@ -105,10 +105,10 @@ def analyze_document():
                 file.save(file_path)
                 label_storage.add_image(file_path)
 
-        form = analyze(label_storage, ocr, gpt)
+        inspection = analyze(label_storage, ocr, gpt)
 
         return app.response_class(
-            response=form.model_dump_json(indent=2),
+            response=inspection.model_dump_json(indent=2),
             status=HTTPStatus.OK,
             mimetype="application/json"
         )
