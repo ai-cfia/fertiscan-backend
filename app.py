@@ -1,6 +1,7 @@
 import os
 import logging
 import asyncio
+import datastore.bin.new_user
 import datastore.db
 
 from backend import SearchQuery
@@ -72,9 +73,30 @@ gpt = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment_i
 def ping():
     return jsonify({"message": "Service is alive"}), 200
 
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.form.get('username')
+    password = request.form.get('password')
+    
+    return verify_password(username, password)
+
+
+@app.route('/signup', methods=['POST'])
+def signup():
+    username = request.form.get('username')
+    password = request.form.get('password')
+    
+    cursor = CONN.cursor()
+
+    try:
+        user.register_user(cursor, username)
+        return jsonify({"message": "User registered successfully"}), 201
+    except Exception as e:
+        return jsonify({"message": str(e)}), 400
+
 @auth.verify_password
-def verify_password(user_id, password):    
-    if user_id is None:
+def verify_password(username, password):    
+    if username is None:
         return jsonify(
             error="Missing email address!",
             message="The request is missing the 'email' parameter. Please provide a valid email address to proceed.",
@@ -84,7 +106,7 @@ def verify_password(user_id, password):
 
     # Check if the user exists in the database
     try:
-        is_user_id = user.is_a_user_id(cursor, user_id)
+        is_user_id = user.is_a_user_id(cursor, username)
     except Exception as e:
         return jsonify(
             error="Authentication error!",
@@ -97,7 +119,7 @@ def verify_password(user_id, password):
             message="The email provided does not match with any known user.",
         ), HTTPStatus.UNAUTHORIZED
     
-    return user_id
+    return username
 
 @app.route('/forms', methods=['POST'])
 @auth.login_required
