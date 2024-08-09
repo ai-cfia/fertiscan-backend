@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from flask_httpauth import HTTPBasicAuth
 from azure.core.exceptions import HttpResponseError
 from werkzeug.utils import secure_filename
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 from flasgger import Swagger, swag_from
 from pipeline import OCR, GPT, LabelStorage, analyze
@@ -60,6 +60,32 @@ def ping():
 @auth.verify_password
 def verify_password(user_id, password):
     return user_id
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    # Replace with your user authentication logic
+    if username == 'valid_user' and password == 'valid_password':
+        session['username'] = username
+        return jsonify({"message": "Login successful"}), 200
+    else:
+        return jsonify({"message": "Invalid credentials"}), 401
+
+
+@app.route('/signup', methods=['POST'])
+def signup():
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    # Replace with your user creation logic
+    if username and password:
+        # Save user to the database
+        return jsonify({"message": "User registered successfully"}), 201
+    else:
+        return jsonify({"message": "Missing username or password"}), 400
 
 @app.route('/forms', methods=['POST'])
 @auth.login_required
