@@ -12,7 +12,8 @@ database SQL as DB
 -> BE: PUT /forms/form_id
 note right BE
   Authorization: Basic
-  Content: JSON (Form)
+  Content-Type: application/json
+  Content: Form
 end note
 alt form.confirm == true
   BE -> DS: submit_final_form()

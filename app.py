@@ -1,7 +1,9 @@
 import os
 import logging
-import uuid
+import asyncio
+import datastore.db
 
+from backend import SearchQuery
 from http import HTTPStatus
 from dotenv import load_dotenv
 from flask_httpauth import HTTPBasicAuth
@@ -11,21 +13,34 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flasgger import Swagger, swag_from
 from pipeline import OCR, GPT, LabelStorage, analyze
+from datastore.db.queries import user, inspection
 
 # Load environment variables
 load_dotenv()
 
-# Set up logging
-log_file_path = './logs/app.log'
-if not os.path.exists(os.path.dirname(log_file_path)):
-    os.mkdir(os.path.dirname(log_file_path))
+# Create a real database connection
+FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA", "fertiscan_0.0.8")
+FERTISCAN_DB_URL = os.getenv("FERTISCAN_DB_URL")
+CONN = datastore.db.connect_db(conn_str=FERTISCAN_DB_URL, schema=FERTISCAN_SCHEMA)
 
+# Set the connection string as an environment variable
+CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+
+# Set up logging
+log_dir = os.path.join('.', 'logs')
+log_file_path = os.path.join(log_dir, 'app.log')
+
+# Create the directory if it doesn't exist
+os.makedirs(log_dir, exist_ok=True)
+
+# Set up logging configuration
 logging.basicConfig(
     filename=log_file_path,
     level=logging.INFO,
     force=True,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+
 logger = logging.getLogger(__name__)
 
 # Ensure the directory for uploaded images exists
@@ -58,21 +73,109 @@ def ping():
     return jsonify({"message": "Service is alive"}), 200
 
 @auth.verify_password
-def verify_password(user_id, password):
+def verify_password(user_id, password):    
+    if user_id is None:
+        return jsonify(
+            error="Missing email address!",
+            message="The request is missing the 'email' parameter. Please provide a valid email address to proceed.",
+        ), HTTPStatus.BAD_REQUEST
+    
+    cursor = CONN.cursor()
+
+    # Check if the user exists in the database
+    try:
+        is_user_id = user.is_a_user_id(cursor, user_id)
+    except Exception as e:
+        return jsonify(
+            error="Authentication error!",
+            message=str(e),
+        ), HTTPStatus.INTERNAL_SERVER_ERROR
+    
+    if is_user_id:
+        return jsonify(
+            error="Unknown user!",
+            message="The email provided does not match with any known user.",
+        ), HTTPStatus.UNAUTHORIZED
+    
     return user_id
 
 @app.route('/forms', methods=['POST'])
 @auth.login_required
 @swag_from('docs/swagger/create_form.yaml')
 def create_form():
-    form_id = uuid.uuid4()
-    return jsonify({"message": "Form created successfully", "form_id": form_id}), HTTPStatus.CREATED
+    # Database cursor
+    cursor = CONN.cursor()
 
-@app.route('/forms/<form_id>', methods=['PUT'])
+    username = auth.username()
+    if username is None:
+        return jsonify(error="Missing username!"), HTTPStatus.BAD_REQUEST
+    
+    # Sample userId from the database
+    try:
+        db_user = asyncio.run(datastore.get_user(cursor, username))
+        
+        user_id = db_user.id
+        container_client = datastore.ContainerClient.from_connection_string(
+            CONNECTION_STRING, container_name=f"user-{user_id}"
+        )
+
+        # Get JSON form from the request
+        form = request.json
+        if form is None:
+            return jsonify(error="Missing fertiliser form!"), HTTPStatus.BAD_REQUEST
+        
+        files = request.files.getlist('images')
+
+        # Collect files in a list
+        images = []
+        for file in files:
+            if file:
+                images.append(file.stream.read())
+        
+        analysis = asyncio.run(datastore.fertiscan.register_analysis(
+            cursor=cursor,
+            container_client=container_client,
+            analysis_dict=form,
+            image=images
+        ))
+        return jsonify({"message": "Form created successfully", "form_id": analysis["analysis_id"]}), HTTPStatus.CREATED
+    except Exception as err:
+        CONN.rollback()
+        logger.error(f"datastore: {err}")
+        return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
+
+@app.route('/forms/<inspection_id>', methods=['PUT'])
 @auth.login_required
 @swag_from('docs/swagger/update_form.yaml')
-def update_form(form_id):
-    return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
+def update_form(inspection_id):
+   # Database cursor
+    cursor = CONN.cursor()
+
+    username = auth.username()
+    if username is None:
+        return jsonify(error="Missing username!"), HTTPStatus.BAD_REQUEST
+    
+    # Sample userId from the database
+    try:
+        # Get JSON form from the request
+        inspection = request.json
+        if inspection is None:
+            return jsonify(error="Missing fertiliser form!"), HTTPStatus.BAD_REQUEST
+        
+        inspection = request.json
+        
+        inspection = asyncio.run(datastore.fertiscan.update_inspection(
+            cursor,
+            inspection_id,
+            username,
+            inspection # Might need to change to match the schema 
+        ))
+        return jsonify({"message": "Form successfully updated!", "inspection": inspection}), HTTPStatus.OK
+    except Exception as err:
+        CONN.rollback()
+        logger.error(f"datastore: {err}")
+        return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
+
 
 @app.route('/forms/<form_id>', methods=['DELETE'])
 @auth.login_required
@@ -80,11 +183,26 @@ def update_form(form_id):
 def discard_form(form_id):
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
-@app.route('/forms/<form_id>', methods=['GET'])
+@app.route('/forms', methods=['GET'])
 @auth.login_required
-@swag_from('docs/swagger/get_form.yaml')
-def get_form(form_id):
-    return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
+@swag_from('docs/swagger/search_form.yaml')
+def search():
+    try:
+        # Database cursor
+        cursor = CONN.cursor()
+
+        # The search query used to find the label.
+        user_id = request.args.get('user_id')
+        label_id = request.args.get('label_id')
+        query = SearchQuery(user_id=user_id, label_id=label_id)
+
+        # TO-DO Send that search query to the datastore
+        inspections = inspection.get_all_user_inspection(cursor, query.user_id)
+        return jsonify(inspections), HTTPStatus.OK
+    except Exception as err:
+        CONN.rollback()
+        logger.error(f"datastore: {err}")
+        return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 @app.route('/analyze', methods=['POST'])
 @swag_from('docs/swagger/analyze_document.yaml')
@@ -113,7 +231,7 @@ def analyze_document():
             mimetype="application/json"
         )
     except ValueError as err:
-        logger.error(f"document: {err}")
+        logger.error(f"images: {err}")
         return jsonify(error=str(err)), HTTPStatus.BAD_REQUEST
     except HttpResponseError as err:
         logger.error(f"azure: {err.message}")
