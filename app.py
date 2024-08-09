@@ -24,7 +24,7 @@ logging.basicConfig(
     filename=log_file_path,
     level=logging.INFO,
     force=True,
-    inspectionat='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
