@@ -64,7 +64,7 @@ def verify_password(user_id, password):
 
 @app.route('/forms', methods=['POST'])
 @auth.login_required
-@cross_origin(origins='*')
+@cross_origin(origins=[FRONTEND_URL, 'localhost'])
 @swag_from('docs/swagger/create_form.yaml')
 def create_form():
     form_id = uuid.uuid4()
@@ -72,27 +72,27 @@ def create_form():
 
 @app.route('/forms/<form_id>', methods=['PUT'])
 @auth.login_required
-@cross_origin(origins=FRONTEND_URL)
+@cross_origin(origins=[FRONTEND_URL, 'localhost'])
 @swag_from('docs/swagger/update_form.yaml')
 def update_form(form_id):
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/forms/<form_id>', methods=['DELETE'])
 @auth.login_required
-@cross_origin(origins=FRONTEND_URL)
+@cross_origin(origins=[FRONTEND_URL, 'localhost'])
 @swag_from('docs/swagger/discard_form.yaml')
 def discard_form(form_id):
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/forms/<form_id>', methods=['GET'])
 @auth.login_required
-@cross_origin(origins=FRONTEND_URL)
+@cross_origin(origins=[FRONTEND_URL, 'localhost'])
 @swag_from('docs/swagger/get_form.yaml')
 def get_form(form_id):
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/analyze', methods=['POST'])
-@cross_origin(origins='*')
+@cross_origin(origins=[FRONTEND_URL, 'localhost'])
 @swag_from('docs/swagger/analyze_document.yaml')
 def analyze_document():
     try:
