@@ -8,7 +8,7 @@ from flask_httpauth import HTTPBasicAuth
 from azure.core.exceptions import HttpResponseError
 from werkzeug.utils import secure_filename
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import cross_origin
 from flasgger import Swagger, swag_from
 from pipeline import OCR, GPT, LabelStorage, analyze
 
@@ -54,6 +54,7 @@ gpt = GPT(api_endpoint=OPENAI_API_ENDPOINT, api_key=OPENAI_API_KEY, deployment_i
 
 @app.route('/health', methods=['GET'])
 @swag_from('docs/swagger/ping.yaml')
+@cross_origin(origins='*')
 def ping():
     return jsonify({"message": "Service is alive"}), 200
 
@@ -63,6 +64,7 @@ def verify_password(user_id, password):
 
 @app.route('/forms', methods=['POST'])
 @auth.login_required
+@cross_origin(origins='*')
 @swag_from('docs/swagger/create_form.yaml')
 def create_form():
     form_id = uuid.uuid4()
@@ -70,28 +72,32 @@ def create_form():
 
 @app.route('/forms/<form_id>', methods=['PUT'])
 @auth.login_required
+@cross_origin(origins=FRONTEND_URL)
 @swag_from('docs/swagger/update_form.yaml')
 def update_form(form_id):
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/forms/<form_id>', methods=['DELETE'])
 @auth.login_required
+@cross_origin(origins=FRONTEND_URL)
 @swag_from('docs/swagger/discard_form.yaml')
 def discard_form(form_id):
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/forms/<form_id>', methods=['GET'])
 @auth.login_required
+@cross_origin(origins=FRONTEND_URL)
 @swag_from('docs/swagger/get_form.yaml')
 def get_form(form_id):
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 @app.route('/analyze', methods=['POST'])
+@cross_origin(origins='*')
 @swag_from('docs/swagger/analyze_document.yaml')
 def analyze_document():
     try:
         files = request.files.getlist('images')
-        
+
         if not files:
             raise ValueError("No files provided for analysis")
 
@@ -131,8 +137,4 @@ def internal_error(error): # pragma: no cover
     return jsonify(error=str(error)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 if __name__ == "__main__":
-    # CORS configuration limited to the frontend URL
-    cors = CORS(app, resources={"*", FRONTEND_URL})
-    app.config['CORS_HEADERS'] = 'Content-Type'
-
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='localhost', debug=True)
