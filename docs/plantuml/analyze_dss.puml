@@ -25,7 +25,7 @@ BE <<-- D: return AnalyzeResult
 BE -> O: POST /completions
 BE <<-- O: return JSON
 note left
-A form with all the
+A inspection with all the
 information needed
 by the inspector.
 end note
