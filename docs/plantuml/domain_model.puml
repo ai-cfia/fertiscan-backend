@@ -17,7 +17,7 @@ class "Label" as DS {
 }
 
 class "GPT" as LLM {
-+ generate_form(prompt)
++ create_inspection(prompt)
 }
 
 class "OCR" {

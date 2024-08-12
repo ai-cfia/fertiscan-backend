@@ -1,7 +1,7 @@
 @startuml FertiScan Sequence Diagram
-header 10/07/2024
+header 05/07/2024
 
-title FertiScan Create Form
+title FertiScan Discard Form
 hide empty members
 hide footbox
 
@@ -9,29 +9,25 @@ participant FertiScan as BE <<http:localhost:5000>>
 participant DataStore as DS
 database SQL as DB
 
--> BE: POST /forms
+-> BE: GET /inspections/inspection_id
 note right BE
   Authorization: Basic
-  Content: JSON (Form)
 end note
-BE -> DS: create_form()
-note left
-    Creates a new unconfirmed
-    form in the backend for the user.
-end note
-DS -> DB: execute_query()
+BE -> DS: get_inspection() 
+DS -> DB: execute_query(query)
 DS <<-- DB: //SQL_CODE//
 BE <<-- DS: //JSON, HTTP_CODE//
 alt HTTP_CODE is success
   <<-- BE: //JSON, 200//
   note right
-    {
-        "message": "...",
-        "form_id": "<form_id>"
-    }
+    The inspection as stored in the database.
+
+    Note: It does not have
+    the same format as the one
+    given by /analyze.
   end note
 else
-  <<-- BE: //Database error, HTTP_CODE//
+  <<-- BE: //message, 500//
 end
 
 @enduml

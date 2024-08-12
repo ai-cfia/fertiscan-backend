@@ -11,8 +11,8 @@ The `/analyze` route serves to:
 - **Extract and Structure Data**: Utilizes Azure Document Intelligence to
  extract text and layout information from the uploaded documents.
 - **Generate Forms**: Uses OpenAI's GPT-4 to generate a structured JSON
- form containing all the necessary information extracted from the document.
-- **Provide Responses**: Returns the generated form to the client,
+ inspection containing all the necessary information extracted from the document.
+- **Provide Responses**: Returns the generated inspection to the client,
  facilitating the inspection and validation processes
  by providing all relevant data in a structured format.
 
@@ -49,32 +49,32 @@ Check if the service is still alive.
 
 ### `POST /analyze`
 
-Upload images for analysis and get the results as a JSON form.
+Upload images for analysis and get the results as a JSON inspection.
 
 ![analyze](../out/analyze_dss/Analyze%20DSS.png)
 
-### `POST /forms`
+### `POST /inspections`
 
-Create a new form and add it to the database.
+Create a new inspection and add it to the database.
 
-![create](../out/create_form_dss/FertiScan%20Sequence%20Diagram.png)
+![create](../out/create_inspection_dss/FertiScan%20Sequence%20Diagram.png)
 
-### `PUT /forms`
+### `PUT /inspections`
 
-Send the latest state of a form to the database.
+Send the latest state of a inspection to the database.
 
-![submit](../out/submit_form_dss/FertiScan%20Sequence%20Diagram.png)
+![submit](../out/submit_inspection_dss/FertiScan%20Sequence%20Diagram.png)
 
-### `DELETE /forms`
+### `DELETE /inspections`
 
-Remove all transient states of a form.
+Remove all transient states of a inspection.
 
-![discard](../out/discard_form_dss/FertiScan%20Sequence%20Diagram.png)
+![discard](../out/discard_inspection_dss/FertiScan%20Sequence%20Diagram.png)
 
-### `GET /forms`
+### `GET /inspections`
 
-Retrieve the latest state of a form from the database.
+Retrieve the latest state of a inspection from the database.
 
-![get](../out/get_form_dss/FertiScan%20Sequence%20Diagram.png)
+![get](../out/get_inspection_dss/FertiScan%20Sequence%20Diagram.png)
 
 v1.0.0

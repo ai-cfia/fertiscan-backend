@@ -9,21 +9,21 @@ participant FertiScan as BE <<http:localhost:5000>>
 participant DataStore as DS
 database SQL as DB
 
--> BE: PUT /forms/form_id
+-> BE: PUT /inspections/inspection_id
 note right BE
   Authorization: Basic
   Content: JSON (Form)
 end note
-alt form.confirm == true
-  BE -> DS: submit_final_form()
+alt inspection.confirm == true
+  BE -> DS: submit_final_inspection()
   note left
     the final version of 
-    the form.
+    the inspection.
   end note
 else
-  BE -> DS: submit_update_form()
+  BE -> DS: submit_update_inspection()
   note left
-    Update the given form.
+    Update the given inspection.
   end note
 end
 DS -> DB: execute_query()
