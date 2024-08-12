@@ -1,0 +1,19 @@
+Returns an existing inspection from the database.
+---
+security:
+  - basicAuth: []
+parameters:
+  - name: form_id
+    in: path
+    type: string
+    required: true
+    description: "ID of the inspection to get"
+responses:
+  503:
+    description: "Not yet implemented!"
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Not yet implemented!"

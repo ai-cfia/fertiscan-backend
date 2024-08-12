@@ -277,10 +277,10 @@ def analyze_document():
                 file.save(file_path)
                 label_storage.add_image(file_path)
 
-        form = analyze(label_storage, ocr, gpt)
+        inspection = analyze(label_storage, ocr, gpt)
 
         return app.response_class(
-            response=form.model_dump_json(indent=2),
+            response=inspection.model_dump_json(indent=2),
             status=HTTPStatus.OK,
             mimetype="application/json",
         )

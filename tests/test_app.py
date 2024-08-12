@@ -53,7 +53,7 @@ class APITestCase(unittest.TestCase):
         
         response = test_client.post(
             '/analyze',
-            content_type='multipart/form-data',
+            content_type='multipart/inspection-data',
             data=data
         )
 

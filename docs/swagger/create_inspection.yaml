@@ -1,4 +1,4 @@
-Create a new instance of a form in the database.
+Create a new instance of a inspection in the database.
 ---
 security:
   - basicAuth: []
@@ -10,7 +10,7 @@ parameters:
     required: true
     schema:
       type: object
-    description: "The result of the fertiliser analysis."
+    description: "The result of the inspection."
   - name: images
     in: formData
     type: file
@@ -18,13 +18,13 @@ parameters:
     description: "The images analysed."  
 responses:
   201:
-  description: Form created successfully
+  description: Inspection created successfully
   schema:
     type: object
     properties:
       message:
         type: string
-        example: "Form created successfully"
+        example: "Inpsection created successfully"
         form_id:
           type: string
           format: uuid
