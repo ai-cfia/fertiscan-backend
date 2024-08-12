@@ -139,15 +139,11 @@ def verify_password(username, password):
 @auth.login_required
 @swag_from("docs/swagger/create_form.yaml")
 def create_form():
-    username = auth.username()
-    if username is None:
-        logger.warning("Missing username in request")
-        return jsonify(error="Missing username!"), HTTPStatus.BAD_REQUEST
-
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
                 # Sample userId from the database
+                username = auth.username()
                 logger.info(f"Fetching user ID for username: {username}")
                 db_user = asyncio.run(get_user(cursor, username))
                 user_id = db_user.id
@@ -200,14 +196,11 @@ def create_form():
 @auth.login_required
 @swag_from("docs/swagger/update_form.yaml")
 def update_form(inspection_id):
-    username = auth.username()
-    if username is None:
-        return jsonify(error="Missing username!"), HTTPStatus.BAD_REQUEST
-
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
                 # Sample userId from the database
+                username = auth.username()
                 logger.info(f"Fetching user ID for username: {username}")
                 db_user = asyncio.run(get_user(cursor, username))
                 
