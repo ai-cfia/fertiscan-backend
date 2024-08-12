@@ -93,9 +93,9 @@ def signup():
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
-                asyncio.run(new_user(cursor, username, FERTISCAN_STORAGE_URL))
+                user = asyncio.run(new_user(cursor, username, FERTISCAN_STORAGE_URL))
             conn.commit()
-        return jsonify({"message": "User registered successfully"}), 201
+        return jsonify({"user_id": user.get_id()}), 201
     except Exception as e:
         logger.error(f"Error occurred: {e}")
         logger.error("Traceback: " + traceback.format_exc())
