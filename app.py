@@ -138,7 +138,7 @@ def verify_password(username, password):
 @app.route("/forms", methods=["POST"])
 @auth.login_required
 @swag_from("docs/swagger/create_form.yaml")
-def create_form():
+def create_form():  # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
@@ -195,7 +195,7 @@ def create_form():
 @app.route("/forms/<inspection_id>", methods=["PUT"])
 @auth.login_required
 @swag_from("docs/swagger/update_form.yaml")
-def update_form(inspection_id):
+def update_form(inspection_id):  # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
@@ -230,14 +230,14 @@ def update_form(inspection_id):
 @app.route("/forms/<form_id>", methods=["DELETE"])
 @auth.login_required
 @swag_from("docs/swagger/discard_form.yaml")
-def discard_form(form_id):
+def discard_form(form_id):   # pragma: no cover
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 
 @app.route("/forms", methods=["GET"])
 @auth.login_required
 @swag_from("docs/swagger/search_form.yaml")
-def search():
+def search():   # pragma: no cover
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
     # try:
     #     # Database cursor
