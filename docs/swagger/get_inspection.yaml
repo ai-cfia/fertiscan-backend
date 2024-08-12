@@ -1,5 +1,4 @@
-Discards a form a user was working on.
-This is will remove all transient states of the form from the database.
+Returns an existing inspection from the database.
 ---
 security:
   - basicAuth: []
@@ -8,7 +7,7 @@ parameters:
     in: path
     type: string
     required: true
-    description: "ID of the form to discard"
+    description: "ID of the inspection to get"
 responses:
   503:
     description: "Not yet implemented!"

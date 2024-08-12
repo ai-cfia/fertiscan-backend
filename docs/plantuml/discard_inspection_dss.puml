@@ -1,0 +1,26 @@
+@startuml FertiScan Sequence Diagram
+header 05/07/2024
+
+title FertiScan Discard Form
+hide empty members
+hide footbox
+
+participant FertiScan as BE <<http:localhost:5000>>
+participant DataStore as DS
+database SQL as DB
+
+-> BE: DELETE /inspections/inspection_id
+note right BE
+  Authorization: Basic
+end note
+BE -> DS: discard_inspection() 
+DS -> DB: execute_query(query)
+DS <<-- DB: //SQL_CODE//
+BE <<-- DS: //message, HTTP_CODE//
+alt HTTP_CODE is success
+  <<-- BE: //Successfully discarded, 200//
+else
+  <<-- BE: //message, 500//
+end
+
+@enduml

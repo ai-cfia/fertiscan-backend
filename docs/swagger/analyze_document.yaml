@@ -1,8 +1,8 @@
-Analyzes a document by performing OCR and generating a form.
-The form is a JSON with all the key informations of a fertiliser label.
+Analyzes a document by performing OCR and generating a inspection.
+The inspection is a JSON with all the key informations of a fertiliser label.
 ---
 consumes:
-  - multipart/form-data
+  - multipart/inspection-data
 parameters:
   - name: images
     in: formData

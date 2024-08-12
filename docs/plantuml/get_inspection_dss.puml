@@ -9,22 +9,23 @@ participant FertiScan as BE <<http:localhost:5000>>
 participant DataStore as DS
 database SQL as DB
 
--> BE: GET /forms/form_id
+-> BE: GET /inspections/inspection_id
 note right BE
   Authorization: Basic
+  Content: Search Query
 end note
-BE -> DS: get_form() 
+BE -> DS: get_inspection() 
 DS -> DB: execute_query(query)
 DS <<-- DB: //SQL_CODE//
 BE <<-- DS: //JSON, HTTP_CODE//
 alt HTTP_CODE is success
   <<-- BE: //JSON, 200//
   note right
-    The form as stored in the database.
+    The inspection as stored in the database.
 
-    Note: It does not have
+    Note: It might not have
     the same format as the one
-    given by /analyze.
+    returned by the analysis.
   end note
 else
   <<-- BE: //message, 500//

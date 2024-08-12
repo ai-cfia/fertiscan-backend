@@ -9,16 +9,24 @@ participant FertiScan as BE <<http:localhost:5000>>
 participant DataStore as DS
 database SQL as DB
 
--> BE: DELETE /forms/form_id
+-> BE: GET /inspections/inspection_id
 note right BE
   Authorization: Basic
+  Content: Search Query
 end note
-BE -> DS: discard_form() 
+BE -> DS: get_inspection() 
 DS -> DB: execute_query(query)
 DS <<-- DB: //SQL_CODE//
-BE <<-- DS: //message, HTTP_CODE//
+BE <<-- DS: //JSON, HTTP_CODE//
 alt HTTP_CODE is success
-  <<-- BE: //Successfully discarded, 200//
+  <<-- BE: //JSON, 200//
+  note right
+    The inspection as stored in the database.
+
+    Note: It might not have
+    the same format as the one
+    returned by the analysis.
+  end note
 else
   <<-- BE: //message, 500//
 end
