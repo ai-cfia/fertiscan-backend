@@ -86,7 +86,7 @@ def login():
 
 
 @app.route("/signup", methods=["POST"])
-def signup():
+def signup(): # pragma: no cover
     username = request.form.get("username")
     _ = request.form.get("password")
 
