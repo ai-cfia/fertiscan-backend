@@ -58,7 +58,7 @@ class APITestCase(unittest.TestCase):
         )
 
         # Document Intelligence throws an error
-        self.assertEqual(response.status_code, 500, response.json)
+        self.assertEqual(response.status_code, 400, response.json)
         self.assertIn('error', response.json)
 
     @patch('app.gpt.create_inspection')

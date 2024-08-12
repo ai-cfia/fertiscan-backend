@@ -120,7 +120,7 @@ def verify_password(username, password):
                     return jsonify(
                         error="Authentication error!",
                         message=str(e),
-                    ), HTTPStatus.INTERNAL_SERVER_ERROR
+                    ), HTTPStatus.UNAUTHORIZED
 
         if is_user_id:
             return jsonify(
