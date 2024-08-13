@@ -73,7 +73,7 @@ Remove all transient states of a inspection.
 
 ### `GET /inspections`
 
-Retrieve the latest state of a inspection from the database.
+Retrieve a list of inspections matching the search query.
 
 ![get](../out/get_inspection_dss/FertiScan%20Sequence%20Diagram.png)
 

@@ -245,7 +245,7 @@ def discard_inspection(form_id):   # pragma: no cover
 @auth.login_required
 @cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/search_inspection.yaml")
-def search():   # pragma: no cover
+def search_inspections():   # pragma: no cover
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
     # try:
     #     # Database cursor

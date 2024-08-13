@@ -9,19 +9,20 @@ participant FertiScan as BE <<http:localhost:5000>>
 participant DataStore as DS
 database SQL as DB
 
--> BE: GET /inspections/inspection_id
+-> BE: GET /inspections
 note right BE
   Authorization: Basic
   Content: Search Query
 end note
-BE -> DS: get_inspection() 
+BE -> DS: search() 
 DS -> DB: execute_query(query)
 DS <<-- DB: //SQL_CODE//
 BE <<-- DS: //JSON, HTTP_CODE//
 alt HTTP_CODE is success
   <<-- BE: //JSON, 200//
   note right
-    The inspection as stored in the database.
+    A list of inspections that
+    match the search query.
 
     Note: It might not have
     the same format as the one
