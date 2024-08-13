@@ -2,17 +2,17 @@ import asyncio
 import logging
 import os
 import traceback
-from http import HTTPStatus
 
+from http import HTTPStatus
+from dotenv import load_dotenv
 from azure.core.exceptions import HttpResponseError
 from datastore import ContainerClient, get_user, new_user
 from datastore.db import connect_db
 from datastore.db.queries.user import is_a_user_id
 from datastore.fertiscan import register_analysis, update_inspection
-from dotenv import load_dotenv
 from flasgger import Swagger, swag_from
 from flask import Flask, jsonify, request
-from flask_cors import CORS
+from flask_cors import cross_origin
 from flask_httpauth import HTTPBasicAuth
 from pipeline import GPT, OCR, LabelStorage, analyze
 from werkzeug.utils import secure_filename
@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 UPLOAD_FOLDER = os.getenv("UPLOAD_PATH", "uploads")
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
-FRONTEND_URL = os.getenv("FRONTEND_URL")
+FRONTEND_URL = os.getenv("FRONTEND_URL",'*')
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -72,12 +72,14 @@ gpt = GPT(
 
 
 @app.route("/health", methods=["GET"])
-@swag_from("docs/swagger/ping.yaml")
+@swag_from("docs/swagger/health.yaml")
 def ping():
     return jsonify({"message": "Service is alive"}), 200
 
 
 @app.route("/login", methods=["POST"])
+@cross_origin(origins=FRONTEND_URL)
+@swag_from("docs/swagger/login.yaml")
 def login():
     username = request.form.get("username")
     password = request.form.get("password")
@@ -86,6 +88,8 @@ def login():
 
 
 @app.route("/signup", methods=["POST"])
+@cross_origin(origins=FRONTEND_URL)
+@swag_from("docs/swagger/signup.yaml")
 def signup(): # pragma: no cover
     username = request.form.get("username")
     _ = request.form.get("password")
@@ -93,6 +97,7 @@ def signup(): # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
+                print(f"Creating user: {username}")
                 user = asyncio.run(new_user(cursor, username, FERTISCAN_STORAGE_URL))
             conn.commit()
         return jsonify({"user_id": user.get_id()}), 201
@@ -135,10 +140,11 @@ def verify_password(username, password):
         return jsonify(error="Internal server error!"), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@app.route("/forms", methods=["POST"])
+@app.route("/inspections", methods=["POST"])
 @auth.login_required
-@swag_from("docs/swagger/create_form.yaml")
-def create_form():  # pragma: no cover
+@cross_origin(origins=FRONTEND_URL)
+@swag_from("docs/swagger/create_inspection.yaml")
+def create_inspection():  # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
@@ -192,10 +198,11 @@ def create_form():  # pragma: no cover
         return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@app.route("/forms/<inspection_id>", methods=["PUT"])
+@app.route("/inspections/<inspection_id>", methods=["PUT"])
 @auth.login_required
-@swag_from("docs/swagger/update_form.yaml")
-def update_form(inspection_id):  # pragma: no cover
+@cross_origin(origins=FRONTEND_URL)
+@swag_from("docs/swagger/update_inspection.yaml")
+def submit_inspection(inspection_id):  # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
@@ -227,16 +234,17 @@ def update_form(inspection_id):  # pragma: no cover
         return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@app.route("/forms/<form_id>", methods=["DELETE"])
+@app.route("/inspections/<form_id>", methods=["DELETE"])
 @auth.login_required
-@swag_from("docs/swagger/discard_form.yaml")
-def discard_form(form_id):   # pragma: no cover
+@swag_from("docs/swagger/discard_inspection.yaml")
+def discard_inspection(form_id):   # pragma: no cover
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 
-@app.route("/forms", methods=["GET"])
+@app.route("/inspections", methods=["GET"])
 @auth.login_required
-@swag_from("docs/swagger/search_form.yaml")
+@cross_origin(origins=FRONTEND_URL)
+@swag_from("docs/swagger/search_inspection.yaml")
 def search():   # pragma: no cover
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
     # try:
@@ -259,6 +267,7 @@ def search():   # pragma: no cover
 
 
 @app.route("/analyze", methods=["POST"])
+@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/analyze_document.yaml")
 def analyze_document():
     try:
@@ -306,8 +315,4 @@ def internal_error(error):  # pragma: no cover
 
 
 if __name__ == "__main__":
-    # CORS configuration limited to the frontend URL
-    cors = CORS(app, resources={"*", FRONTEND_URL})
-    app.config["CORS_HEADERS"] = "Content-Type"
-
-    app.run(host="0.0.0.0", debug=True)
+    app.run(host='localhost', debug=True)
