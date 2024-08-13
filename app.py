@@ -143,7 +143,7 @@ def verify_password(username, password):
 @auth.login_required
 @cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/create_inspection.yaml")
-def create_form():  # pragma: no cover
+def create_inspection():  # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
@@ -201,7 +201,7 @@ def create_form():  # pragma: no cover
 @auth.login_required
 @cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/update_inspection.yaml")
-def update_form(inspection_id):  # pragma: no cover
+def submit_inspection(inspection_id):  # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
@@ -236,7 +236,7 @@ def update_form(inspection_id):  # pragma: no cover
 @app.route("/inspections/<form_id>", methods=["DELETE"])
 @auth.login_required
 @swag_from("docs/swagger/discard_inspection.yaml")
-def discard_form(form_id):   # pragma: no cover
+def discard_inspection(form_id):   # pragma: no cover
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 

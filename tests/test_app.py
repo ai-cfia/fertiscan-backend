@@ -13,7 +13,7 @@ class APITestCase(unittest.TestCase):
     def setUp(self):
         app.testing = True
         self.headers = {
-            'Authorization': 'Basic ' + 'user1:password1',
+            'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Headers': '*',
             'Access-Control-Allow-Methods': '*',
@@ -33,10 +33,25 @@ class APITestCase(unittest.TestCase):
         except Exception as e:
             self.fail(f"Database connection failed: {e}")
 
+    def test_create_user(self):
+        response = test_client.post('/signup', headers=self.headers , data={'username': 'test', 'password': 'password1'})
+        self.assertEqual(response.status_code, 201, response.json)
+    
+    def test_create_user_missing_username(self):
+        response = test_client.post('/signup', headers=self.headers , data={'password': 'password1'})
+        self.assertEqual(response.status_code, 400, response.json)
+
+    def create_empty_inspection(self):
+        response = test_client.post('/inspections', headers=self.headers)
+        self.assertEqual(response.status_code, 400, response.json)
+
+    def update_empty_inspection(self):
+        response = test_client.put('/inspections', headers=self.headers)
+        self.assertEqual(response.status_code, 400, response.json)
+
     def test_missing_username(self):
         response = test_client.post('/login', headers=self.headers)
         self.assertEqual(response.status_code, 400, response.json)
-
     
     def test_unknow_username(self):
         username = str(uuid.uuid4())
