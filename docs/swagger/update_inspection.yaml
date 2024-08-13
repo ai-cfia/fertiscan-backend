@@ -2,12 +2,19 @@ Submit an updated version of a inspection to the database.
 ---
 security:
   - basicAuth: []
+consumes:
+  - application/json
 parameters:
   - name: form_id
     in: path
     type: string
     required: true
     description: "ID of the inspection to update"
+  - name: form
+    in: body
+    required: true
+    schema:
+      type: object
 responses:
   503:
     description: "Not yet implemented!"

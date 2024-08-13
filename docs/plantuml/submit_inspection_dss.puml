@@ -12,7 +12,8 @@ database SQL as DB
 -> BE: PUT /inspections/inspection_id
 note right BE
   Authorization: Basic
-  Content: JSON (Form)
+  Content-Type: application/json
+  Content: Form
 end note
 alt inspection.confirm == true
   BE -> DS: submit_final_inspection()
