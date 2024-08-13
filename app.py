@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 UPLOAD_FOLDER = os.getenv("UPLOAD_PATH", "uploads")
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
-FRONTEND_URL = os.getenv("FRONTEND_URL")
+FRONTEND_URL = os.getenv("FRONTEND_URL",'*')
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -78,7 +78,7 @@ def ping():
 
 
 @app.route("/login", methods=["POST"])
-@cross_origin(origins='*')
+@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/login.yaml")
 def login():
     username = request.form.get("username")
@@ -88,7 +88,7 @@ def login():
 
 
 @app.route("/signup", methods=["POST"])
-@cross_origin(origins='*')
+@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/signup.yaml")
 def signup(): # pragma: no cover
     username = request.form.get("username")
@@ -141,7 +141,7 @@ def verify_password(username, password):
 
 @app.route("/inspections", methods=["POST"])
 @auth.login_required
-@cross_origin(origins=[FRONTEND_URL, 'localhost'])
+@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/create_inspection.yaml")
 def create_form():  # pragma: no cover
     try:
@@ -199,6 +199,7 @@ def create_form():  # pragma: no cover
 
 @app.route("/inspections/<inspection_id>", methods=["PUT"])
 @auth.login_required
+@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/update_inspection.yaml")
 def update_form(inspection_id):  # pragma: no cover
     try:
@@ -234,14 +235,14 @@ def update_form(inspection_id):  # pragma: no cover
 
 @app.route("/inspections/<form_id>", methods=["DELETE"])
 @auth.login_required
-# @swag_from("docs/swagger/discard_inspection.yaml")
+@swag_from("docs/swagger/discard_inspection.yaml")
 def discard_form(form_id):   # pragma: no cover
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 
 @app.route("/inspections", methods=["GET"])
 @auth.login_required
-@cross_origin(origins=[FRONTEND_URL, 'localhost'])
+@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/search_inspection.yaml")
 def search():   # pragma: no cover
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
@@ -265,6 +266,7 @@ def search():   # pragma: no cover
 
 
 @app.route("/analyze", methods=["POST"])
+@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/analyze_document.yaml")
 def analyze_document():
     try:
