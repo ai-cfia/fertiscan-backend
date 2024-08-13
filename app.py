@@ -97,6 +97,7 @@ def signup(): # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
+                print(f"Creating user: {username}")
                 user = asyncio.run(new_user(cursor, username, FERTISCAN_STORAGE_URL))
             conn.commit()
         return jsonify({"user_id": user.get_id()}), 201
