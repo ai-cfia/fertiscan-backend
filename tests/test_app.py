@@ -13,6 +13,7 @@ class APITestCase(unittest.TestCase):
     def setUp(self):
         app.testing = True
         self.headers = {
+            'Authorization': 'Basic ' + 'user1:password1',
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Headers': '*',
             'Access-Control-Allow-Methods': '*',
