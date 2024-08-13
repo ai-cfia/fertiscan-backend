@@ -13,8 +13,9 @@ class APITestCase(unittest.TestCase):
     def setUp(self):
         app.testing = True
         self.headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Basic ' + 'user1:password1'
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': '*',
+            'Access-Control-Allow-Methods': '*',
         }
 
     def test_health(self):

@@ -72,7 +72,6 @@ gpt = GPT(
 
 
 @app.route("/health", methods=["GET"])
-@cross_origin(origins=[FRONTEND_URL, 'localhost'])
 @swag_from("docs/swagger/health.yaml")
 def ping():
     return jsonify({"message": "Service is alive"}), 200
