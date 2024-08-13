@@ -2,29 +2,17 @@ import asyncio
 import logging
 import os
 import traceback
-<<<<<<< HEAD
 
 from http import HTTPStatus
 from dotenv import load_dotenv
-=======
-from http import HTTPStatus
-
->>>>>>> origin/main
 from azure.core.exceptions import HttpResponseError
 from datastore import ContainerClient, get_user, new_user
 from datastore.db import connect_db
 from datastore.db.queries.user import is_a_user_id
 from datastore.fertiscan import register_analysis, update_inspection
-<<<<<<< HEAD
 from flasgger import Swagger, swag_from
 from flask import Flask, jsonify, request
 from flask_cors import cross_origin
-=======
-from dotenv import load_dotenv
-from flasgger import Swagger, swag_from
-from flask import Flask, jsonify, request
-from flask_cors import CORS
->>>>>>> origin/main
 from flask_httpauth import HTTPBasicAuth
 from pipeline import GPT, OCR, LabelStorage, analyze
 from werkzeug.utils import secure_filename
