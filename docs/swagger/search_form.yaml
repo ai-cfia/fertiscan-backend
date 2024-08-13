@@ -1,0 +1,33 @@
+Search an inspection in the database using a search query.
+---
+security:
+  - basicAuth: []
+consumes:
+  - application/json
+parameters:
+  - name: user_id
+    in: query
+    description: "The id of the user."
+    schema:
+      type: string
+responses:
+  200:
+    description: "Search query executed successfully"
+    schema:
+      type: object
+  400:
+    description: "Bad Request"
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Missing username!"
+  500:
+    description: "Internal Server Error"
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Not yet implemented!"
