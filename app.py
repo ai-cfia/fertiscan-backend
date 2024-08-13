@@ -72,12 +72,14 @@ gpt = GPT(
 
 
 @app.route("/health", methods=["GET"])
+@cross_origin(origins=[FRONTEND_URL, 'localhost'])
 @swag_from("docs/swagger/health.yaml")
 def ping():
     return jsonify({"message": "Service is alive"}), 200
 
 
 @app.route("/login", methods=["POST"])
+@cross_origin(origins=[FRONTEND_URL, 'localhost'])
 @swag_from("docs/swagger/login.yaml")
 def login():
     username = request.form.get("username")
@@ -87,6 +89,7 @@ def login():
 
 
 @app.route("/signup", methods=["POST"])
+@cross_origin(origins=[FRONTEND_URL, 'localhost'])
 @swag_from("docs/swagger/signup.yaml")
 def signup(): # pragma: no cover
     username = request.form.get("username")
