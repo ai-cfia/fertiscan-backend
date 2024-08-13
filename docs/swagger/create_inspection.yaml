@@ -18,16 +18,16 @@ parameters:
     description: "The images analysed."  
 responses:
   201:
-  description: Inspection created successfully
-  schema:
-    type: object
-    properties:
-      message:
-        type: string
-        example: "Inpsection created successfully"
-        form_id:
+    description: Inspection created successfully
+    schema:
+      type: object
+      properties:
+        message:
           type: string
-          format: uuid
+          example: "Inpsection created successfully"
+          form_id:
+            type: string
+            format: uuid
   400:
     description: Bad Request
     schema:

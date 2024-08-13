@@ -2,14 +2,6 @@ Search an inspection in the database using a search query.
 ---
 security:
   - basicAuth: []
-consumes:
-  - application/json
-parameters:
-  - name: user_id
-    in: query
-    description: "The id of the user."
-    schema:
-      type: string
 responses:
   200:
     description: "Search query executed successfully"

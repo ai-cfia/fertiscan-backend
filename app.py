@@ -78,6 +78,7 @@ def ping():
 
 
 @app.route("/login", methods=["POST"])
+@swag_from("docs/swagger/login.yaml")
 def login():
     username = request.form.get("username")
     password = request.form.get("password")
@@ -86,6 +87,7 @@ def login():
 
 
 @app.route("/signup", methods=["POST"])
+@swag_from("docs/swagger/signup.yaml")
 def signup(): # pragma: no cover
     username = request.form.get("username")
     _ = request.form.get("password")
@@ -135,10 +137,10 @@ def verify_password(username, password):
         return jsonify(error="Internal server error!"), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@app.route("/forms", methods=["POST"])
+@app.route("/inspections", methods=["POST"])
 @auth.login_required
 @cross_origin(origins=[FRONTEND_URL, 'localhost'])
-@swag_from("docs/swagger/create_form.yaml")
+@swag_from("docs/swagger/create_inspection.yaml")
 def create_form():  # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
@@ -193,9 +195,9 @@ def create_form():  # pragma: no cover
         return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@app.route("/forms/<inspection_id>", methods=["PUT"])
+@app.route("/inspections/<inspection_id>", methods=["PUT"])
 @auth.login_required
-@swag_from("docs/swagger/update_form.yaml")
+@swag_from("docs/swagger/update_inspection.yaml")
 def update_form(inspection_id):  # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
@@ -228,17 +230,17 @@ def update_form(inspection_id):  # pragma: no cover
         return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@app.route("/forms/<form_id>", methods=["DELETE"])
+@app.route("/inspections/<form_id>", methods=["DELETE"])
 @auth.login_required
-@swag_from("docs/swagger/discard_form.yaml")
+# @swag_from("docs/swagger/discard_inspection.yaml")
 def discard_form(form_id):   # pragma: no cover
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 
-@app.route("/forms", methods=["GET"])
+@app.route("/inspections", methods=["GET"])
 @auth.login_required
 @cross_origin(origins=[FRONTEND_URL, 'localhost'])
-@swag_from("docs/swagger/search_form.yaml")
+@swag_from("docs/swagger/search_inspection.yaml")
 def search():   # pragma: no cover
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
     # try:

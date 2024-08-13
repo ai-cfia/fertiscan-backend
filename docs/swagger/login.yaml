@@ -1,0 +1,30 @@
+This endpoint allows users to log in with their username and password.
+---
+parameters:
+  - name: username
+    in: formData
+    type: string
+    required: true
+    description: "The username of the user"
+    example: "johndoe@inspection.gc.ca"
+  - name: password
+    type: string
+    description: "The password of the user"
+    example: "mypassword123"
+responses:
+  200:
+    description: "Login successful"
+    schema:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Login successful"
+  401:
+    description: "Invalid credentials"
+    schema:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Invalid credentials"
