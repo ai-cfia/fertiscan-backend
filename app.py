@@ -9,13 +9,15 @@ from azure.core.exceptions import HttpResponseError
 from datastore import ContainerClient, get_user, new_user
 from datastore.db import connect_db
 from datastore.db.queries.user import is_a_user_id
-from datastore.fertiscan import register_analysis, update_inspection
+from datastore import fertiscan
 from flasgger import Swagger, swag_from
 from flask import Flask, jsonify, request
 from flask_cors import cross_origin
 from flask_httpauth import HTTPBasicAuth
 from pipeline import GPT, OCR, LabelStorage, analyze
 from werkzeug.utils import secure_filename
+
+from backend.search import SearchQuery
 
 # Load environment variables
 load_dotenv()
@@ -177,7 +179,7 @@ def create_inspection():  # pragma: no cover
 
                 logger.info(f"Registering analysis for user_id: {user_id}")
                 inspection = asyncio.run(
-                    register_analysis(
+                    fertiscan.register_analysis(
                         cursor=cursor,
                         container_client=container_client,
                         user_id=user_id,
@@ -219,7 +221,7 @@ def submit_inspection(inspection_id):  # pragma: no cover
                     ), HTTPStatus.BAD_REQUEST
 
                 inspection = asyncio.run(
-                    update_inspection(
+                    fertiscan.update_inspection(
                         cursor,
                         inspection_id,
                         db_user.id,
@@ -246,24 +248,24 @@ def discard_inspection(form_id):   # pragma: no cover
 @cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/search_inspection.yaml")
 def search():   # pragma: no cover
-    return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
-    # try:
-    #     # Database cursor
-    #     cursor = CONN.cursor()
+    try:
+        # Database cursor
+        with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
+            with conn.cursor() as cursor:
+                # The search query used to find the label.
+                username = request.args.get('username')
+                query = SearchQuery(username=username)
 
-    #     # The search query used to find the label.
-    #     user_id = request.args.get('user_id')
-    #     label_id = request.args.get('label_id')
-    #     query = SearchQuery(user_id=user_id, label_id=label_id)
+                logger.info(f"Fetching user ID for username: {username}")
+                db_user = asyncio.run(get_user(cursor, query.username))
 
-    #     # TO-DO Send that search query to the datastore
-    #     inspections = inspection.get_all_user_inspection(cursor, query.user_id)
-    #     return jsonify(inspections), HTTPStatus.OK
-    # except Exception as err:
-    #     CONN.rollback()
-    # logger.error(f"Error occurred: {err}")
-    # logger.error("Traceback: " + traceback.format_exc())
-    #     return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
+                # TO-DO Send that search query to the datastore
+                inspections = fertiscan.get_user_unverified_analysis(cursor, db_user.id)
+                return jsonify(inspections), HTTPStatus.OK
+    except Exception as err:
+        logger.error(f"Error occurred: {err}")
+        logger.error("Traceback: " + traceback.format_exc())
+        return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 @app.route("/analyze", methods=["POST"])
