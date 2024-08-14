@@ -1,5 +1,5 @@
 @startuml FertiScan Sequence Diagram
-header 10/07/2024
+header 14/08/2024
 
 title FertiScan Create Form
 hide empty members
@@ -15,7 +15,7 @@ note right BE
   Content-Type: application/json
   Content: Form
 end note
-BE -> DS: create_inspection()
+BE -> DS: register_analysis()
 note left
     Creates a new unconfirmed
     inspection in the backend for the user.

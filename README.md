@@ -75,6 +75,9 @@ AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint
 AZURE_OPENAI_API_KEY=your_azure_openai_key
 AZURE_OPENAI_DEPLOYMENT=your_azure_openai_deployment
 
+FERTISCAN_DB_URL=your_fertiscan_db_url
+FERTISCAN_SCHEMA=your_fertiscan_schema
+
 PROMPT_PATH=path/to/file
 UPLOAD_PATH=path/to/file
 FRONTEND_URL=http://url.to_frontend/

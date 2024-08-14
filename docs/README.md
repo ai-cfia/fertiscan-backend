@@ -63,7 +63,7 @@ Create a new inspection and add it to the database.
 
 Send the latest state of a inspection to the database.
 
-![submit](../out/submit_inspection_dss/FertiScan%20Sequence%20Diagram.png)
+![update](../out/update_inspection_dss/FertiScan%20Sequence%20Diagram.png)
 
 ### `DELETE /inspections`
 
@@ -75,6 +75,6 @@ Remove all transient states of a inspection.
 
 Retrieve a list of inspections matching the search query.
 
-![get](../out/get_inspection_dss/FertiScan%20Sequence%20Diagram.png)
+![search](../out/search_inspections_dss/FertiScan%20Sequence%20Diagram.png)
 
 v1.0.0

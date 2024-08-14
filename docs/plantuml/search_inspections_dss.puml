@@ -1,5 +1,5 @@
 @startuml FertiScan Sequence Diagram
-header 05/07/2024
+header 14/08/2024
 
 title FertiScan Discard Form
 hide empty members
@@ -14,7 +14,12 @@ note right BE
   Authorization: Basic
   Content: Search Query
 end note
-BE -> DS: search() 
+BE -> DS: get_user_unverified_analysis() 
+note right
+So far it's the only
+way to search for inspections
+supported by the backend.
+end note
 DS -> DB: execute_query(query)
 DS <<-- DB: //SQL_CODE//
 BE <<-- DS: //JSON, HTTP_CODE//
@@ -30,6 +35,11 @@ alt HTTP_CODE is success
   end note
 else
   <<-- BE: //message, 500//
+  note right
+  {
+    "error": "...",
+  }
+  end note
 end
 
 @enduml

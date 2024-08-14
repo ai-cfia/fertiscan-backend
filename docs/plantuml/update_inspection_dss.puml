@@ -1,5 +1,5 @@
 @startuml FertiScan Sequence Diagram
-header 10/07/2024
+header 14/08/2024
 
 title FertiScan Update Form
 hide empty members
@@ -15,23 +15,21 @@ note right BE
   Content-Type: application/json
   Content: Form
 end note
-alt inspection.confirm == true
-  BE -> DS: submit_final_inspection()
-  note left
-    the final version of 
-    the inspection.
-  end note
-else
-  BE -> DS: submit_update_inspection()
-  note left
-    Update the given inspection.
-  end note
-end
+BE -> DS: update_inspection()
+note left
+  A flag in the JSON will
+  indicate if the inspection
+  is confirmed or not.
+end note
 DS -> DB: execute_query()
 DS <<-- DB: //SQL_CODE//
-BE <<-- DS: //message, HTTP_CODE//
+BE <<-- DS: //JSON, 500//
 alt HTTP_CODE is success
-  <<-- BE: //message, 200//
+  <<-- BE: //JSON, 200//
+  note right
+  The inspection form as
+  registered in the database.
+  end note
 else
   <<-- BE: //Database error, HTTP_CODE//
 end
