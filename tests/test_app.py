@@ -54,6 +54,15 @@ class APITestCase(unittest.TestCase):
         response = test_client.post('/login', data={'username': username, 'password': 'password1'})
         self.assertEqual(response.status_code, 401, response.json)
 
+    def test_get_inspection_from_none(self):
+        response = test_client.get('/inspections', headers=self.headers)
+        self.assertEqual(response.status_code, 500, response.json)
+    
+    def test_get_inspection_from_unknown_user(self):
+        username = str(uuid.uuid4())
+        response = test_client.get('/inspections', headers=self.headers, data={'username': username, 'password': 'password1'})
+        self.assertEqual(response.status_code, 500, response.json)
+
     def test_analyze_document_no_files(self):
         response = test_client.post('/analyze', headers=self.headers)
         self.assertEqual(response.status_code, 400, response.json)
