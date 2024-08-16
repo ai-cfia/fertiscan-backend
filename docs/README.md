@@ -1,5 +1,7 @@
 # Developer Documentation
 
+![domain](../out/domain_model/Model%20Diagram.png)
+
 ## Document Analysis Workflow
 
 ![workflow](../out/workflow_dss/FertiScan%20Sequence%20Diagram.png)
