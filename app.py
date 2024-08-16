@@ -17,8 +17,6 @@ from flask_httpauth import HTTPBasicAuth
 from pipeline import GPT, OCR, LabelStorage, analyze
 from werkzeug.utils import secure_filename
 
-from backend.search import SearchQuery
-
 # Load environment variables
 load_dotenv()
 
@@ -254,10 +252,10 @@ def search():   # pragma: no cover
             with conn.cursor() as cursor:
                 # The search query used to find the label.
                 username = request.args.get('username')
-                query = SearchQuery(username=username)
+                # query = SearchQuery(username=username)
 
                 logger.info(f"Fetching user ID for username: {username}")
-                db_user = asyncio.run(get_user(cursor, query.username))
+                db_user = asyncio.run(get_user(cursor, username))
 
                 # TO-DO Send that search query to the datastore
                 inspections = fertiscan.get_user_unverified_analysis(cursor, db_user.id)
