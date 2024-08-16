@@ -127,11 +127,12 @@ def verify_password(username, password):
                         message=str(e),
                     ), HTTPStatus.UNAUTHORIZED
 
-        if is_user_id:
+        if not is_user_id:
             return jsonify(
                 error="Unknown user!",
                 message="The email provided does not match with any known user.",
             ), HTTPStatus.UNAUTHORIZED
+        
 
         return username
     except Exception as err:
