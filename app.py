@@ -9,7 +9,7 @@ from azure.core.exceptions import HttpResponseError
 from datastore import ContainerClient, get_user, new_user
 from datastore.db import connect_db
 from datastore.db.queries.user import is_a_user_id
-from datastore.fertiscan import register_analysis, update_inspection
+from datastore import fertiscan
 from flasgger import Swagger, swag_from
 from flask import Flask, jsonify, request
 from flask_cors import cross_origin
@@ -127,11 +127,12 @@ def verify_password(username, password):
                         message=str(e),
                     ), HTTPStatus.UNAUTHORIZED
 
-        if is_user_id:
+        if not is_user_id:
             return jsonify(
                 error="Unknown user!",
                 message="The email provided does not match with any known user.",
             ), HTTPStatus.UNAUTHORIZED
+        
 
         return username
     except Exception as err:
@@ -177,7 +178,7 @@ def create_inspection():  # pragma: no cover
 
                 logger.info(f"Registering analysis for user_id: {user_id}")
                 inspection = asyncio.run(
-                    register_analysis(
+                    fertiscan.register_analysis(
                         cursor=cursor,
                         container_client=container_client,
                         user_id=user_id,
@@ -202,7 +203,7 @@ def create_inspection():  # pragma: no cover
 @auth.login_required
 @cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/update_inspection.yaml")
-def submit_inspection(inspection_id):  # pragma: no cover
+def update_inspection(inspection_id):  # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
@@ -219,7 +220,7 @@ def submit_inspection(inspection_id):  # pragma: no cover
                     ), HTTPStatus.BAD_REQUEST
 
                 inspection = asyncio.run(
-                    update_inspection(
+                    fertiscan.update_inspection(
                         cursor,
                         inspection_id,
                         db_user.id,
@@ -237,7 +238,7 @@ def submit_inspection(inspection_id):  # pragma: no cover
 @app.route("/inspections/<form_id>", methods=["DELETE"])
 @auth.login_required
 @swag_from("docs/swagger/discard_inspection.yaml")
-def discard_inspection(form_id):   # pragma: no cover
+def discard_inspection(inspection_id):   # pragma: no cover
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 
@@ -245,7 +246,7 @@ def discard_inspection(form_id):   # pragma: no cover
 @auth.login_required
 @cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/search_inspection.yaml")
-def search():   # pragma: no cover
+def search_inspections():   # pragma: no cover
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
     # try:
     #     # Database cursor

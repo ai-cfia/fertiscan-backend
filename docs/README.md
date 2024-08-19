@@ -1,5 +1,7 @@
 # Developer Documentation
 
+![domain](../out/domain_model/Model%20Diagram.png)
+
 ## Document Analysis Workflow
 
 ![workflow](../out/workflow_dss/FertiScan%20Sequence%20Diagram.png)
@@ -63,7 +65,7 @@ Create a new inspection and add it to the database.
 
 Send the latest state of a inspection to the database.
 
-![submit](../out/submit_inspection_dss/FertiScan%20Sequence%20Diagram.png)
+![update](../out/update_inspection_dss/FertiScan%20Sequence%20Diagram.png)
 
 ### `DELETE /inspections`
 
@@ -73,8 +75,8 @@ Remove all transient states of a inspection.
 
 ### `GET /inspections`
 
-Retrieve the latest state of a inspection from the database.
+Retrieve a list of inspections matching the search query.
 
-![get](../out/get_inspection_dss/FertiScan%20Sequence%20Diagram.png)
+![search](../out/search_inspections_dss/FertiScan%20Sequence%20Diagram.png)
 
 v1.0.0
