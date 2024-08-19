@@ -70,8 +70,8 @@ gpt = GPT(
     deployment_id=OPENAI_API_DEPLOYMENT,
 )
 
-
 @app.route("/health", methods=["GET"])
+@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/health.yaml")
 def ping():
     return jsonify({"message": "Service is alive"}), 200
