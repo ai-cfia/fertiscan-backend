@@ -50,11 +50,15 @@ and form generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_
     docker build -t fertiscan-backend \
     --build-arg ARG_AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint \
     --build-arg ARG_AZURE_API_KEY=your_azure_form_recognizer_key \
-    --build-arg ARG_AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint \
-    --build-arg ARG_AZURE_OPENAI_API_KEY=your_azure_openai_key \
-    --build-arg ARG_PROMPT_PATH=path/to/prompt_file \
-    --build-arg ARG_UPLOAD_PATH=path/to/upload_file \
+    --build-arg ARG_AZURE_OPENAI_DEPLOYMENT=your_azure_openai_deployment \
+    --build-arg ARG_AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint \
+    --build-arg ARG_AZURE_OPENAI_KEY=your_azure_openai_key \
+    --build-arg ARG_FERTISCAN_STORAGE_URL=your_fertiscan_storage_url \
+    --build-arg ARG_FERTISCAN_DB_URL=your_fertiscan_db_url \
+    --build-arg ARG_FERTISCAN_SCHEMA=your_fertiscan_schema \
     --build-arg ARG_FRONTEND_URL=http://url.to_frontend/ \
+    --build-arg ARG_PROMPT_PATH=path/to/file \
+    --build-arg ARG_UPLOAD_PATH=path/to/file \
     .
     ```
 
