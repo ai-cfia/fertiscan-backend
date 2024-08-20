@@ -1,5 +1,5 @@
 @startuml FertiScan Sequence Diagram
-header 05/07/2024
+header 14/08/2024
 
 title FertiScan Discard Form
 hide empty members
@@ -9,19 +9,25 @@ participant FertiScan as BE <<http:localhost:5000>>
 participant DataStore as DS
 database SQL as DB
 
--> BE: GET /inspections/inspection_id
+-> BE: GET /inspections
 note right BE
   Authorization: Basic
   Content: Search Query
 end note
-BE -> DS: get_inspection() 
+BE -> DS: get_user_unverified_analysis() 
+note right
+So far it's the only
+way to search for inspections
+supported by the backend.
+end note
 DS -> DB: execute_query(query)
 DS <<-- DB: //SQL_CODE//
 BE <<-- DS: //JSON, HTTP_CODE//
 alt HTTP_CODE is success
   <<-- BE: //JSON, 200//
   note right
-    The inspection as stored in the database.
+    A list of inspections that
+    match the search query.
 
     Note: It might not have
     the same format as the one
@@ -29,6 +35,11 @@ alt HTTP_CODE is success
   end note
 else
   <<-- BE: //message, 500//
+  note right
+  {
+    "error": "...",
+  }
+  end note
 end
 
 @enduml

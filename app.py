@@ -70,8 +70,8 @@ gpt = GPT(
     deployment_id=OPENAI_API_DEPLOYMENT,
 )
 
-
 @app.route("/health", methods=["GET"])
+@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/health.yaml")
 def ping():
     return jsonify({"message": "Service is alive"}), 200
@@ -127,11 +127,12 @@ def verify_password(username, password):
                         message=str(e),
                     ), HTTPStatus.UNAUTHORIZED
 
-        if is_user_id:
+        if not is_user_id:
             return jsonify(
                 error="Unknown user!",
                 message="The email provided does not match with any known user.",
             ), HTTPStatus.UNAUTHORIZED
+        
 
         return username
     except Exception as err:
@@ -202,7 +203,7 @@ def create_inspection():  # pragma: no cover
 @auth.login_required
 @cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/update_inspection.yaml")
-def submit_inspection(inspection_id):  # pragma: no cover
+def update_inspection(inspection_id):  # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
@@ -237,7 +238,7 @@ def submit_inspection(inspection_id):  # pragma: no cover
 @app.route("/inspections/<form_id>", methods=["DELETE"])
 @auth.login_required
 @swag_from("docs/swagger/discard_inspection.yaml")
-def discard_inspection(form_id):   # pragma: no cover
+def discard_inspection(inspection_id):   # pragma: no cover
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 
@@ -245,7 +246,7 @@ def discard_inspection(form_id):   # pragma: no cover
 @auth.login_required
 @cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/search_inspection.yaml")
-def search():   # pragma: no cover
+def search_inspection():   # pragma: no cover
     try:
         # Database cursor
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:

@@ -7,8 +7,13 @@ title FertiScan Domain Model
 hide empty members
  
 class "Flask" as S <<localhost:5000>> {
-  + upload_image()
+  + login()
+  + signup()
   + analyze_document()
+  + create_inspection()
+  + search_inspections()
+  + update_inspection(inspection_id)
+  + discard_inspection(inspection_id)
 }
 
 class "Label" as DS {
@@ -29,7 +34,7 @@ entity "User" as U
 entity "Image" as I
 entity "Document" as D
 entity "Prompt" as P 
-entity "Form" as F
+class "FertilizerInspection" as F
  
  
 S "1" -- "1" OCR: uses >
