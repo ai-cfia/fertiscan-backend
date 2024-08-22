@@ -39,7 +39,7 @@ class APITestCase(unittest.TestCase):
 
     def test_create_user_missing_username(self):
         response = test_client.post('/signup', headers=self.headers , data={'password': 'password1'})
-        self.assertEqual(response.status_code, 500, response.json)
+        self.assertEqual(response.status_code, 400, response.json)
 
     def test_login(self):
         response = test_client.post('/login', headers=self.headers, data={'username': 'test', 'password': 'password1'})

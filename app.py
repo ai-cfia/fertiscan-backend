@@ -103,14 +103,17 @@ def signup(): # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
-                print(f"Creating user: {username}")
+                logger.info(f"Creating user: {username}")
                 user = asyncio.run(new_user(cursor, username, FERTISCAN_STORAGE_URL))
             conn.commit()
         return jsonify({"user_id": user.get_id()}), HTTPStatus.CREATED
     except Exception as e:
         logger.error(f"Error occurred: {e}")
         logger.error("Traceback: " + traceback.format_exc())
-        return jsonify({"message": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
+        return jsonify(
+            error="Failed to create user!",
+            message=str(e)
+        ), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 @auth.verify_password
