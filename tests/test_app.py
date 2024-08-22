@@ -13,6 +13,7 @@ class APITestCase(unittest.TestCase):
     def setUp(self):
         app.testing = True
         self.headers = {
+            'ContentType':'application/x-www-form-urlencoded',
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Headers': '*',
             'Access-Control-Allow-Methods': '*',
@@ -33,7 +34,7 @@ class APITestCase(unittest.TestCase):
             self.fail(f"Database connection failed: {e}")
 
     def test_create_user(self):
-        response = test_client.post('/signup', data={'username': 'test', 'password': 'password1'})
+        response = test_client.post('/signup', headers=self.headers, data={'username': 'test'})
         self.assertEqual(response.status_code, 201, response.json)
 
     def test_create_user_missing_username(self):
@@ -41,7 +42,7 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 500, response.json)
 
     def test_login(self):
-        response = test_client.post('/login', data={'username': 'test', 'password': 'password1'})
+        response = test_client.post('/login', headers=self.headers, data={'username': 'test', 'password': 'password1'})
         self.assertEqual(response.status_code, 200, response.json)
 
     def test_missing_username(self):
