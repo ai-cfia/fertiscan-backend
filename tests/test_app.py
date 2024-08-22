@@ -39,7 +39,7 @@ class APITestCase(unittest.TestCase):
             cursor.fetchall()
             conn.close()
         except Exception as e:
-            self.fail(f"Database connection failed: {FERTISCAN_DB_URL}")
+            self.fail(f"Database connection failed: {str(e)}")
 
     def test_blob_conn(self):
         FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
