@@ -100,7 +100,7 @@ def signup(): # pragma: no cover
                 print(f"Creating user: {username}")
                 user = asyncio.run(new_user(cursor, username, FERTISCAN_STORAGE_URL))
             conn.commit()
-        return jsonify({"user_id": user.get_id()}), 201
+        return jsonify({"user_id": user.get_id()}), HTTPStatus.CREATED
     except Exception as e:
         logger.error(f"Error occurred: {e}")
         logger.error("Traceback: " + traceback.format_exc())
@@ -134,7 +134,7 @@ def verify_password(username, password):
             ), HTTPStatus.UNAUTHORIZED
         
 
-        return username
+        return jsonify(message="Sucessfully logged in!"), HTTPStatus.OK
     except Exception as err:
         logger.error(f"Error occurred: {err}")
         logger.error("Traceback: " + traceback.format_exc())
@@ -205,19 +205,18 @@ def create_inspection():  # pragma: no cover
 @swag_from("docs/swagger/update_inspection.yaml")
 def update_inspection(inspection_id):  # pragma: no cover
     try:
+        # Get JSON form from the request
+        inspection = request.json
+        if inspection is None:
+            return jsonify(
+                error="Missing fertiliser form!"
+            ), HTTPStatus.BAD_REQUEST
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
                 # Sample userId from the database
                 username = auth.username()
                 logger.info(f"Fetching user ID for username: {username}")
                 db_user = asyncio.run(get_user(cursor, username))
-                
-                # Get JSON form from the request
-                inspection = request.json
-                if inspection is None:
-                    return jsonify(
-                        error="Missing fertiliser form!"
-                    ), HTTPStatus.BAD_REQUEST
 
                 inspection = asyncio.run(
                     fertiscan.update_inspection(
@@ -228,7 +227,7 @@ def update_inspection(inspection_id):  # pragma: no cover
                     )
                 )
                 conn.commit()
-                return inspection.model_dump(), HTTPStatus.OK
+                return inspection.model_dump(indent=2), HTTPStatus.OK
     except Exception as err:
         logger.error(f"Error occurred: {err}")
         logger.error("Traceback: " + traceback.format_exc())

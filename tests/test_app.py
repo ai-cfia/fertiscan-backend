@@ -33,17 +33,17 @@ class APITestCase(unittest.TestCase):
         except Exception as e:
             self.fail(f"Database connection failed: {e}")
 
+    def test_create_user(self):
+        response = test_client.post('/signup', headers=self.headers , data={'username': 'test'})
+        self.assertEqual(response.status_code, 201, response.json)
+
     def test_create_user_missing_username(self):
         response = test_client.post('/signup', headers=self.headers , data={'password': 'password1'})
         self.assertEqual(response.status_code, 500, response.json)
 
-    def create_empty_inspection(self):
-        response = test_client.post('/inspections', headers=self.headers)
-        self.assertEqual(response.status_code, 400, response.json)
-
-    def update_empty_inspection(self):
-        response = test_client.put('/inspections', headers=self.headers)
-        self.assertEqual(response.status_code, 400, response.json)
+    def test_login(self):
+        response = test_client.post('/login', data={'username': 'test', 'password': 'password1'})
+        self.assertEqual(response.status_code, 200, response.json)
 
     def test_missing_username(self):
         response = test_client.post('/login', headers=self.headers)
@@ -53,6 +53,14 @@ class APITestCase(unittest.TestCase):
         username = str(uuid.uuid4())
         response = test_client.post('/login', data={'username': username, 'password': 'password1'})
         self.assertEqual(response.status_code, 401, response.json)
+
+    def create_empty_inspection(self):
+        response = test_client.post('/inspections', headers=self.headers)
+        self.assertEqual(response.status_code, 400, response.json)
+
+    def update_empty_inspection(self):
+        response = test_client.put('/inspections', headers=self.headers)
+        self.assertEqual(response.status_code, 400, response.json)
 
     def test_get_inspection_from_none(self):
         response = test_client.get('/inspections', headers=self.headers)
