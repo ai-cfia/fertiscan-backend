@@ -4,6 +4,8 @@ import unittest
 import datastore
 
 from io import BytesIO
+
+import datastore.db
 from app import app
 from azure.storage.blob import BlobServiceClient
 from unittest.mock import patch, MagicMock
@@ -31,6 +33,10 @@ class APITestCase(unittest.TestCase):
         FERTISCAN_DB_URL = os.getenv("FERTISCAN_DB_URL")
         try:
             conn = datastore.db.connect_db(conn_str=FERTISCAN_DB_URL, schema=FERTISCAN_SCHEMA)
+            cursor = conn.cursor()
+            datastore.db.create_search_path(conn, cursor, FERTISCAN_SCHEMA)
+            cursor.execute("SELECT 1 from users")
+            cursor.fetchall()
             conn.close()
         except Exception as e:
             self.fail(f"Database connection failed: {e}")
