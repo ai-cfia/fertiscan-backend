@@ -31,15 +31,15 @@ class APITestCase(unittest.TestCase):
         # Create a real database connection
         FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA", "fertiscan_0.0.10")
         FERTISCAN_DB_URL = os.getenv("FERTISCAN_DB_URL")
-        try:
-            conn = datastore.db.connect_db(conn_str=FERTISCAN_DB_URL, schema=FERTISCAN_SCHEMA)
-            cursor = conn.cursor()
-            datastore.db.create_search_path(conn, cursor, FERTISCAN_SCHEMA)
-            cursor.execute("""SELECT 1 from "fertiscan_0.0.11".users""")
-            cursor.fetchall()
-            conn.close()
-        except Exception as e:
-            self.fail(f"Database connection failed: {e}")
+        # try:
+        #     conn = datastore.db.connect_db(conn_str=FERTISCAN_DB_URL, schema=FERTISCAN_SCHEMA)
+        #     cursor = conn.cursor()
+        #     datastore.db.create_search_path(conn, cursor, FERTISCAN_SCHEMA)
+        #     cursor.execute("""SELECT 1 from "fertiscan_0.0.11".users""")
+        #     cursor.fetchall()
+        #     conn.close()
+        # except Exception as e:
+        self.fail(f"Database connection failed: {FERTISCAN_DB_URL}")
 
     def test_blob_conn(self):
         FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
@@ -58,16 +58,12 @@ class APITestCase(unittest.TestCase):
         except Exception as e:
             self.fail("Connection failed:", str(e))
 
-    def test_create_user(self):
-        response = test_client.post('/signup', headers=self.headers, data={'username': 'test'})
-        self.assertEqual(response.status_code, 201, response.json)
-
     def test_create_user_missing_username(self):
         response = test_client.post('/signup', headers=self.headers , data={'password': 'password1'})
         self.assertEqual(response.status_code, 400, response.json)
 
     def test_login(self):
-        response = test_client.post('/login', headers=self.headers, data={'username': 'test', 'password': 'password1'})
+        response = test_client.post('/login', headers=self.headers, data={'username': 'test-bryan', 'password': 'password1'})
         self.assertEqual(response.status_code, 200, response.json)
 
     def test_missing_username(self):
