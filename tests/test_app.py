@@ -35,7 +35,7 @@ class APITestCase(unittest.TestCase):
             conn = datastore.db.connect_db(conn_str=FERTISCAN_DB_URL, schema=FERTISCAN_SCHEMA)
             cursor = conn.cursor()
             datastore.db.create_search_path(conn, cursor, FERTISCAN_SCHEMA)
-            cursor.execute("SELECT 1 from users")
+            cursor.execute("""SELECT 1 from "fertiscan_0.0.11".users""")
             cursor.fetchall()
             conn.close()
         except Exception as e:
