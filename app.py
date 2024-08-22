@@ -97,7 +97,7 @@ def signup(): # pragma: no cover
     if username is None:
         return jsonify(
             error="Missing email address!",
-            message="The request is missing the 'email' parameter. Please provide a valid email address to proceed.",
+            message="The request is missing the 'username' parameter. Please provide a valid email address to proceed.",
         ), HTTPStatus.BAD_REQUEST
     
     try:

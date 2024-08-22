@@ -13,7 +13,7 @@ class APITestCase(unittest.TestCase):
     def setUp(self):
         app.testing = True
         self.headers = {
-            'ContentType':'application/x-www-form-urlencoded',
+            'Content-Type': 'application/x-www-form-urlencoded',
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Headers': '*',
             'Access-Control-Allow-Methods': '*',
