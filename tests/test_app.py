@@ -5,6 +5,7 @@ import datastore
 
 from io import BytesIO
 from app import app
+from azure.storage.blob import BlobServiceClient
 from unittest.mock import patch, MagicMock
 
 test_client = app.test_client()
@@ -19,6 +20,7 @@ class APITestCase(unittest.TestCase):
             'Access-Control-Allow-Methods': '*',
         }
 
+
     def test_health(self):
         response = test_client.get('/health', headers=self.headers)
         self.assertEqual(response.status_code, 200)
@@ -32,6 +34,23 @@ class APITestCase(unittest.TestCase):
             conn.close()
         except Exception as e:
             self.fail(f"Database connection failed: {e}")
+
+    def test_blob_conn(self):
+        FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
+
+        try:
+            # Create the BlobServiceClient object which will be used to create a container client
+            blob_service_client = BlobServiceClient.from_connection_string(FERTISCAN_STORAGE_URL)
+
+            # List all containers to test the connection
+            containers = blob_service_client.list_containers()
+
+            print("Connection successful. Containers:")
+            for container in containers:
+                print(container.name)
+
+        except Exception as e:
+            self.fail("Connection failed:", str(e))
 
     def test_create_user(self):
         response = test_client.post('/signup', headers=self.headers, data={'username': 'test'})
