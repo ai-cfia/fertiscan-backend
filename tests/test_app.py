@@ -31,15 +31,15 @@ class APITestCase(unittest.TestCase):
         # Create a real database connection
         FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA", "fertiscan_0.0.10")
         FERTISCAN_DB_URL = os.getenv("FERTISCAN_DB_URL")
-        # try:
-        #     conn = datastore.db.connect_db(conn_str=FERTISCAN_DB_URL, schema=FERTISCAN_SCHEMA)
-        #     cursor = conn.cursor()
-        #     datastore.db.create_search_path(conn, cursor, FERTISCAN_SCHEMA)
-        #     cursor.execute("""SELECT 1 from "fertiscan_0.0.11".users""")
-        #     cursor.fetchall()
-        #     conn.close()
-        # except Exception as e:
-        self.fail(f"Database connection failed: {FERTISCAN_DB_URL}")
+        try:
+            conn = datastore.db.connect_db(conn_str=FERTISCAN_DB_URL, schema=FERTISCAN_SCHEMA)
+            cursor = conn.cursor()
+            datastore.db.create_search_path(conn, cursor, FERTISCAN_SCHEMA)
+            cursor.execute("""SELECT 1 from "fertiscan_0.0.11".users""")
+            cursor.fetchall()
+            conn.close()
+        except Exception as e:
+            self.fail(f"Database connection failed: {FERTISCAN_DB_URL}")
 
     def test_blob_conn(self):
         FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
