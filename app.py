@@ -94,6 +94,12 @@ def signup(): # pragma: no cover
     username = request.form.get("username")
     _ = request.form.get("password")
 
+    if username is None:
+        return jsonify(
+            error="Missing email address!",
+            message="The request is missing the 'email' parameter. Please provide a valid email address to proceed.",
+        ), HTTPStatus.BAD_REQUEST
+    
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:

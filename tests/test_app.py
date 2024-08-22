@@ -33,7 +33,7 @@ class APITestCase(unittest.TestCase):
             self.fail(f"Database connection failed: {e}")
 
     def test_create_user(self):
-        response = test_client.post('/signup', headers=self.headers , data={'username': 'test'})
+        response = test_client.post('/signup', data={'username': 'test', 'password': 'password1'})
         self.assertEqual(response.status_code, 201, response.json)
 
     def test_create_user_missing_username(self):
