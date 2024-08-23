@@ -151,7 +151,7 @@ def verify_password(username, password):
     except Exception as err:
         logger.error(f"Error occurred: {err}")
         logger.error("Traceback: " + traceback.format_exc())
-        return jsonify(error="Internal server error!"), HTTPStatus.INTERNAL_SERVER_ERROR
+        return jsonify(error="Internal server error!", message=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 @app.route("/inspections", methods=["POST"])

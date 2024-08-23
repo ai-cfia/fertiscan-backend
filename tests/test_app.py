@@ -29,13 +29,13 @@ class APITestCase(unittest.TestCase):
 
     def test_conn(self):
         # Create a real database connection
-        FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA", "fertiscan_0.0.10")
+        FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA", "fertiscan_0.0.11")
         FERTISCAN_DB_URL = os.getenv("FERTISCAN_DB_URL")
         try:
             conn = datastore.db.connect_db(conn_str=FERTISCAN_DB_URL, schema=FERTISCAN_SCHEMA)
             cursor = conn.cursor()
             datastore.db.create_search_path(conn, cursor, FERTISCAN_SCHEMA)
-            cursor.execute("""SELECT 1 from "fertiscan_0.0.11".users""")
+            cursor.execute(f"""SELECT 1 from "{FERTISCAN_SCHEMA}".users""")
             cursor.fetchall()
             conn.close()
         except Exception as e:
@@ -51,7 +51,6 @@ class APITestCase(unittest.TestCase):
             # List all containers to test the connection
             containers = blob_service_client.list_containers()
 
-            print("Connection successful. Containers:")
             for container in containers:
                 print(container.name)
 
@@ -104,12 +103,12 @@ class APITestCase(unittest.TestCase):
         
         response = test_client.post(
             '/analyze',
-            content_type='multipart/inspection-data',
+            content_type='multipart/form-data',
             data=data
         )
 
         # Document Intelligence throws an error
-        self.assertEqual(response.status_code, 400, response.json)
+        self.assertEqual(response.status_code, 500, response.json)
         self.assertIn('error', response.json)
 
     @patch('app.gpt.create_inspection')
