@@ -124,9 +124,9 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 500, response.json)
 
     # I think it requires an object with the format the datastore expects.
-    def test_update_inspection(self):
+    def test_update_inspection_fake_id(self):
         with requests.get('https://raw.githubusercontent.com/ai-cfia/fertiscan-pipeline/main/expected.json') as response:
-            inspection_id = str(uuid.uuid4())
+            inspection_id = str(uuid.uuid4()) # Should fail since the inspection with this id does not exist
             json_data = str(response.content)
             response = test_client.put(
                 f'/inspections/{inspection_id}', 
@@ -134,7 +134,7 @@ class APITestCase(unittest.TestCase):
                 content_type='application/json',
                 json=json_data
             )
-            self.assertEqual(response.status_code, 201, response.json)
+            self.assertEqual(response.status_code, 400, response.json)
 
     def test_update_empty_inspection(self):
         inspection_id = str(uuid.uuid4())

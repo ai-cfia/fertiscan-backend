@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import json
 import traceback
 
 from http import HTTPStatus
@@ -175,7 +176,7 @@ def create_inspection():  # pragma: no cover
                 )
 
                 # Get JSON form from the request
-                form = request.json
+                form = request.get_json()
                 if form is None:
                     logger.warning("Missing form in request")
                     return jsonify(
@@ -221,7 +222,7 @@ def create_inspection():  # pragma: no cover
 def update_inspection(inspection_id):  # pragma: no cover
     try:
         # Get JSON form from the request
-        inspection = request.json
+        inspection = request.get_json()
         if inspection is None:
             return jsonify(
                 error="Missing fertiliser form!"
@@ -277,7 +278,7 @@ def search_inspection():   # pragma: no cover
                 db_user = asyncio.run(get_user(cursor, username))
 
                 # TO-DO Send that search query to the datastore
-                inspections = fertiscan.get_user_unverified_analysis(cursor, db_user.id)
+                inspections = fertiscan.inspection.get_all_user_inspection(cursor, db_user.id)
                 return jsonify(inspections), HTTPStatus.OK
     except Exception as err:
         logger.error(f"Error occurred: {err}")
