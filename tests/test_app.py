@@ -1,6 +1,5 @@
 import os
 import uuid
-import json
 import unittest
 import base64
 import requests
