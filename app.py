@@ -133,14 +133,14 @@ def verify_password(username, password):
                 
                 # Check if the user exists in the database
                 try:
-                    is_user_id = is_a_user_id(cursor, username)
+                    user = get_user(cursor, username)
                 except Exception as e:
                     return jsonify(
                         error="Authentication error!",
                         message=str(e),
                     ), HTTPStatus.UNAUTHORIZED
 
-        if not is_user_id:
+        if user is None:
             return jsonify(
                 error="Unknown user!",
                 message="The email provided does not match with any known user.",
