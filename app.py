@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from azure.core.exceptions import HttpResponseError
 from datastore import ContainerClient, get_user, new_user
 from datastore.db import connect_db, create_search_path
-from datastore.db.queries.user import is_a_user_id
+# from datastore.db.queries.user import is_a_user_id
 from datastore import fertiscan
 from flasgger import Swagger, swag_from
 from flask import Flask, jsonify, request
@@ -133,7 +133,7 @@ def verify_password(username, password):
                 
                 # Check if the user exists in the database
                 try:
-                    user = get_user(cursor, username)
+                    user = asyncio.run(get_user(cursor, username))
                 except Exception as e:
                     return jsonify(
                         error="Authentication error!",
@@ -147,7 +147,7 @@ def verify_password(username, password):
             ), HTTPStatus.UNAUTHORIZED
         
 
-        return jsonify(message="Sucessfully logged in!"), HTTPStatus.OK
+        return jsonify(user_id=user.get_id() ,message="Sucessfully logged in!"), HTTPStatus.OK
     except Exception as err:
         logger.error(f"Error occurred: {err}")
         logger.error("Traceback: " + traceback.format_exc())
