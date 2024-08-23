@@ -1,6 +1,9 @@
 import os
 import uuid
+import json
 import unittest
+import base64
+import requests
 import datastore
 
 from io import BytesIO
@@ -15,8 +18,14 @@ test_client = app.test_client()
 class APITestCase(unittest.TestCase):
     def setUp(self):
         app.testing = True
+        
+        username = 'test'
+        password = 'password1'
+        credentials = f"{username}:{password}"
+        encoded_credentials = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
+        
         self.headers = {
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': f'Basic {encoded_credentials}',
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Headers': '*',
             'Access-Control-Allow-Methods': '*',
@@ -58,12 +67,33 @@ class APITestCase(unittest.TestCase):
             self.fail("Connection failed:", str(e))
 
     def test_create_user_missing_username(self):
-        response = test_client.post('/signup', headers=self.headers , data={'password': 'password1'})
+        response = test_client.post(
+            '/signup',
+            headers=self.headers,
+            content_type='application/x-www-form-urlencoded',
+            data={'password': 'password1'}
+        )
         self.assertEqual(response.status_code, 400, response.json)
 
     def test_login(self):
-        response = test_client.post('/login', headers=self.headers, data={'username': 'test-bryan', 'password': 'password1'})
+        response = test_client.post(
+            '/login',
+            headers=self.headers,
+            content_type='application/x-www-form-urlencoded',
+            data={'username': 'test-bryan', 'password': 'password1'}
+        )
         self.assertEqual(response.status_code, 200, response.json)
+
+    
+    def test_signup(self):
+        response = test_client.post(\
+            '/signup',
+            headers=self.headers,
+            content_type='application/x-www-form-urlencoded',
+            data={'username': 'test', 'password': 'password1'}
+        )
+        if response.json['message'] != "User already exists":
+            self.assertEqual(response.status_code, 201, response.json)
 
     def test_missing_username(self):
         response = test_client.post('/login', headers=self.headers)
@@ -71,24 +101,59 @@ class APITestCase(unittest.TestCase):
     
     def test_unknow_username(self):
         username = str(uuid.uuid4())
-        response = test_client.post('/login', data={'username': username, 'password': 'password1'})
+        response = test_client.post(\
+            '/login',
+            headers=self.headers,
+            content_type='application/x-www-form-urlencoded',
+            data={'username': username, 'password': 'password1'}
+        )
         self.assertEqual(response.status_code, 401, response.json)
 
-    def create_empty_inspection(self):
-        response = test_client.post('/inspections', headers=self.headers)
-        self.assertEqual(response.status_code, 400, response.json)
+    def test_create_inspection(self):
+        with requests.get('https://raw.githubusercontent.com/ai-cfia/fertiscan-pipeline/main/expected.json') as response:
+            json_data = str(response.content)
+            response = test_client.post(
+                '/inspections', 
+                headers=self.headers,
+                content_type='application/json',
+                json=json_data
+            )
+            self.assertEqual(response.status_code, 201, response.json)
 
-    def update_empty_inspection(self):
-        response = test_client.put('/inspections', headers=self.headers)
-        self.assertEqual(response.status_code, 400, response.json)
+    def test_create_empty_inspection(self):
+        response = test_client.post('/inspections', headers=self.headers)
+        self.assertEqual(response.status_code, 500, response.json)
+
+    # I think it requires an object with the format the datastore expects.
+    def test_update_inspection(self):
+        with requests.get('https://raw.githubusercontent.com/ai-cfia/fertiscan-pipeline/main/expected.json') as response:
+            inspection_id = str(uuid.uuid4())
+            json_data = str(response.content)
+            response = test_client.put(
+                f'/inspections/{inspection_id}', 
+                headers=self.headers,
+                content_type='application/json',
+                json=json_data
+            )
+            self.assertEqual(response.status_code, 201, response.json)
+
+    def test_update_empty_inspection(self):
+        inspection_id = str(uuid.uuid4())
+        response = test_client.put(f'/inspections/{inspection_id}', headers=self.headers)
+        self.assertEqual(response.status_code, 500, response.json)
 
     def test_get_inspection_from_none(self):
-        response = test_client.get('/inspections', headers=self.headers)
+        response = test_client.get('/inspections', content_type='application/json', headers=self.headers)
         self.assertEqual(response.status_code, 500, response.json)
     
     def test_get_inspection_from_unknown_user(self):
         username = str(uuid.uuid4())
-        response = test_client.get('/inspections', headers=self.headers, data={'username': username, 'password': 'password1'})
+        response = test_client.get(
+            '/inspections',
+            headers=self.headers, 
+            content_type='application/json',
+            data={'username': username, 'password': 'password1'}
+        )
         self.assertEqual(response.status_code, 500, response.json)
 
     def test_analyze_document_no_files(self):

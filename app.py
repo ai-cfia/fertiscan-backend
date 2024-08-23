@@ -147,7 +147,7 @@ def verify_password(username, password):
             ), HTTPStatus.UNAUTHORIZED
         
 
-        return jsonify(user_id=user.get_id() ,message="Sucessfully logged in!"), HTTPStatus.OK
+        return jsonify(user_id=user.get_id()), HTTPStatus.OK
     except Exception as err:
         logger.error(f"Error occurred: {err}")
         logger.error("Traceback: " + traceback.format_exc())
