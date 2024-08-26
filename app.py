@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-import json
 import traceback
 
 from http import HTTPStatus
