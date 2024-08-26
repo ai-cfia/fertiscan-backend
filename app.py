@@ -7,7 +7,7 @@ from http import HTTPStatus
 from dotenv import load_dotenv
 from azure.core.exceptions import HttpResponseError
 from datastore import ContainerClient, get_user, new_user
-from datastore.db import connect_db, create_search_path
+from datastore.db import connect_db
 # from datastore.db.queries.user import is_a_user_id
 from datastore import fertiscan
 from flasgger import Swagger, swag_from
@@ -102,7 +102,7 @@ def signup(): # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
-                create_search_path(conn, cursor, FERTISCAN_SCHEMA)
+                # create_search_path(conn, cursor, FERTISCAN_SCHEMA)
                 
                 logger.info(f"Creating user: {username}")
                 user = asyncio.run(new_user(cursor, username, FERTISCAN_STORAGE_URL))
@@ -128,7 +128,7 @@ def verify_password(username, password):
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
-                create_search_path(conn, cursor, FERTISCAN_SCHEMA)
+                # create_search_path(conn, cursor, FERTISCAN_SCHEMA)
                 
                 # Check if the user exists in the database
                 try:
@@ -161,7 +161,7 @@ def create_inspection():  # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
-                create_search_path(conn, cursor, FERTISCAN_SCHEMA)
+                # create_search_path(conn, cursor, FERTISCAN_SCHEMA)
                 
                 # Sample userId from the database
                 username = auth.username()
@@ -228,8 +228,6 @@ def update_inspection(inspection_id):  # pragma: no cover
             ), HTTPStatus.BAD_REQUEST
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
-                create_search_path(conn, cursor, FERTISCAN_SCHEMA)
-                
                 # Sample userId from the database
                 username = auth.username()
                 logger.info(f"Fetching user ID for username: {username}")
@@ -244,7 +242,7 @@ def update_inspection(inspection_id):  # pragma: no cover
                     )
                 )
                 conn.commit()
-                return inspection.model_dump(indent=2), HTTPStatus.OK
+                return inspection.model_dump_json(indent=2), HTTPStatus.OK
     except Exception as err:
         logger.error(f"Error occurred: {err}")
         logger.error("Traceback: " + traceback.format_exc())
@@ -267,7 +265,7 @@ def search_inspection():   # pragma: no cover
         # Database cursor
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
-                create_search_path(conn, cursor, FERTISCAN_SCHEMA)
+                # create_search_path(conn, cursor, FERTISCAN_SCHEMA)
             
                 # The search query used to find the label.
                 username = auth.username()
