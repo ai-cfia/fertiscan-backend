@@ -331,5 +331,4 @@ if __name__ == "__main__":
     if FERTISCAN_STORAGE_URL is None:
         raise ValueError("FERTISCAN_STORAGE_URL is not set")
     
-    # Run the app
-    app.run(host='localhost', debug=True)
+    app.run(host='0.0.0.0', debug=True)
