@@ -82,8 +82,8 @@ def ping():
 @cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/login.yaml")
 def login():
-    username = request.form.get("username")
-    password = request.form.get("password")
+    username = auth.username()
+    password = "password1"
 
     return verify_password(username, password)
 
@@ -92,10 +92,9 @@ def login():
 @cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/signup.yaml")
 def signup(): # pragma: no cover
-    username = request.form.get("username")
-    _ = request.form.get("password")
+    username = auth.username()
 
-    if username is None:
+    if username is None or username == "":
         return jsonify(
             error="Missing email address!",
             message="The request is missing the 'username' parameter. Please provide a valid email address to proceed.",
@@ -121,7 +120,7 @@ def signup(): # pragma: no cover
 
 @auth.verify_password
 def verify_password(username, password):
-    if username is None:
+    if username is None or username == "":
         return jsonify(
             error="Missing email address!",
             message="The request is missing the 'email' parameter. Please provide a valid email address to proceed.",
@@ -177,6 +176,7 @@ def create_inspection():  # pragma: no cover
 
                 # Get JSON form from the request
                 form = request.get_json()
+
                 if form is None:
                     logger.warning("Missing form in request")
                     return jsonify(
@@ -271,7 +271,7 @@ def search_inspection():   # pragma: no cover
                 create_search_path(conn, cursor, FERTISCAN_SCHEMA)
             
                 # The search query used to find the label.
-                username = request.args.get('username')
+                username = auth.username()
                 # query = SearchQuery(username=username)
 
                 logger.info(f"Fetching user ID for username: {username}")
