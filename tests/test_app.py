@@ -1,5 +1,6 @@
 import os
 import uuid
+import json
 import unittest
 import base64
 import requests
@@ -118,7 +119,7 @@ class APITestCase(unittest.TestCase):
     # If the inspection is created, it should at least return a message testifying that.
     def test_create_inspection(self):
         with requests.get('https://raw.githubusercontent.com/ai-cfia/fertiscan-pipeline/main/expected.json') as response:
-            json_data = str(response.content)
+            json_data = response.json()
             response = test_client.post(
                 '/inspections', 
                 headers=self.headers,
@@ -134,27 +135,27 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 500, response.json)
 
     # Requires the database schema
-    # def test_update_inspection_fake_id(self):
-    #     inspection_id = str(uuid.uuid4()) # Should fail since the inspection with this id does not exist
-    #     response = test_client.put(
-    #         f'/inspections/{inspection_id}', 
-    #         headers=self.headers,
-    #         content_type='application/json',
-    #         json={'status': 'completed'}
-    #     )
-    #     self.assertEqual(response.status_code, 400, response.json)
+    def test_update_inspection_fake_id(self):
+        inspection_id = str(uuid.uuid4()) # Should fail since the inspection with this id does not exist
+        response = test_client.put(
+            f'/inspections/{inspection_id}', 
+            headers=self.headers,
+            content_type='application/json',
+            json={'status': 'completed'}
+        )
+        self.assertEqual(response.status_code, 400, response.json)
 
     # Requires the database schema
-    # def test_update_inspection(self):
-    #     with requests.get('https://raw.githubusercontent.com/ai-cfia/fertiscan-pipeline/main/expected.json') as response:
-    #         json_data = str(response.content)
-    #         response = test_client.put(
-    #             f'/inspections/{self.inspection_id}', 
-    #             headers=self.headers,
-    #             content_type='application/json',
-    #             json=json_data
-    #         )
-    #         self.assertEqual(response.status_code, 200, response.json)
+    def test_update_inspection(self):
+        with requests.get('https://raw.githubusercontent.com/ai-cfia/fertiscan-pipeline/main/expected.json') as response:
+            json_data = response.json()
+            response = test_client.put(
+                f'/inspections/{self.inspection_id}', 
+                headers=self.headers,
+                content_type='application/json',
+                json=json_data
+            )
+            self.assertEqual(response.status_code, 200, response.json)
     
     def test_get_inspection_from_unknown_user(self):
         username = str(uuid.uuid4())
