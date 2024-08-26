@@ -20,7 +20,7 @@ from werkzeug.utils import secure_filename
 load_dotenv()
 
 # fertiscan storage config vars
-FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA", "fertiscan_0.0.11")
+FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA")
 FERTISCAN_DB_URL = os.getenv("FERTISCAN_DB_URL")
 FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
 
@@ -266,7 +266,7 @@ def search_inspection():   # pragma: no cover
                 db_user = asyncio.run(get_user(cursor, username))
 
                 # TO-DO Send that search query to the datastore
-                inspections = fertiscan.inspection.get_all_user_inspection(cursor, db_user.id)
+                inspections = asyncio.run(fertiscan.get_user_analysis_by_verified(cursor, db_user.id, False))
                 return jsonify(inspections), HTTPStatus.OK
     except Exception as err:
         logger.error(f"Error occurred: {err}")
@@ -323,4 +323,13 @@ def internal_error(error):  # pragma: no cover
 
 
 if __name__ == "__main__":
+    # Check if the required environment variables are set
+    if FERTISCAN_DB_URL is None:
+        raise ValueError("FERTISCAN_DB_URL is not set")
+    if FERTISCAN_SCHEMA is None:
+        raise ValueError("FERTISCAN_SCHEMA is not set")
+    if FERTISCAN_STORAGE_URL is None:
+        raise ValueError("FERTISCAN_STORAGE_URL is not set")
+    
+    # Run the app
     app.run(host='localhost', debug=True)
