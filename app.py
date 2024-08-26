@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 from azure.core.exceptions import HttpResponseError
 from datastore import ContainerClient, get_user, new_user
 from datastore.db import connect_db
-# from datastore.db.queries.user import is_a_user_id
 from datastore import fertiscan
 from flasgger import Swagger, swag_from
 from flask import Flask, jsonify, request
@@ -21,7 +20,7 @@ from werkzeug.utils import secure_filename
 load_dotenv()
 
 # fertiscan storage config vars
-FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA", "fertiscan_0.0.8")
+FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA", "fertiscan_0.0.11")
 FERTISCAN_DB_URL = os.getenv("FERTISCAN_DB_URL")
 FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
 
@@ -102,8 +101,6 @@ def signup(): # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
-                # create_search_path(conn, cursor, FERTISCAN_SCHEMA)
-                
                 logger.info(f"Creating user: {username}")
                 user = asyncio.run(new_user(cursor, username, FERTISCAN_STORAGE_URL))
             conn.commit()
@@ -128,8 +125,6 @@ def verify_password(username, password):
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
-                # create_search_path(conn, cursor, FERTISCAN_SCHEMA)
-                
                 # Check if the user exists in the database
                 try:
                     user = asyncio.run(get_user(cursor, username))
@@ -161,8 +156,6 @@ def create_inspection():  # pragma: no cover
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
-                # create_search_path(conn, cursor, FERTISCAN_SCHEMA)
-                
                 # Sample userId from the database
                 username = auth.username()
                 logger.info(f"Fetching user ID for username: {username}")
@@ -265,8 +258,6 @@ def search_inspection():   # pragma: no cover
         # Database cursor
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
-                # create_search_path(conn, cursor, FERTISCAN_SCHEMA)
-            
                 # The search query used to find the label.
                 username = auth.username()
                 # query = SearchQuery(username=username)
