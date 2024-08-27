@@ -4,8 +4,7 @@ from pydantic import BaseModel
 
 
 class SearchQuery(BaseModel):
-    user_id: Optional[str]
-    label_id: Optional[str]
+    username: Optional[str]
 
     class Config:
         populate_by_name = True

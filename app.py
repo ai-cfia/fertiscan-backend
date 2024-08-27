@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 from azure.core.exceptions import HttpResponseError
 from datastore import ContainerClient, get_user, new_user
 from datastore.db import connect_db
-from datastore.db.queries.user import is_a_user_id
 from datastore import fertiscan
 from flasgger import Swagger, swag_from
 from flask import Flask, jsonify, request
@@ -21,7 +20,7 @@ from werkzeug.utils import secure_filename
 load_dotenv()
 
 # fertiscan storage config vars
-FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA", "fertiscan_0.0.8")
+FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA")
 FERTISCAN_DB_URL = os.getenv("FERTISCAN_DB_URL")
 FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
 
@@ -81,8 +80,8 @@ def ping():
 @cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/login.yaml")
 def login():
-    username = request.form.get("username")
-    password = request.form.get("password")
+    username = auth.username()
+    password = "password1"
 
     return verify_password(username, password)
 
@@ -91,25 +90,33 @@ def login():
 @cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/signup.yaml")
 def signup(): # pragma: no cover
-    username = request.form.get("username")
-    _ = request.form.get("password")
+    username = auth.username()
 
+    if username is None or username == "":
+        return jsonify(
+            error="Missing email address!",
+            message="The request is missing the 'username' parameter. Please provide a valid email address to proceed.",
+        ), HTTPStatus.BAD_REQUEST
+    
     try:
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
-                print(f"Creating user: {username}")
+                logger.info(f"Creating user: {username}")
                 user = asyncio.run(new_user(cursor, username, FERTISCAN_STORAGE_URL))
             conn.commit()
-        return jsonify({"user_id": user.get_id()}), 201
+        return jsonify({"user_id": user.get_id()}), HTTPStatus.CREATED
     except Exception as e:
         logger.error(f"Error occurred: {e}")
         logger.error("Traceback: " + traceback.format_exc())
-        return jsonify({"message": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
+        return jsonify(
+            error="Failed to create user!",
+            message=str(e)
+        ), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 @auth.verify_password
 def verify_password(username, password):
-    if username is None:
+    if username is None or username == "":
         return jsonify(
             error="Missing email address!",
             message="The request is missing the 'email' parameter. Please provide a valid email address to proceed.",
@@ -120,25 +127,25 @@ def verify_password(username, password):
             with conn.cursor() as cursor:
                 # Check if the user exists in the database
                 try:
-                    is_user_id = is_a_user_id(cursor, username)
+                    user = asyncio.run(get_user(cursor, username))
                 except Exception as e:
                     return jsonify(
                         error="Authentication error!",
                         message=str(e),
                     ), HTTPStatus.UNAUTHORIZED
 
-        if not is_user_id:
+        if user is None:
             return jsonify(
                 error="Unknown user!",
                 message="The email provided does not match with any known user.",
             ), HTTPStatus.UNAUTHORIZED
         
 
-        return username
+        return jsonify(user_id=user.get_id()), HTTPStatus.OK
     except Exception as err:
         logger.error(f"Error occurred: {err}")
         logger.error("Traceback: " + traceback.format_exc())
-        return jsonify(error="Internal server error!"), HTTPStatus.INTERNAL_SERVER_ERROR
+        return jsonify(error="Internal server error!", message=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 @app.route("/inspections", methods=["POST"])
@@ -160,7 +167,8 @@ def create_inspection():  # pragma: no cover
                 )
 
                 # Get JSON form from the request
-                form = request.json
+                form = request.get_json()
+
                 if form is None:
                     logger.warning("Missing form in request")
                     return jsonify(
@@ -205,19 +213,18 @@ def create_inspection():  # pragma: no cover
 @swag_from("docs/swagger/update_inspection.yaml")
 def update_inspection(inspection_id):  # pragma: no cover
     try:
+        # Get JSON form from the request
+        inspection = request.get_json()
+        if inspection is None:
+            return jsonify(
+                error="Missing fertiliser form!"
+            ), HTTPStatus.BAD_REQUEST
         with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
             with conn.cursor() as cursor:
                 # Sample userId from the database
                 username = auth.username()
                 logger.info(f"Fetching user ID for username: {username}")
                 db_user = asyncio.run(get_user(cursor, username))
-                
-                # Get JSON form from the request
-                inspection = request.json
-                if inspection is None:
-                    return jsonify(
-                        error="Missing fertiliser form!"
-                    ), HTTPStatus.BAD_REQUEST
 
                 inspection = asyncio.run(
                     fertiscan.update_inspection(
@@ -228,7 +235,7 @@ def update_inspection(inspection_id):  # pragma: no cover
                     )
                 )
                 conn.commit()
-                return inspection.model_dump(), HTTPStatus.OK
+                return inspection.model_dump_json(indent=2), HTTPStatus.OK
     except Exception as err:
         logger.error(f"Error occurred: {err}")
         logger.error("Traceback: " + traceback.format_exc())
@@ -246,25 +253,25 @@ def discard_inspection(inspection_id):   # pragma: no cover
 @auth.login_required
 @cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/search_inspection.yaml")
-def search_inspections():   # pragma: no cover
-    return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
-    # try:
-    #     # Database cursor
-    #     cursor = CONN.cursor()
+def search_inspection():   # pragma: no cover
+    try:
+        # Database cursor
+        with connect_db(FERTISCAN_DB_URL, FERTISCAN_SCHEMA) as conn:
+            with conn.cursor() as cursor:
+                # The search query used to find the label.
+                username = auth.username()
+                # query = SearchQuery(username=username)
 
-    #     # The search query used to find the label.
-    #     user_id = request.args.get('user_id')
-    #     label_id = request.args.get('label_id')
-    #     query = SearchQuery(user_id=user_id, label_id=label_id)
+                logger.info(f"Fetching user ID for username: {username}")
+                db_user = asyncio.run(get_user(cursor, username))
 
-    #     # TO-DO Send that search query to the datastore
-    #     inspections = inspection.get_all_user_inspection(cursor, query.user_id)
-    #     return jsonify(inspections), HTTPStatus.OK
-    # except Exception as err:
-    #     CONN.rollback()
-    # logger.error(f"Error occurred: {err}")
-    # logger.error("Traceback: " + traceback.format_exc())
-    #     return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
+                # TO-DO Send that search query to the datastore
+                inspections = asyncio.run(fertiscan.get_user_analysis_by_verified(cursor, db_user.id, False))
+                return jsonify(inspections), HTTPStatus.OK
+    except Exception as err:
+        logger.error(f"Error occurred: {err}")
+        logger.error("Traceback: " + traceback.format_exc())
+        return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 @app.route("/analyze", methods=["POST"])
@@ -316,4 +323,12 @@ def internal_error(error):  # pragma: no cover
 
 
 if __name__ == "__main__":
+    # Check if the required environment variables are set
+    if FERTISCAN_DB_URL is None:
+        raise ValueError("FERTISCAN_DB_URL is not set")
+    if FERTISCAN_SCHEMA is None:
+        raise ValueError("FERTISCAN_SCHEMA is not set")
+    if FERTISCAN_STORAGE_URL is None:
+        raise ValueError("FERTISCAN_STORAGE_URL is not set")
+    
     app.run(host='0.0.0.0', debug=True)
