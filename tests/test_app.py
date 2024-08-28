@@ -1,16 +1,16 @@
-import os
-import uuid
-import unittest
 import base64
-import requests
-import datastore
-
+import os
+import unittest
+import uuid
 from io import BytesIO
+from unittest.mock import MagicMock, patch
 
+import datastore
 import datastore.db
-from app import app
+import requests
 from azure.storage.blob import BlobServiceClient
-from unittest.mock import patch, MagicMock
+
+from app import app
 
 test_client = app.test_client()
 
@@ -61,19 +61,17 @@ class APITestCase(unittest.TestCase):
 
     def test_blob_conn(self):
         FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
-
-        try:
-            # Create the BlobServiceClient object which will be used to create a container client
-            blob_service_client = BlobServiceClient.from_connection_string(FERTISCAN_STORAGE_URL)
-
-            # List all containers to test the connection
-            containers = blob_service_client.list_containers()
-
-            for container in containers:
-                print(container.name)
-
-        except Exception as e:
-            self.fail("Connection failed:", str(e))
+        self.assertIsNotNone(
+            FERTISCAN_STORAGE_URL,
+            "FERTISCAN_STORAGE_URL environment variable is not set.",
+        )
+        blob_service_client = BlobServiceClient.from_connection_string(
+            FERTISCAN_STORAGE_URL
+        )
+        service_properties = blob_service_client.get_service_properties()
+        self.assertIsNotNone(
+            service_properties, "Failed to retrieve service properties."
+        )
 
     def test_signup_missing_username(self):
         response = test_client.post(
