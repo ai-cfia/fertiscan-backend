@@ -33,7 +33,6 @@ os.makedirs(log_dir, exist_ok=True)
 
 # Set up logging configuration
 logging.basicConfig(
-    filename=None,
     level=logging.INFO,
     force=True,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
