@@ -27,14 +27,13 @@ FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
 
 # Set up logging
 log_dir = os.path.join(".", "logs")
-log_file_path = os.path.join(log_dir, "app.log")
 
 # Create the directory if it doesn't exist
 os.makedirs(log_dir, exist_ok=True)
 
 # Set up logging configuration
 logging.basicConfig(
-    filename=log_file_path,
+    filename=None,
     level=logging.INFO,
     force=True,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
