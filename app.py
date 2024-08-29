@@ -15,7 +15,7 @@ from pipeline import GPT, OCR, LabelStorage, analyze
 from psycopg_pool import ConnectionPool
 from werkzeug.utils import secure_filename
 
-from connection_manager import ConnectionManager
+from backend.connection_manager import ConnectionManager
 
 # Load environment variables
 load_dotenv()
@@ -251,7 +251,7 @@ def update_inspection(inspection_id):  # pragma: no cover
         return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@app.route("/inspections/<form_id>", methods=["DELETE"])
+@app.route("/inspections/<inspection_id>", methods=["DELETE"])
 @auth.login_required
 @swag_from("docs/swagger/discard_inspection.yaml")
 def discard_inspection(inspection_id):  # pragma: no cover

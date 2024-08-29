@@ -57,7 +57,6 @@ and form generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_
     --build-arg ARG_FERTISCAN_DB_URL=your_fertiscan_db_url \
     --build-arg ARG_FERTISCAN_SCHEMA=your_fertiscan_schema \
     --build-arg ARG_FRONTEND_URL=http://url.to_frontend/ \
-    --build-arg ARG_PROMPT_PATH=path/to/file \
     --build-arg ARG_UPLOAD_PATH=path/to/file \
     .
     ```
@@ -82,7 +81,6 @@ AZURE_OPENAI_DEPLOYMENT=your_azure_openai_deployment
 FERTISCAN_DB_URL=your_fertiscan_db_url
 FERTISCAN_SCHEMA=your_fertiscan_schema
 
-PROMPT_PATH=path/to/file
 UPLOAD_PATH=path/to/file
 FRONTEND_URL=http://url.to_frontend/
 ```

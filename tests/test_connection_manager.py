@@ -5,7 +5,7 @@ from flask import Flask
 from psycopg import Connection
 from psycopg_pool import ConnectionPool
 
-from connection_manager import ConnectionManager
+from backend.connection_manager import ConnectionManager
 
 
 class TestConnectionManager(unittest.TestCase):
