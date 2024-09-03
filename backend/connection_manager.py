@@ -41,7 +41,6 @@ class ConnectionManager:
             Connection: The active database connection.
         """
         if self.connection is None:
-            self.pool.check()
             self.connection = self.pool.getconn()
         return self.connection
 
