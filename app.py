@@ -27,14 +27,15 @@ FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
 
 # Set up logging
 log_dir = os.path.join(".", "logs")
-log_file_path = os.path.join(log_dir, "app.log")
+log_filename = os.getenv("LOG_FILENAME")
+log_file = os.path.join(log_dir, log_filename) if log_filename else None
 
 # Create the directory if it doesn't exist
 os.makedirs(log_dir, exist_ok=True)
 
 # Set up logging configuration
 logging.basicConfig(
-    filename=log_file_path,
+    filename=log_file,
     level=logging.INFO,
     force=True,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -75,6 +76,8 @@ pool = ConnectionPool(
     conninfo=FERTISCAN_DB_URL,
     open=True,
     kwargs={"options": f"-c search_path={FERTISCAN_SCHEMA},public"},
+    min_size=10,
+    timeout=3,
 )
 connection_manager = ConnectionManager(app, pool)
 
