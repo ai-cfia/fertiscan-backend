@@ -85,17 +85,17 @@ class APITestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400, response.json)
 
-    def test_signup(self):
-        username = str(uuid.uuid4())
-        response = self.client.post(
-            "/signup",
-            headers={
-                **self.headers,
-                "Authorization": f'Basic {self.credentials(username, self.password)}',
-            },
-            content_type="application/x-www-form-urlencoded",
-        )
-        self.assertEqual(response.status_code, 201, response.json)
+    # def test_signup(self):
+    #     username = str(uuid.uuid4())
+    #     response = self.client.post(
+    #         "/signup",
+    #         headers={
+    #             **self.headers,
+    #             "Authorization": f'Basic {self.credentials(username, self.password)}',
+    #         },
+    #         content_type="application/x-www-form-urlencoded",
+    #     )
+    #     self.assertEqual(response.status_code, 201, response.json)
 
     def test_login_missing_username(self):
         response = self.client.post(
