@@ -76,6 +76,8 @@ pool = ConnectionPool(
     conninfo=FERTISCAN_DB_URL,
     open=True,
     kwargs={"options": f"-c search_path={FERTISCAN_SCHEMA},public"},
+    min_size=10,
+    timeout=3,
 )
 connection_manager = ConnectionManager(app, pool)
 
