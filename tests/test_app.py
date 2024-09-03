@@ -10,12 +10,11 @@ from azure.storage.blob import BlobServiceClient
 
 from app import app, connection_manager
 
-
 class APITestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Setup credentials and headers
-        cls.username = "test"
+        cls.username = "test-user"
         cls.password = "password1"
         encoded_credentials = cls.credentials(cls.username, cls.password)
 
@@ -87,13 +86,16 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400, response.json)
 
     def test_signup(self):
+        username = str(uuid.uuid4())
         response = self.client.post(
             "/signup",
-            headers=self.headers,
+            headers={
+                **self.headers,
+                "Authorization": f'Basic {self.credentials(username, self.password)}',
+            },
             content_type="application/x-www-form-urlencoded",
         )
-        if response.json["message"] != "User already exists":
-            self.assertEqual(response.status_code, 201, response.json)
+        self.assertEqual(response.status_code, 201, response.json)
 
     def test_login_missing_username(self):
         response = self.client.post(
