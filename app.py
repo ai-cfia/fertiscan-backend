@@ -259,11 +259,11 @@ def discard_inspection(inspection_id):  # pragma: no cover
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 
-@app.route("/inspections", methods=["GET"])
+@app.route("/inspections/<inspection_id>", methods=["GET"])
 @auth.login_required
 @cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/search_inspection.yaml")
-def search_inspection():  # pragma: no cover
+def search_inspection(inspection_id):  # pragma: no cover
     try:
         with connection_manager as manager:
             with manager.get_cursor() as cursor:
@@ -272,10 +272,15 @@ def search_inspection():  # pragma: no cover
                 logger.info(f"Fetching user ID for username: {username}")
                 db_user = asyncio.run(get_user(cursor, username))
 
-                # Execute the search query
-                inspections = asyncio.run(
-                    fertiscan.get_user_analysis_by_verified(cursor, db_user.id, False)
-                )
+                if inspection_id is None:
+                    # Execute the search query
+                    inspections = asyncio.run(
+                        fertiscan.get_user_analysis_by_verified(cursor, db_user.id, False)
+                    )
+                else:
+                    inspections = asyncio.run(
+                        fertiscan.get_full_inspection_json(cursor, inspection_id, db_user.get_id())
+                    )
 
                 return jsonify(inspections), HTTPStatus.OK
 

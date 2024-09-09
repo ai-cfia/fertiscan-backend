@@ -189,6 +189,23 @@ class APITestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200, response.json)
 
+    def test_get_inspection_by_id(self):
+        # Create a new inspection first
+        response = self.client.post(
+            "/inspections", headers=self.headers, json=self.analysis_json
+        )
+        self.assertEqual(response.status_code, 201, response.get_json())
+
+        # Use the response data from the creation for the update
+        update_data = response.get_json()
+        inspection_id = update_data["inspection_id"]
+
+        response = self.client.get(
+            f"/inspections/{inspection_id}",
+            headers=self.headers,
+        )
+        self.assertEqual(response.status_code, 200, response.json)
+
     def test_analyze_document_no_files(self):
         response = self.client.post("/analyze", headers=self.headers)
         self.assertEqual(response.status_code, 400, response.json)
