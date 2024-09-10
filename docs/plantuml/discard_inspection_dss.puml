@@ -1,7 +1,7 @@
 @startuml FertiScan Sequence Diagram
 header 05/07/2024
 
-title FertiScan Discard Form
+title FertiScan Discard Inspection
 hide empty members
 hide footbox
 

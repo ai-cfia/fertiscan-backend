@@ -77,6 +77,6 @@ Remove all transient states of a inspection.
 
 Retrieve a list of inspections matching the search query.
 
-![search](../out/search_inspections_dss/FertiScan%20Sequence%20Diagram.png)
+![search](../out/get_inspections_dss/FertiScan%20Sequence%20Diagram.png)
 
 v1.0.0

@@ -263,7 +263,7 @@ def discard_inspection(inspection_id):  # pragma: no cover
 @auth.login_required
 @cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/search_inspection.yaml")
-def get_inspection():  # pragma: no cover
+def get_inspections():  # pragma: no cover
     try:
         with connection_manager as manager:
             with manager.get_cursor() as cursor:
