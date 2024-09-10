@@ -1,10 +1,10 @@
-Search an inspection in the database using a search query.
+Retreive all the inspections for a given user.
 ---
 security:
   - basicAuth: []
 responses:
   200:
-    description: "Search query executed successfully"
+    description: "Inspections successfully retrieved"
     schema:
       type: object
   400:

@@ -1,7 +1,7 @@
 @startuml FertiScan Sequence Diagram
 header 14/08/2024
 
-title FertiScan Discard Form
+title FertiScan Get Inspection
 hide empty members
 hide footbox
 
@@ -9,17 +9,24 @@ participant FertiScan as BE <<http:localhost:5000>>
 participant DataStore as DS
 database SQL as DB
 
--> BE: GET /inspections
+-> BE: GET /inspections/<inspection_id>
 note right BE
   Authorization: Basic
-  Content: Search Query
 end note
-BE -> DS: get_user_unverified_analysis() 
-note right
-So far it's the only
-way to search for inspections
-supported by the backend.
-end note
+alt inspection_id is None
+  BE -> DS: get_inspections() 
+  note right
+    This will return all the
+    inspections of the user.
+  end note
+else
+  BE -> DS: get_inspection_by_id(inspection_id)
+  note right
+    This will return the
+    inspection with the given
+    inspection_id.
+  end note
+end
 DS -> DB: execute_query(query)
 DS <<-- DB: //SQL_CODE//
 BE <<-- DS: //JSON, HTTP_CODE//

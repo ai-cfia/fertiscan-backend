@@ -1,18 +1,16 @@
-Search an inspection in the database using a search query.
+Retreive a specific inspection by its ID.
 ---
 security:
   - basicAuth: []
-consumes:
-  - application/json
 parameters:
-  - name: user_id
-    in: query
-    description: "The id of the user."
-    schema:
-      type: string
+  - name: inspection_id
+    in: path
+    type: string
+    required: true
+    description: "ID of the inspection to retrieve"
 responses:
   200:
-    description: "Search query executed successfully"
+    description: "Inspection successfully retrieved"
     schema:
       type: object
   400:

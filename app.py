@@ -262,8 +262,8 @@ def discard_inspection(inspection_id):  # pragma: no cover
 @app.route("/inspections", methods=["GET"])
 @auth.login_required
 @cross_origin(origins=FRONTEND_URL)
-@swag_from("docs/swagger/search_inspection.yaml")
-def search_inspection():  # pragma: no cover
+@swag_from("docs/swagger/get_inspection.yaml")
+def get_inspections():  # pragma: no cover
     try:
         with connection_manager as manager:
             with manager.get_cursor() as cursor:
@@ -278,6 +278,30 @@ def search_inspection():  # pragma: no cover
                 )
 
                 return jsonify(inspections), HTTPStatus.OK
+
+    except Exception as err:
+        logger.error(f"Error occurred: {err}")
+        logger.error("Traceback: " + traceback.format_exc())
+        return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
+
+@app.route("/inspections/<inspection_id>", methods=["GET"])
+@auth.login_required
+@cross_origin(origins=FRONTEND_URL)
+@swag_from("docs/swagger/get_inspection_by_id.yaml")
+def get_inspection_by_id(inspection_id):  # pragma: no cover
+    try:
+        with connection_manager as manager:
+            with manager.get_cursor() as cursor:
+                # The search query used to find the label.
+                username = auth.username()
+                logger.info(f"Fetching user ID for username: {username}")
+                db_user = asyncio.run(get_user(cursor, username))
+                
+                inspection = asyncio.run(
+                    fertiscan.get_full_inspection_json(cursor, inspection_id, db_user.get_id())
+                )
+
+                return jsonify(inspection), HTTPStatus.OK
 
     except Exception as err:
         logger.error(f"Error occurred: {err}")

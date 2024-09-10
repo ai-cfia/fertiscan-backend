@@ -5,7 +5,7 @@ security:
 consumes:
   - application/json
 parameters:
-  - name: form_id
+  - name: inspection_id
     in: path
     type: string
     required: true
