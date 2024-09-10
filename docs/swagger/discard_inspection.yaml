@@ -4,7 +4,7 @@ This is will remove all transient states of the inspection from the database.
 security:
   - basicAuth: []
 parameters:
-  - name: form_id
+  - name: inspection
     in: path
     type: string
     required: true

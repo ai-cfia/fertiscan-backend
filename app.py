@@ -262,7 +262,7 @@ def discard_inspection(inspection_id):  # pragma: no cover
 @app.route("/inspections", methods=["GET"])
 @auth.login_required
 @cross_origin(origins=FRONTEND_URL)
-@swag_from("docs/swagger/search_inspection.yaml")
+@swag_from("docs/swagger/get_inspection.yaml")
 def get_inspections():  # pragma: no cover
     try:
         with connection_manager as manager:
@@ -287,7 +287,7 @@ def get_inspections():  # pragma: no cover
 @app.route("/inspections/<inspection_id>", methods=["GET"])
 @auth.login_required
 @cross_origin(origins=FRONTEND_URL)
-@swag_from("docs/swagger/search_inspection.yaml")
+@swag_from("docs/swagger/get_inspection_by_id.yaml")
 def get_inspection_by_id(inspection_id):  # pragma: no cover
     try:
         with connection_manager as manager:
