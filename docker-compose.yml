@@ -55,7 +55,7 @@ services:
       - fertiscan-network
 
   postgres:
-    image: ghcr.io/ai-cfia/postgres:main
+    image: ghcr.io/ai-cfia/postgres:0.0.3
     container_name: fertiscan-postgres
     restart: always
     environment:
