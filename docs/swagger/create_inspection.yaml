@@ -14,8 +14,7 @@ parameters:
   - name: images
     in: formData
     type: file
-    required: true
-    description: "The images analysed."  
+    description: "Images of the fertilizer label."  
 responses:
   201:
     description: Inspection created successfully
