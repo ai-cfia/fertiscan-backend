@@ -90,6 +90,9 @@ generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
     docker-compose up --build
     ```
 
+> **Side note : If you are on a ARM based machine, you will need to build the
+image with the `docker-compose build --build-arg TARGETARCH=arm64` command.**
+
 The application will be available at `http://localhost:80`. The database should
 be dynamically built based on latest schema from Bytebase.
 

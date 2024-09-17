@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   nginx:
-    image: ghcr.io/ai-cfia/nginx:latest
+    image: ghcr.io/ai-cfia/nginx:main
     container_name: fertiscan-nginx
     restart: always
     ports:
@@ -55,7 +55,7 @@ services:
       - fertiscan-network
 
   postgres:
-    image: ghcr.io/ai-cfia/postgres:latest
+    image: ghcr.io/ai-cfia/postgres:main
     container_name: fertiscan-postgres
     restart: always
     environment:
