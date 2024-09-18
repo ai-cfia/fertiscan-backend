@@ -53,7 +53,12 @@ app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Swagger UI
-swagger = Swagger(app, template_file="docs/swagger/template.yaml")
+
+swagger_config = Swagger.DEFAULT_CONFIG
+swagger_config["url_prefix"] = os.getenv("API_BASE_PATH")
+
+swagger = Swagger(app, template_file="docs/swagger/template.yaml", config=swagger_config)
+swagger.template["basePath"] = os.getenv("API_BASE_PATH")
 auth = HTTPBasicAuth()
 
 # Configuration for Azure Form Recognizer
@@ -284,6 +289,7 @@ def get_inspections():  # pragma: no cover
         logger.error("Traceback: " + traceback.format_exc())
         return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
+
 @app.route("/inspections/<inspection_id>", methods=["GET"])
 @auth.login_required
 @cross_origin(origins=FRONTEND_URL)
@@ -296,7 +302,7 @@ def get_inspection_by_id(inspection_id):  # pragma: no cover
                 username = auth.username()
                 logger.info(f"Fetching user ID for username: {username}")
                 db_user = asyncio.run(get_user(cursor, username))
-                
+
                 inspection = asyncio.run(
                     fertiscan.get_full_inspection_json(cursor, inspection_id, db_user.get_id())
                 )
