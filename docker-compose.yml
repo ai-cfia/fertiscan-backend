@@ -26,11 +26,6 @@ services:
       - .env
     depends_on:
       - postgres
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
     networks:
       - fertiscan-network
 

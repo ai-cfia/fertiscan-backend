@@ -75,6 +75,7 @@ generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
    following environment variables:
 
     ```ini
+    FERTISCAN_DB_URL=postgresql://postgres:postgres@postgres:5432/fertiscan
     BB_URL=bytebase_url
     BB_SERVICE_ACCOUNT=your-bytebase-sa@service.bytebase.com
     BB_SERVICE_KEY=your-bytebase-sa-key
