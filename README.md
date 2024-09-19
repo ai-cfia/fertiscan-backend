@@ -1,14 +1,16 @@
 # Festiscan backend
 
-FertiScan helps inspectors analyze and process fertilizer labels by extracting text
-and generating structured forms.
+FertiScan helps inspectors analyze and process fertilizer labels by extracting
+text and generating structured forms.
 
 ## Overview
 
 This repository contains the backend for FertiScan, a Flask-based server
-designed to work with the [frontend](https://github.com/ai-cfia/fertiscan-frontend/).
-It handles image uploads, document analysis using [OCR](https://en.wikipedia.org/wiki/Optical_character_recognition),
-and form generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
+designed to work with the
+[frontend](https://github.com/ai-cfia/fertiscan-frontend/). It handles image
+uploads, document analysis using
+[OCR](https://en.wikipedia.org/wiki/Optical_character_recognition), and form
+generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
 
 ![workflow](./out/workflow_dss/FertiScan%20Sequence%20Diagram.png)
 
@@ -67,6 +69,44 @@ and form generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_
     docker run -p 5000:5000 fertiscan-backend
     ```
 
+#### Docker Compose
+
+1. Create a `.env` file from [.env.template](./.env.template). Include the
+   following environment variables:
+
+    ```ini
+    FERTISCAN_DB_URL=postgresql://postgres:postgres@postgres:5432/fertiscan
+    BB_URL=bytebase_url
+    BB_SERVICE_ACCOUNT=your-bytebase-sa@service.bytebase.com
+    BB_SERVICE_KEY=your-bytebase-sa-key
+    BB_INSTANCE_ID=your-bytebase-instance-id
+    BB_DATABASE_ID=your-bytebase-database-id
+    ```
+
+    You can find their values in our vault under fertiscan-dev.
+
+2. Start the Docker container:
+
+    ```sh
+    docker-compose up --build
+    ```
+
+> **Side note : If you are on a ARM based machine, you will need to build the
+image with the `docker-compose build --build-arg TARGETARCH=arm64` command.**
+
+The application will be available at `http://localhost:80`. The database should
+be dynamically built based on latest schema from Bytebase.
+
+To use pgAdmin, navigate to `http://localhost:5050` and login with
+`admin@example.com` and `admin`. You can then register a new server with the
+following details:
+
+- Host: `postgres`
+- Port: `5432`
+- Username: `postgres`
+- Password: `postgres`
+- Database: `fertiscan`
+
 ### Environment Variables
 
 Create a `.env` file from [.env.template](./.env.template).
@@ -87,7 +127,7 @@ FRONTEND_URL=http://url.to_frontend/
 
 ## API Endpoints
 
-The [Swagger UI](https://swagger.io/tools/swagger-ui/) for
-the API of FertiScan is available at `/apidocs`.
+The [Swagger UI](https://swagger.io/tools/swagger-ui/) for the API of FertiScan
+is available at `/apidocs`.
 
 More details in the developer [documentation](./docs/README.md).
