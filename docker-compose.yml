@@ -21,7 +21,7 @@ services:
     container_name: frontend
     restart: always
     ports:
-      - "3000:3000"
+      - "3000:3000" # if you want to run the frontend on a different port, change the first port number
     depends_on:
       - postgres
     networks:
@@ -38,7 +38,7 @@ services:
     depends_on:
       - postgres
     ports:
-      - "5001:5000"
+      - "5001:5000" # if you want to run the backend on a different port, change the first port number
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
