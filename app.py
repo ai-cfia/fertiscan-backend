@@ -81,7 +81,7 @@ connection_manager = ConnectionManager(app, pool)
 
 @app.route('/', methods=["GET"])
 def main_page():
-    return redirect("/apidocs/", code=HTTPStatus.OK)
+    return redirect("/apidocs/", code=HTTPStatus.FOUND)
 
 @app.route("/health", methods=["GET"])
 @cross_origin(origins=FRONTEND_URL)
