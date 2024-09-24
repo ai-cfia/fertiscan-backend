@@ -34,6 +34,7 @@ EXPOSE 5000
 
 RUN chown -R 1000:1000 /app
 RUN mkdir -p /cachedir_joblib && chown -R 1000:1000 /cachedir_joblib
+RUN mkdir -p /.dspy_cache && chown -R 1000:1000 /.dspy_cache
 
 USER 1000
 
