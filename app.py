@@ -8,7 +8,7 @@ from azure.core.exceptions import HttpResponseError
 from datastore import ContainerClient, fertiscan, get_user, new_user
 from dotenv import load_dotenv
 from flasgger import Swagger, swag_from
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, redirect
 from flask_cors import cross_origin
 from flask_httpauth import HTTPBasicAuth
 from pipeline import GPT, OCR, LabelStorage, analyze
@@ -79,6 +79,9 @@ pool = ConnectionPool(
 )
 connection_manager = ConnectionManager(app, pool)
 
+@app.route('/', methods=["GET"])
+def main_page():
+    return redirect("/apidocs/", code=HTTPStatus.FOUND)
 
 @app.route("/health", methods=["GET"])
 @cross_origin(origins=FRONTEND_URL)
