@@ -94,7 +94,7 @@ connection_manager = ConnectionManager(app, pool)
 
 @app.route("/", methods=["GET"])
 def main_page():
-    return redirect(BASE_PATH + "/docs")
+    return redirect(BASE_PATH + SWAGGER_PATH)
 
 
 @app.route("/health", methods=["GET"])
