@@ -92,7 +92,7 @@ connection_manager = ConnectionManager(app, pool)
 
 @app.route("/", methods=["GET"])
 def main_page():
-    return redirect("/apidocs", code=HTTPStatus.FOUND)
+    return redirect(BASE_PATH + "/docs")
 
 
 @app.route("/health", methods=["GET"])
