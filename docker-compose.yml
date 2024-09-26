@@ -56,6 +56,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=fertiscan
+      - PROJECT_NAME=fertiscan
       - BB_URL=${BB_URL}
       - BB_SERVICE_ACCOUNT=${BB_SERVICE_ACCOUNT}
       - BB_SERVICE_KEY=${BB_SERVICE_KEY}
