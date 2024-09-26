@@ -54,8 +54,9 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Swagger UI
 BASE_PATH = os.getenv("API_BASE_PATH", "")
+SWAGGER_PATH = os.getenv("SWAGGER_BASE_PATH","")
 swagger_config = Swagger.DEFAULT_CONFIG
-swagger_config["url_prefix"] = BASE_PATH
+swagger_config["url_prefix"] = SWAGGER_PATH
 swagger_config["specs_route"] = "/docs"
 
 
