@@ -8,7 +8,7 @@ from azure.core.exceptions import HttpResponseError
 from datastore import ContainerClient, fertiscan, get_user, new_user
 from dotenv import load_dotenv
 from flasgger import Swagger, swag_from
-from flask import Flask, jsonify, request, redirect
+from flask import Flask, jsonify, redirect, request
 from flask_cors import cross_origin
 from flask_httpauth import HTTPBasicAuth
 from pipeline import GPT, OCR, LabelStorage, analyze
@@ -53,7 +53,19 @@ app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Swagger UI
-swagger = Swagger(app, template_file="docs/swagger/template.yaml")
+BASE_PATH = os.getenv("API_BASE_PATH", "")
+SWAGGER_BASE_PATH = os.getenv("SWAGGER_BASE_PATH","")
+SWAGGER_PATH = os.getenv("SWAGGER_PATH","/docs")
+swagger_config = Swagger.DEFAULT_CONFIG
+swagger_config["url_prefix"] = SWAGGER_BASE_PATH
+swagger_config["specs_route"] = SWAGGER_PATH
+
+
+swagger = Swagger(
+    app, template_file="docs/swagger/template.yaml", config=swagger_config
+)
+swagger.template["basePath"] = BASE_PATH
+
 auth = HTTPBasicAuth()
 
 # Configuration for Azure Form Recognizer
@@ -79,9 +91,11 @@ pool = ConnectionPool(
 )
 connection_manager = ConnectionManager(app, pool)
 
-@app.route('/', methods=["GET"])
+
+@app.route("/", methods=["GET"])
 def main_page():
-    return redirect("/apidocs/", code=HTTPStatus.FOUND)
+    return redirect(BASE_PATH + SWAGGER_PATH)
+
 
 @app.route("/health", methods=["GET"])
 @cross_origin(origins=FRONTEND_URL)
@@ -287,6 +301,7 @@ def get_inspections():  # pragma: no cover
         logger.error("Traceback: " + traceback.format_exc())
         return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
 
+
 @app.route("/inspections/<inspection_id>", methods=["GET"])
 @auth.login_required
 @cross_origin(origins=FRONTEND_URL)
@@ -299,9 +314,11 @@ def get_inspection_by_id(inspection_id):  # pragma: no cover
                 username = auth.username()
                 logger.info(f"Fetching user ID for username: {username}")
                 db_user = asyncio.run(get_user(cursor, username))
-                
+
                 inspection = asyncio.run(
-                    fertiscan.get_full_inspection_json(cursor, inspection_id, db_user.get_id())
+                    fertiscan.get_full_inspection_json(
+                        cursor, inspection_id, db_user.get_id()
+                    )
                 )
 
                 return jsonify(inspection), HTTPStatus.OK
