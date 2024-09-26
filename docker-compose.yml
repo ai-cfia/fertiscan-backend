@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   nginx:
-    image: ghcr.io/ai-cfia/nginx:0.0.2
+    image: ghcr.io/ai-cfia/nginx:0.0.3
     container_name: fertiscan-nginx
     restart: always
     ports:
@@ -10,6 +10,7 @@ services:
     environment:
       - BACKEND_PORT=5000 # Needs to point to the internal port of the backend service (5000)
       - FRONTEND_PORT=3000 # Needs to point to the internal port of the frontend service (3000)
+      - SWAGGER_PATH=swagger # Use anything but '/api' to avoid conflicts with the backend. Make sure to use the same value for API_BASE_PATH in the backend. e.g. 'API_BASE_PATH=/swagger'
     depends_on:
       - frontend
       - backend
