@@ -14,7 +14,7 @@ class APITestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Setup credentials and headers
-        cls.username = "test-user-2"
+        cls.username = "test-user-3"
         cls.password = "password1"
         encoded_credentials = cls.credentials(cls.username, cls.password)
 
@@ -39,6 +39,14 @@ class APITestCase(unittest.TestCase):
     def setUp(self):
         app.testing = True
         self.client = app.test_client()
+        self.client.post(
+            "/signup",
+            headers={
+                **self.headers,
+                "Authorization": f'Basic {self.credentials(self.username, self.password)}',
+            },
+            content_type="application/x-www-form-urlencoded",
+        )
 
     def tearDown(self):
         connection_manager.rollback()
