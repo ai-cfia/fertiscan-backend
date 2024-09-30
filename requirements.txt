@@ -1,7 +1,6 @@
-flask[async]
+fastapi
 python-dotenv
-flask-cors
-flask_httpauth
+python-multipart
 flasgger==0.9.7.1
 # Add the fertiscan-pipeline package from GitHub
 git+https://github.com/ai-cfia/fertiscan-pipeline.git@main

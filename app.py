@@ -1,20 +1,17 @@
-import asyncio
 import logging
 import os
 import traceback
+from werkzeug.utils import secure_filename
 from http import HTTPStatus
 
 from azure.core.exceptions import HttpResponseError
 from datastore import ContainerClient, fertiscan, get_user, new_user
 from dotenv import load_dotenv
-from flasgger import Swagger, swag_from
-from flask import Flask, jsonify, redirect, request
-from flask_cors import cross_origin
-from flask_httpauth import HTTPBasicAuth
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pipeline import GPT, OCR, LabelStorage, analyze
 from psycopg_pool import ConnectionPool
-from werkzeug.utils import secure_filename
-
 from backend.connection_manager import ConnectionManager
 
 # Load environment variables
@@ -45,28 +42,21 @@ logger = logging.getLogger(__name__)
 
 # Ensure the directory for uploaded images exists
 UPLOAD_FOLDER = os.getenv("UPLOAD_PATH", "uploads")
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 FRONTEND_URL = os.getenv("FRONTEND_URL", "*")
 
-app = Flask(__name__)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app = FastAPI()
 
-# Swagger UI
-BASE_PATH = os.getenv("API_BASE_PATH", "")
-SWAGGER_BASE_PATH = os.getenv("SWAGGER_BASE_PATH","")
-SWAGGER_PATH = os.getenv("SWAGGER_PATH","/docs")
-swagger_config = Swagger.DEFAULT_CONFIG
-swagger_config["url_prefix"] = SWAGGER_BASE_PATH
-swagger_config["specs_route"] = SWAGGER_PATH
-
-
-swagger = Swagger(
-    app, template_file="docs/swagger/template.yaml", config=swagger_config
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[FRONTEND_URL],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-swagger.template["basePath"] = BASE_PATH
 
-auth = HTTPBasicAuth()
+auth = HTTPBasic()
 
 # Configuration for Azure Form Recognizer
 API_ENDPOINT = os.getenv("AZURE_API_ENDPOINT")
@@ -92,289 +82,212 @@ pool = ConnectionPool(
 connection_manager = ConnectionManager(app, pool)
 
 
-@app.route("/", methods=["GET"])
-def main_page():
-    return redirect(BASE_PATH + SWAGGER_PATH)
+@app.get("/")
+async def main_page():
+    return {"message": "Welcome to the FastAPI application."}
 
 
-@app.route("/health", methods=["GET"])
-@cross_origin(origins=FRONTEND_URL)
-@swag_from("docs/swagger/health.yaml")
-def ping():
-    return jsonify({"message": "Service is alive"}), 200
+@app.get("/health")
+async def ping():
+    return {"message": "Service is alive"}
 
 
-@app.route("/login", methods=["POST"])
-@cross_origin(origins=FRONTEND_URL)
-@swag_from("docs/swagger/login.yaml")
-def login():
-    username = auth.username()
-    password = "password1"
+@app.post("/login")
+async def login(credentials: HTTPBasicCredentials = Depends(auth)):
+    username = credentials.username
+    password = "password1"  # Change this logic as per your requirements
 
-    return verify_password(username, password)
+    return await verify_password(username, password)
 
 
-@app.route("/signup", methods=["POST"])
-@cross_origin(origins=FRONTEND_URL)
-@swag_from("docs/swagger/signup.yaml")
-def signup():  # pragma: no cover
-    username = auth.username()
+@app.post("/signup")
+async def signup(credentials: HTTPBasicCredentials = Depends(auth)):
+    username = credentials.username
 
     if not username:
-        return jsonify(
-            error="Missing email address!",
-            message="The request is missing the 'username' parameter. Please provide a valid email address to proceed.",
-        ), HTTPStatus.BAD_REQUEST
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Missing email address!")
 
     try:
-        with connection_manager as manager:
-            with manager.get_cursor() as cursor:
+        async with connection_manager as manager:
+            async with manager.get_cursor() as cursor:
                 logger.info(f"Creating user: {username}")
-                user = asyncio.run(new_user(cursor, username, FERTISCAN_STORAGE_URL))
+                user = await new_user(cursor, username, FERTISCAN_STORAGE_URL)
             manager.commit()
-        return jsonify({"user_id": user.get_id()}), HTTPStatus.CREATED
+        return {"user_id": user.get_id()}
 
     except Exception as e:
         logger.error(f"Error occurred: {e}")
         logger.error("Traceback: " + traceback.format_exc())
-        return jsonify(
-            error="Failed to create user!", message=str(e)
-        ), HTTPStatus.INTERNAL_SERVER_ERROR
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Failed to create user!")
 
 
-@auth.verify_password
-def verify_password(username, password):
+async def verify_password(username: str, password: str):
     if not username:
-        return jsonify(
-            error="Missing email address!",
-            message="The request is missing the 'email' parameter. Please provide a valid email address to proceed.",
-        ), HTTPStatus.BAD_REQUEST
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Missing email address!")
 
     try:
-        with connection_manager as manager:
-            with manager.get_cursor() as cursor:
-                # Check if the user exists in the database
+        async with connection_manager as manager:
+            async with manager.get_cursor() as cursor:
                 try:
-                    user = asyncio.run(get_user(cursor, username))
+                    user = await get_user(cursor, username)
                 except Exception as e:
                     logger.error(f"Error occurred: {e}")
                     logger.error("Traceback: " + traceback.format_exc())
-                    return jsonify(
-                        error="Authentication error!",
-                        message=str(e),
-                    ), HTTPStatus.UNAUTHORIZED
+                    raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED, detail="Authentication error!")
 
         if user is None:
-            return jsonify(
-                error="Unknown user!",
-                message="The email provided does not match with any known user.",
-            ), HTTPStatus.UNAUTHORIZED
+            raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED, detail="Unknown user!")
 
-        return jsonify(user_id=user.get_id()), HTTPStatus.OK
+        return {"user_id": user.get_id()}
 
     except Exception as err:
         logger.error(f"Error occurred: {err}")
         logger.error("Traceback: " + traceback.format_exc())
-        return jsonify(
-            error="Internal server error!", message=str(err)
-        ), HTTPStatus.INTERNAL_SERVER_ERROR
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Internal server error!")
 
 
-@app.route("/inspections", methods=["POST"])
-@auth.login_required
-@cross_origin(origins=FRONTEND_URL)
-@swag_from("docs/swagger/create_inspection.yaml")
-def create_inspection():  # pragma: no cover
+@app.post("/inspections")
+async def create_inspection(form: dict, files: list[UploadFile] = File(...), credentials: HTTPBasicCredentials = Depends(auth)):
     try:
-        with connection_manager as manager:
-            with manager.get_cursor() as cursor:
-                # Sample userId from the database
-                username = auth.username()
+        async with connection_manager as manager:
+            async with manager.get_cursor() as cursor:
+                username = credentials.username
                 logger.info(f"Fetching user ID for username: {username}")
-                db_user = asyncio.run(get_user(cursor, username))
+                db_user = await get_user(cursor, username)
                 user_id = db_user.id
 
                 container_client = ContainerClient.from_connection_string(
                     FERTISCAN_STORAGE_URL, container_name=f"user-{user_id}"
                 )
 
-                # Get JSON form from the request
-                form = request.get_json()
-
                 if form is None:
-                    logger.warning("Missing form in request")
-                    return jsonify(
-                        error="Missing fertiliser form!"
-                    ), HTTPStatus.BAD_REQUEST
-
-                files = request.files.getlist("images")
+                    raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Missing fertiliser form!")
 
                 # Collect files in a list
-                images = []
-                for file in files:
-                    if file:
-                        logger.info(f"Reading file: {file.filename}")
-                        images.append(file.stream.read())
+                images = [await file.read() for file in files if file]
 
                 logger.info(f"Registering analysis for user_id: {user_id}")
-                inspection = asyncio.run(
-                    fertiscan.register_analysis(
-                        cursor=cursor,
-                        container_client=container_client,
-                        user_id=user_id,
-                        analysis_dict=form,
-                        hashed_pictures=images,
-                    )
+                inspection = await fertiscan.register_analysis(
+                    cursor=cursor,
+                    container_client=container_client,
+                    user_id=user_id,
+                    analysis_dict=form,
+                    hashed_pictures=images,
                 )
 
-                logger.info(
-                    f"Inspection created successfully with id: {inspection['inspection_id']}"
-                )
-                return jsonify(inspection), HTTPStatus.CREATED
+                logger.info(f"Inspection created successfully with id: {inspection['inspection_id']}")
+                return inspection
 
     except Exception as err:
         logger.error(f"Error occurred: {err}")
         logger.error("Traceback: " + traceback.format_exc())
-        return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=str(err))
 
 
-@app.route("/inspections/<inspection_id>", methods=["PUT"])
-@auth.login_required
-@cross_origin(origins=FRONTEND_URL)
-@swag_from("docs/swagger/update_inspection.yaml")
-def update_inspection(inspection_id):  # pragma: no cover
+@app.put("/inspections/{inspection_id}")
+async def update_inspection(inspection_id: str, inspection: dict, credentials: HTTPBasicCredentials = Depends(auth)):
     try:
-        # Get JSON form from the request
-        inspection = request.get_json()
-        if inspection is None:
-            return jsonify(error="Missing fertiliser form!"), HTTPStatus.BAD_REQUEST
-
-        with connection_manager as manager:
-            with manager.get_cursor() as cursor:
-                # Sample userId from the database
-                username = auth.username()
+        async with connection_manager as manager:
+            async with manager.get_cursor() as cursor:
+                username = credentials.username
                 logger.info(f"Fetching user ID for username: {username}")
-                db_user = asyncio.run(get_user(cursor, username))
+                db_user = await get_user(cursor, username)
 
-                inspection = asyncio.run(
-                    fertiscan.update_inspection(
-                        cursor, inspection_id, db_user.id, inspection
-                    )
+                inspection = await fertiscan.update_inspection(
+                    cursor, inspection_id, db_user.id, inspection
                 )
-                return inspection.model_dump_json(indent=2), HTTPStatus.OK
+                return inspection.model_dump_json(indent=2)
 
     except Exception as err:
         logger.error(f"Error occurred: {err}")
         logger.error("Traceback: " + traceback.format_exc())
-        return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=str(err))
 
 
-@app.route("/inspections/<inspection_id>", methods=["DELETE"])
-@auth.login_required
-@swag_from("docs/swagger/discard_inspection.yaml")
-def discard_inspection(inspection_id):  # pragma: no cover
-    return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
+@app.delete("/inspections/{inspection_id}")
+async def discard_inspection(inspection_id: str, credentials: HTTPBasicCredentials = Depends(auth)):
+    raise HTTPException(status_code=HTTPStatus.SERVICE_UNAVAILABLE, detail="Not yet implemented!")
 
 
-@app.route("/inspections", methods=["GET"])
-@auth.login_required
-@cross_origin(origins=FRONTEND_URL)
-@swag_from("docs/swagger/get_inspection.yaml")
-def get_inspections():  # pragma: no cover
+@app.get("/inspections")
+async def get_inspections(credentials: HTTPBasicCredentials = Depends(auth)):
     try:
-        with connection_manager as manager:
-            with manager.get_cursor() as cursor:
-                # The search query used to find the label.
-                username = auth.username()
+        async with connection_manager as manager:
+            async with manager.get_cursor() as cursor:
+                username = credentials.username
                 logger.info(f"Fetching user ID for username: {username}")
-                db_user = asyncio.run(get_user(cursor, username))
+                db_user = await get_user(cursor, username)
 
-                # Execute the search query
-                inspections = asyncio.run(
-                    fertiscan.get_user_analysis_by_verified(cursor, db_user.id, False)
-                )
+                inspections = await fertiscan.get_user_analysis_by_verified(cursor, db_user.id, False)
 
-                return jsonify(inspections), HTTPStatus.OK
+                return inspections
 
     except Exception as err:
         logger.error(f"Error occurred: {err}")
         logger.error("Traceback: " + traceback.format_exc())
-        return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=str(err))
 
 
-@app.route("/inspections/<inspection_id>", methods=["GET"])
-@auth.login_required
-@cross_origin(origins=FRONTEND_URL)
-@swag_from("docs/swagger/get_inspection_by_id.yaml")
-def get_inspection_by_id(inspection_id):  # pragma: no cover
+@app.get("/inspections/{inspection_id}")
+async def get_inspection_by_id(inspection_id: str, credentials: HTTPBasicCredentials = Depends(auth)):
     try:
-        with connection_manager as manager:
-            with manager.get_cursor() as cursor:
-                # The search query used to find the label.
-                username = auth.username()
+        async with connection_manager as manager:
+            async with manager.get_cursor() as cursor:
+                username = credentials.username
                 logger.info(f"Fetching user ID for username: {username}")
-                db_user = asyncio.run(get_user(cursor, username))
+                db_user = await get_user(cursor, username)
 
-                inspection = asyncio.run(
-                    fertiscan.get_full_inspection_json(
-                        cursor, inspection_id, db_user.get_id()
-                    )
+                inspection = await fertiscan.get_full_inspection_json(
+                    cursor, inspection_id, db_user.get_id()
                 )
 
-                return jsonify(inspection), HTTPStatus.OK
+                return inspection
 
     except Exception as err:
         logger.error(f"Error occurred: {err}")
         logger.error("Traceback: " + traceback.format_exc())
-        return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=str(err))
 
 
-@app.route("/analyze", methods=["POST"])
-@cross_origin(origins=FRONTEND_URL)
-@swag_from("docs/swagger/analyze_document.yaml")
-def analyze_document():
+@app.post("/analyze")
+async def analyze_document(files: list[UploadFile] = File(...)):
     try:
-        files = request.files.getlist("images")
-
         if not files:
-            raise ValueError("No files provided for analysis")
+            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="No files provided for analysis")
 
         # Initialize the storage for the user
         label_storage = LabelStorage()
 
         for file in files:
-            if file:
-                filename = secure_filename(file.filename)
-                file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-                file.save(file_path)
-                label_storage.add_image(file_path)
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            with open(file_path, "wb") as f:
+                f.write(await file.read())
+            label_storage.add_image(file_path)
 
         inspection = analyze(label_storage, ocr, gpt)
 
-        return app.response_class(
-            response=inspection.model_dump_json(indent=2),
-            status=HTTPStatus.OK,
-            mimetype="application/json",
-        )
+        return inspection.model_dump_json(indent=2)
+
     except ValueError as err:
         logger.error(f"images: {err}")
-        return jsonify(error=str(err)), HTTPStatus.BAD_REQUEST
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=str(err))
     except HttpResponseError as err:
         logger.error(f"azure: {err.message}")
-        return jsonify(error=err.message), err.status_code
+        raise HTTPException(status_code=err.status_code, detail=err.message)
     except Exception as err:
         logger.error(err)
-        return jsonify(error=str(err)), HTTPStatus.INTERNAL_SERVER_ERROR
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=str(err))
 
 
-@app.errorhandler(404)
-def not_found(error):  # pragma: no cover
-    return jsonify(error="Not Found"), HTTPStatus.NOT_FOUND
+@app.exception_handler(404)
+async def not_found_handler(request, exc):
+    return HTTPException(detail="Not Found", status_code=404)
 
 
-@app.errorhandler(500)
-def internal_error(error):  # pragma: no cover
-    return jsonify(error=str(error)), HTTPStatus.INTERNAL_SERVER_ERROR
+@app.exception_handler(500)
+async def internal_error_handler(request, exc):
+    return HTTPException(detail="Not Found", status_code=500)
 
 
 if __name__ == "__main__":
@@ -386,4 +299,5 @@ if __name__ == "__main__":
     if FERTISCAN_STORAGE_URL is None:
         raise ValueError("FERTISCAN_STORAGE_URL is not set")
 
-    app.run(host="0.0.0.0", debug=True)
+    app.run(app, host="0.0.0.0", port=8000, log_level="info")
+

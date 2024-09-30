@@ -4,7 +4,9 @@ import unittest
 import uuid
 from io import BytesIO
 from unittest.mock import MagicMock, patch
+from fastapi.testclient import TestClient
 
+import httpx._types as http
 import requests
 from azure.storage.blob import BlobServiceClient
 
@@ -38,14 +40,14 @@ class APITestCase(unittest.TestCase):
 
     def setUp(self):
         app.testing = True
-        self.client = app.test_client()
+        self.client = TestClient(app)
         self.client.post(
             "/signup",
             headers={
                 **self.headers,
                 "Authorization": f'Basic {self.credentials(self.username, self.password)}',
             },
-            content_type="application/x-www-form-urlencoded",
+            content="application/x-www-form-urlencoded",
         )
 
     def tearDown(self):
@@ -89,7 +91,7 @@ class APITestCase(unittest.TestCase):
                 **self.headers,
                 "Authorization": f'Basic {self.credentials("", self.password)}',
             },
-            content_type="application/x-www-form-urlencoded",
+            content="application/x-www-form-urlencoded",
         )
         self.assertEqual(response.status_code, 400, response.json)
 
@@ -101,7 +103,7 @@ class APITestCase(unittest.TestCase):
                 **self.headers,
                 "Authorization": f'Basic {self.credentials(username, self.password)}',
             },
-            content_type="application/x-www-form-urlencoded",
+            content="application/x-www-form-urlencoded",
         )
         self.assertEqual(response.status_code, 201, response.json)
 
@@ -123,7 +125,7 @@ class APITestCase(unittest.TestCase):
                 **self.headers,
                 "Authorization": f"Basic {self.credentials(username, self.password)}",
             },
-            content_type="application/x-www-form-urlencoded",
+            content="application/x-www-form-urlencoded",
         )
         self.assertEqual(response.status_code, 401, response.json)
 
