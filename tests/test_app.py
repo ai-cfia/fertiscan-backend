@@ -60,7 +60,7 @@ class APITestCase(unittest.TestCase):
         with ContainerClient.from_connection_string(
             FERTISCAN_STORAGE_URL, container_name=f"user-{self.username}"
         ) as container_client:
-            container_client.delete_container();
+            container_client.delete_container()
     
     def test_health(self):
         response = self.client.get("/health", headers=self.headers)
