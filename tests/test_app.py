@@ -4,7 +4,10 @@ import unittest
 import uuid
 from io import BytesIO
 from unittest.mock import MagicMock, patch
+from fastapi.testclient import TestClient
 
+from httpx._types import *  # noqa
+# import httpx._types as http
 import requests
 from azure.storage.blob import BlobServiceClient
 
@@ -14,7 +17,7 @@ class APITestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Setup credentials and headers
-        cls.username = "test-user-2"
+        cls.username = "test-user-10"
         cls.password = "password1"
         encoded_credentials = cls.credentials(cls.username, cls.password)
 
@@ -38,7 +41,15 @@ class APITestCase(unittest.TestCase):
 
     def setUp(self):
         app.testing = True
-        self.client = app.test_client()
+        self.client = TestClient(app)
+        response = self.client.post(
+            "/signup",
+            headers={
+            **self.headers,
+            "Authorization": f'Basic {self.credentials(self.username, self.password)}',
+            },
+        )
+        self.assertEqual(response.status_code, 201)
 
     def tearDown(self):
         connection_manager.rollback()
@@ -78,10 +89,9 @@ class APITestCase(unittest.TestCase):
         response = self.client.post(
             "/signup",
             headers={
-                **self.headers,
-                "Authorization": f'Basic {self.credentials("", self.password)}',
+            **self.headers,
+            "Authorization": f'Basic {self.credentials("", self.password)}',
             },
-            content_type="application/x-www-form-urlencoded",
         )
         self.assertEqual(response.status_code, 400, response.json)
 
@@ -90,10 +100,10 @@ class APITestCase(unittest.TestCase):
         response = self.client.post(
             "/signup",
             headers={
-                **self.headers,
-                "Authorization": f'Basic {self.credentials(username, self.password)}',
+            **self.headers,
+            "Authorization": f'Basic {self.credentials(username, self.password)}',
+            "Content-Type": "application/x-www-form-urlencoded",
             },
-            content_type="application/x-www-form-urlencoded",
         )
         self.assertEqual(response.status_code, 201, response.json)
 
@@ -101,8 +111,8 @@ class APITestCase(unittest.TestCase):
         response = self.client.post(
             "/login",
             headers={
-                **self.headers,
-                "Authorization": f'Basic {self.credentials("", self.password)}',
+            **self.headers,
+            "Authorization": f'Basic {self.credentials("", self.password)}',
             },
         )
         self.assertEqual(response.status_code, 400, response.json)
@@ -112,10 +122,9 @@ class APITestCase(unittest.TestCase):
         response = self.client.post(
             "/login",
             headers={
-                **self.headers,
-                "Authorization": f"Basic {self.credentials(username, self.password)}",
+            **self.headers,
+            "Authorization": f"Basic {self.credentials(username, self.password)}",
             },
-            content_type="application/x-www-form-urlencoded",
         )
         self.assertEqual(response.status_code, 401, response.json)
 
