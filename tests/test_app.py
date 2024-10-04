@@ -6,6 +6,7 @@ from io import BytesIO
 from unittest.mock import MagicMock, patch
 
 import requests
+from datastore import ContainerClient
 from azure.storage.blob import BlobServiceClient
 
 from app import app, connection_manager
@@ -52,6 +53,15 @@ class APITestCase(unittest.TestCase):
         connection_manager.rollback()
         connection_manager.put()
 
+    
+    def tearDownClass(self):
+        # Delete the content of the storage account
+        FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
+        with ContainerClient.from_connection_string(
+            FERTISCAN_STORAGE_URL, container_name=f"user-{self.username}"
+        ) as container_client:
+            container_client.delete_container();
+    
     def test_health(self):
         response = self.client.get("/health", headers=self.headers)
         self.assertEqual(response.status_code, 200)
