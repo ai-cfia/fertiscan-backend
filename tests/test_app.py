@@ -2,12 +2,11 @@ import base64
 import os
 import unittest
 import uuid
-import asyncio
 from io import BytesIO
 from unittest.mock import MagicMock, patch
 
 import requests
-from datastore import ContainerClient, get_user
+from datastore import ContainerClient
 from azure.storage.blob import BlobServiceClient
 
 from app import app, connection_manager
