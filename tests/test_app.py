@@ -2,11 +2,12 @@ import base64
 import os
 import unittest
 import uuid
+import asyncio
 from io import BytesIO
 from unittest.mock import MagicMock, patch
 
 import requests
-from datastore import ContainerClient
+from datastore import ContainerClient, get_user
 from azure.storage.blob import BlobServiceClient
 
 from app import app, connection_manager
@@ -17,6 +18,7 @@ class APITestCase(unittest.TestCase):
         # Setup credentials and headers
         cls.username = "test-user-10"
         cls.password = "password1"
+        cls.user_id = None
         encoded_credentials = cls.credentials(cls.username, cls.password)
 
         cls.headers = {
@@ -55,13 +57,21 @@ class APITestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        # Delete the content of the storage account
-        FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
-        with ContainerClient.from_connection_string(
-            FERTISCAN_STORAGE_URL, container_name=f"user-{self.username}"
-        ) as container_client:
-            if container_client.exists():
-                container_client.delete_container()
+        try:
+            with connection_manager as manager:
+                with manager.get_cursor() as cursor:
+                    db_user = asyncio.run(get_user(cursor, self.username))
+                    user_id = db_user.id
+                    
+                    FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
+                    container_client = ContainerClient.from_connection_string(
+                        FERTISCAN_STORAGE_URL, container_name=f"user-{user_id}"
+                    )
+                    # Delete the content of the storage account
+                    if container_client.exists():
+                        container_client.delete_container()
+        except Exception as e:
+            print(f"Failed to delete storage account: {str(e)}")
     
     def test_health(self):
         response = self.client.get("/health", headers=self.headers)
