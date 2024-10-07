@@ -16,9 +16,8 @@ class APITestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Setup credentials and headers
-        cls.username = "test-user-10"
+        cls.username = uuid.uuid4().hex
         cls.password = "password1"
-        cls.user_id = None
         encoded_credentials = cls.credentials(cls.username, cls.password)
 
         cls.headers = {
@@ -27,6 +26,16 @@ class APITestCase(unittest.TestCase):
             "Access-Control-Allow-Headers": "*",
             "Access-Control-Allow-Methods": "*",
         }
+
+        response = app.test_client().post(
+            "/signup",
+            headers={
+                **cls.headers,
+                "Authorization": f'Basic {cls.credentials(cls.username, cls.password)}',
+            },
+            content_type="application/x-www-form-urlencoded",
+        )
+        cls.user_id = response.get_json()["user_id"]
 
         # Fetch and save the JSON data in setUpClass
         with requests.get(
@@ -41,15 +50,6 @@ class APITestCase(unittest.TestCase):
 
     def setUp(self):
         app.testing = True
-        self.client = app.test_client()
-        self.client.post(
-            "/signup",
-            headers={
-                **self.headers,
-                "Authorization": f'Basic {self.credentials(self.username, self.password)}',
-            },
-            content_type="application/x-www-form-urlencoded",
-        )
 
     def tearDown(self):
         connection_manager.rollback()
@@ -57,22 +57,14 @@ class APITestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        try:
-            with connection_manager as manager:
-                with manager.get_cursor() as cursor:
-                    db_user = asyncio.run(get_user(cursor, self.username))
-                    user_id = db_user.id
-                    
-                    FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
-                    container_client = ContainerClient.from_connection_string(
-                        FERTISCAN_STORAGE_URL, container_name=f"user-{user_id}"
-                    )
-                    # Delete the content of the storage account
-                    if container_client.exists():
-                        container_client.delete_container()
-        except Exception as e:
-            print(f"Failed to delete storage account: {str(e)}")
-    
+        FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
+        container_client = ContainerClient.from_connection_string(
+            FERTISCAN_STORAGE_URL, container_name=f"user-{self.user_id}"
+        )
+        # Delete the content of the storage account
+        if container_client.exists():
+            container_client.delete_container()
+
     def test_health(self):
         response = self.client.get("/health", headers=self.headers)
         self.assertEqual(response.status_code, 200)
