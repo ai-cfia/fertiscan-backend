@@ -49,6 +49,7 @@ class APITestCase(unittest.TestCase):
 
     def setUp(self):
         app.testing = True
+        self.client = app.test_client()
 
     def tearDown(self):
         connection_manager.rollback()
