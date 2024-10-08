@@ -6,6 +6,7 @@ from io import BytesIO
 from unittest.mock import MagicMock, patch
 
 import requests
+from datastore import ContainerClient
 from azure.storage.blob import BlobServiceClient
 
 from app import app, connection_manager
@@ -14,7 +15,7 @@ class APITestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Setup credentials and headers
-        cls.username = "test-user-2"
+        cls.username = uuid.uuid4().hex
         cls.password = "password1"
         encoded_credentials = cls.credentials(cls.username, cls.password)
 
@@ -24,6 +25,16 @@ class APITestCase(unittest.TestCase):
             "Access-Control-Allow-Headers": "*",
             "Access-Control-Allow-Methods": "*",
         }
+
+        response = app.test_client().post(
+            "/signup",
+            headers={
+                **cls.headers,
+                "Authorization": f'Basic {cls.credentials(cls.username, cls.password)}',
+            },
+            content_type="application/x-www-form-urlencoded",
+        )
+        cls.user_id = response.get_json()["user_id"]
 
         # Fetch and save the JSON data in setUpClass
         with requests.get(
@@ -43,6 +54,16 @@ class APITestCase(unittest.TestCase):
     def tearDown(self):
         connection_manager.rollback()
         connection_manager.put()
+
+    @classmethod
+    def tearDownClass(self):
+        FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
+        container_client = ContainerClient.from_connection_string(
+            FERTISCAN_STORAGE_URL, container_name=f"user-{self.user_id}"
+        )
+        # Delete the content of the storage account
+        if container_client.exists():
+            container_client.delete_container()
 
     def test_health(self):
         response = self.client.get("/health", headers=self.headers)
