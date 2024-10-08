@@ -5,7 +5,8 @@ import traceback
 from http import HTTPStatus
 
 from azure.core.exceptions import HttpResponseError
-from datastore import ContainerClient, fertiscan, get_user, new_user
+from datastore import ContainerClient, get_user, new_user
+import fertiscan
 from dotenv import load_dotenv
 from flasgger import Swagger, swag_from
 from flask import Flask, jsonify, redirect, request
