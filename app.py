@@ -8,9 +8,8 @@ from azure.core.exceptions import HttpResponseError
 from datastore import ContainerClient, fertiscan, get_user, new_user
 from dotenv import load_dotenv
 from flasgger import Swagger, swag_from
-from flask import Flask, jsonify, redirect, request
-from flask_cors import cross_origin
-from flask_httpauth import HTTPBasicAuth
+from quart import Quart, jsonify, redirect, request
+from quart_cors import cors
 from pipeline import GPT, OCR, LabelStorage, analyze
 from psycopg_pool import ConnectionPool
 from werkzeug.utils import secure_filename
@@ -20,53 +19,46 @@ from backend.connection_manager import ConnectionManager
 # Load environment variables
 load_dotenv()
 
-# fertiscan storage config vars
+# Configuration variables
 FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA")
 FERTISCAN_DB_URL = os.getenv("FERTISCAN_DB_URL")
 FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
 
 # Set up logging
 log_dir = os.path.join(".", "logs")
-log_filename = os.getenv("LOG_FILENAME")
-log_file = os.path.join(log_dir, log_filename) if log_filename else None
-
-# Create the directory if it doesn't exist
+log_filename = os.getenv("LOG_FILENAME", "server.log")
+log_file = os.path.join(log_dir, log_filename)
 os.makedirs(log_dir, exist_ok=True)
 
-# Set up logging configuration
 logging.basicConfig(
     filename=log_file,
     level=logging.INFO,
-    force=True,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
-
 logger = logging.getLogger(__name__)
 
 # Ensure the directory for uploaded images exists
 UPLOAD_FOLDER = os.getenv("UPLOAD_PATH", "uploads")
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 FRONTEND_URL = os.getenv("FRONTEND_URL", "*")
 
-app = Flask(__name__)
+# Initialize the Quart application and configure it
+app = Quart(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app = cors(app, allow_origin=FRONTEND_URL)
 
-# Swagger UI
+# Swagger UI configuration
 BASE_PATH = os.getenv("API_BASE_PATH", "")
-SWAGGER_BASE_PATH = os.getenv("SWAGGER_BASE_PATH","")
-SWAGGER_PATH = os.getenv("SWAGGER_PATH","/docs")
+SWAGGER_BASE_PATH = os.getenv("SWAGGER_BASE_PATH", "")
+SWAGGER_PATH = os.getenv("SWAGGER_PATH", "/docs")
 swagger_config = Swagger.DEFAULT_CONFIG
 swagger_config["url_prefix"] = SWAGGER_BASE_PATH
 swagger_config["specs_route"] = SWAGGER_PATH
-
 
 swagger = Swagger(
     app, template_file="docs/swagger/template.yaml", config=swagger_config
 )
 swagger.template["basePath"] = BASE_PATH
-
-auth = HTTPBasicAuth()
 
 # Configuration for Azure Form Recognizer
 API_ENDPOINT = os.getenv("AZURE_API_ENDPOINT")
@@ -83,7 +75,7 @@ gpt = GPT(
     deployment_id=OPENAI_API_DEPLOYMENT,
 )
 
-# Set up the database connection pool with default values and the manager
+# Set up the database connection pool
 pool = ConnectionPool(
     conninfo=FERTISCAN_DB_URL,
     open=True,
@@ -91,34 +83,48 @@ pool = ConnectionPool(
 )
 connection_manager = ConnectionManager(app, pool)
 
-
 @app.route("/", methods=["GET"])
-def main_page():
+async def main_page():
     return redirect(BASE_PATH + SWAGGER_PATH)
 
 
 @app.route("/health", methods=["GET"])
-@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/health.yaml")
-def ping():
+async def ping():
     return jsonify({"message": "Service is alive"}), 200
 
 
 @app.route("/login", methods=["POST"])
-@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/login.yaml")
-def login():
-    username = auth.username()
-    password = "password1"
+async def login():  # pragma: no cover
+    auth = request.authorization
+    username = auth.username
+    # password = auth.password()
 
-    return verify_password(username, password)
-
+    if not username:
+        return jsonify(
+            error="Missing email address!",
+            message="The request is missing the 'username' parameter. Please provide a valid email address to proceed.",
+        ), HTTPStatus.BAD_REQUEST
+    
+    try:
+        async with connection_manager as manager:
+            async with manager.get_cursor() as cursor:
+                logger.info(f"Fetching user ID for username: {username}")
+                user = await get_user(cursor, username)
+                return jsonify({"user_id": user.get_id()}), HTTPStatus.OK
+    except Exception as e:
+        logger.error(f"Error occurred: {e}")
+        logger.error("Traceback: " + traceback.format_exc())
+        return jsonify(
+            error="Failed to login!", message=str(e)
+        ), HTTPStatus.INTERNAL_SERVER_ERROR
 
 @app.route("/signup", methods=["POST"])
-@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/signup.yaml")
-def signup():  # pragma: no cover
-    username = auth.username()
+async def signup():  # pragma: no cover
+    auth = request.authorization
+    username = auth.username
 
     if not username:
         return jsonify(
@@ -127,11 +133,11 @@ def signup():  # pragma: no cover
         ), HTTPStatus.BAD_REQUEST
 
     try:
-        with connection_manager as manager:
-            with manager.get_cursor() as cursor:
+        async with connection_manager as manager:
+            async with manager.get_cursor() as cursor:
                 logger.info(f"Creating user: {username}")
-                user = asyncio.run(new_user(cursor, username, FERTISCAN_STORAGE_URL))
-            manager.commit()
+                user = await new_user(cursor, username, FERTISCAN_STORAGE_URL)
+            await manager.commit()
         return jsonify({"user_id": user.get_id()}), HTTPStatus.CREATED
 
     except Exception as e:
@@ -142,56 +148,17 @@ def signup():  # pragma: no cover
         ), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-@auth.verify_password
-def verify_password(username, password):
-    if not username:
-        return jsonify(
-            error="Missing email address!",
-            message="The request is missing the 'email' parameter. Please provide a valid email address to proceed.",
-        ), HTTPStatus.BAD_REQUEST
-
-    try:
-        with connection_manager as manager:
-            with manager.get_cursor() as cursor:
-                # Check if the user exists in the database
-                try:
-                    user = asyncio.run(get_user(cursor, username))
-                except Exception as e:
-                    logger.error(f"Error occurred: {e}")
-                    logger.error("Traceback: " + traceback.format_exc())
-                    return jsonify(
-                        error="Authentication error!",
-                        message=str(e),
-                    ), HTTPStatus.UNAUTHORIZED
-
-        if user is None:
-            return jsonify(
-                error="Unknown user!",
-                message="The email provided does not match with any known user.",
-            ), HTTPStatus.UNAUTHORIZED
-
-        return jsonify(user_id=user.get_id()), HTTPStatus.OK
-
-    except Exception as err:
-        logger.error(f"Error occurred: {err}")
-        logger.error("Traceback: " + traceback.format_exc())
-        return jsonify(
-            error="Internal server error!", message=str(err)
-        ), HTTPStatus.INTERNAL_SERVER_ERROR
-
-
 @app.route("/inspections", methods=["POST"])
-@auth.login_required
-@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/create_inspection.yaml")
-def create_inspection():  # pragma: no cover
+async def create_inspection():  # pragma: no cover
     try:
-        with connection_manager as manager:
-            with manager.get_cursor() as cursor:
+        async with connection_manager as manager:
+            async with manager.get_cursor() as cursor:
                 # Sample userId from the database
-                username = auth.username()
+                auth = request.authorization
+                username = auth.username
                 logger.info(f"Fetching user ID for username: {username}")
-                db_user = asyncio.run(get_user(cursor, username))
+                db_user = await get_user(cursor, username)
                 user_id = db_user.id
 
                 container_client = ContainerClient.from_connection_string(
@@ -199,7 +166,7 @@ def create_inspection():  # pragma: no cover
                 )
 
                 # Get JSON form from the request
-                form = request.get_json()
+                form = await request.get_json()
 
                 if form is None:
                     logger.warning("Missing form in request")
@@ -207,24 +174,22 @@ def create_inspection():  # pragma: no cover
                         error="Missing fertiliser form!"
                     ), HTTPStatus.BAD_REQUEST
 
-                files = request.files.getlist("images")
+                files = await request.files.getlist("images")
 
                 # Collect files in a list
                 images = []
                 for file in files:
                     if file:
                         logger.info(f"Reading file: {file.filename}")
-                        images.append(file.stream.read())
+                        images.append(await file.read())
 
                 logger.info(f"Registering analysis for user_id: {user_id}")
-                inspection = asyncio.run(
-                    fertiscan.register_analysis(
-                        cursor=cursor,
-                        container_client=container_client,
-                        user_id=user_id,
-                        analysis_dict=form,
-                        hashed_pictures=images,
-                    )
+                inspection = await fertiscan.register_analysis(
+                    cursor=cursor,
+                    container_client=container_client,
+                    user_id=user_id,
+                    analysis_dict=form,
+                    hashed_pictures=images,
                 )
 
                 logger.info(
@@ -239,29 +204,26 @@ def create_inspection():  # pragma: no cover
 
 
 @app.route("/inspections/<inspection_id>", methods=["PUT"])
-@auth.login_required
-@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/update_inspection.yaml")
-def update_inspection(inspection_id):  # pragma: no cover
+async def update_inspection(inspection_id):  # pragma: no cover
     try:
         # Get JSON form from the request
-        inspection = request.get_json()
+        inspection = await request.get_json()
         if inspection is None:
             return jsonify(error="Missing fertiliser form!"), HTTPStatus.BAD_REQUEST
 
-        with connection_manager as manager:
-            with manager.get_cursor() as cursor:
+        async with connection_manager as manager:
+            async with manager.get_cursor() as cursor:
                 # Sample userId from the database
-                username = auth.username()
+                auth = request.authorization
+                username = auth.username
                 logger.info(f"Fetching user ID for username: {username}")
-                db_user = asyncio.run(get_user(cursor, username))
+                db_user = await get_user(cursor, username)
 
-                inspection = asyncio.run(
-                    fertiscan.update_inspection(
-                        cursor, inspection_id, db_user.id, inspection
-                    )
+                inspection = await fertiscan.update_inspection(
+                    cursor, inspection_id, db_user.id, inspection
                 )
-                return inspection.model_dump_json(indent=2), HTTPStatus.OK
+                return jsonify(inspection.model_dump_json(indent=2)), HTTPStatus.OK
 
     except Exception as err:
         logger.error(f"Error occurred: {err}")
@@ -270,29 +232,25 @@ def update_inspection(inspection_id):  # pragma: no cover
 
 
 @app.route("/inspections/<inspection_id>", methods=["DELETE"])
-@auth.login_required
 @swag_from("docs/swagger/discard_inspection.yaml")
-def discard_inspection(inspection_id):  # pragma: no cover
+async def discard_inspection(inspection_id):  # pragma: no cover
     return jsonify(error="Not yet implemented!"), HTTPStatus.SERVICE_UNAVAILABLE
 
 
 @app.route("/inspections", methods=["GET"])
-@auth.login_required
-@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/get_inspection.yaml")
-def get_inspections():  # pragma: no cover
+async def get_inspections():  # pragma: no cover
     try:
-        with connection_manager as manager:
-            with manager.get_cursor() as cursor:
+        async with connection_manager as manager:
+            async with manager.get_cursor() as cursor:
                 # The search query used to find the label.
-                username = auth.username()
+                auth = request.authorization
+                username = auth.username
                 logger.info(f"Fetching user ID for username: {username}")
-                db_user = asyncio.run(get_user(cursor, username))
+                db_user = await get_user(cursor, username)
 
                 # Execute the search query
-                inspections = asyncio.run(
-                    fertiscan.get_user_analysis_by_verified(cursor, db_user.id, False)
-                )
+                inspections = await fertiscan.get_user_analysis_by_verified(cursor, db_user.id, False)
 
                 return jsonify(inspections), HTTPStatus.OK
 
@@ -303,22 +261,19 @@ def get_inspections():  # pragma: no cover
 
 
 @app.route("/inspections/<inspection_id>", methods=["GET"])
-@auth.login_required
-@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/get_inspection_by_id.yaml")
-def get_inspection_by_id(inspection_id):  # pragma: no cover
+async def get_inspection_by_id(inspection_id):  # pragma: no cover
     try:
-        with connection_manager as manager:
-            with manager.get_cursor() as cursor:
+        async with connection_manager as manager:
+            async with manager.get_cursor() as cursor:
                 # The search query used to find the label.
-                username = auth.username()
+                auth = request.authorization
+                username = auth.username
                 logger.info(f"Fetching user ID for username: {username}")
-                db_user = asyncio.run(get_user(cursor, username))
+                db_user = await get_user(cursor, username)
 
-                inspection = asyncio.run(
-                    fertiscan.get_full_inspection_json(
-                        cursor, inspection_id, db_user.get_id()
-                    )
+                inspection = await fertiscan.get_full_inspection_json(
+                    cursor, inspection_id, db_user.get_id()
                 )
 
                 return jsonify(inspection), HTTPStatus.OK
@@ -330,11 +285,10 @@ def get_inspection_by_id(inspection_id):  # pragma: no cover
 
 
 @app.route("/analyze", methods=["POST"])
-@cross_origin(origins=FRONTEND_URL)
 @swag_from("docs/swagger/analyze_document.yaml")
-def analyze_document():
+async def analyze_document():
     try:
-        files = request.files.getlist("images")
+        files = await request.files.getlist("images")
 
         if not files:
             raise ValueError("No files provided for analysis")
@@ -346,10 +300,10 @@ def analyze_document():
             if file:
                 filename = secure_filename(file.filename)
                 file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-                file.save(file_path)
+                await file.save(file_path)
                 label_storage.add_image(file_path)
 
-        inspection = analyze(label_storage, ocr, gpt)
+        inspection = await analyze(label_storage, ocr, gpt)
 
         return app.response_class(
             response=inspection.model_dump_json(indent=2),
