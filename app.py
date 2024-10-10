@@ -4,8 +4,9 @@ import os
 import traceback
 from http import HTTPStatus
 
+import fertiscan
 from azure.core.exceptions import HttpResponseError
-from datastore import ContainerClient, fertiscan, get_user, new_user
+from datastore import ContainerClient, get_user, new_user
 from dotenv import load_dotenv
 from flasgger import Swagger, swag_from
 from flask import Flask, jsonify, redirect, request
@@ -54,8 +55,8 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Swagger UI
 BASE_PATH = os.getenv("API_BASE_PATH", "")
-SWAGGER_BASE_PATH = os.getenv("SWAGGER_BASE_PATH","")
-SWAGGER_PATH = os.getenv("SWAGGER_PATH","/docs")
+SWAGGER_BASE_PATH = os.getenv("SWAGGER_BASE_PATH", "")
+SWAGGER_PATH = os.getenv("SWAGGER_PATH", "/docs")
 swagger_config = Swagger.DEFAULT_CONFIG
 swagger_config["url_prefix"] = SWAGGER_BASE_PATH
 swagger_config["specs_route"] = SWAGGER_PATH
