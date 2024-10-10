@@ -9,11 +9,11 @@
         ".*requirements\\.txt$"
       ],
       "matchStrings": [
-        "git\\+https://github.com/(?<orgName>[^/]+)/(?<depName>[^@]+)\\.git@(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+-fertiscan-datastore)"
+        "git\\+https://github.com/(?<orgName>[^/]+)/(?<depName>[^@]+)\\.git@v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)-fertiscan-datastore"
       ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "{{{orgName}}}/{{{depName}}}",
-      "extractVersionTemplate": "{{{currentValue}}}"
+      "versioning": "semver"
     }
   ]
 }
