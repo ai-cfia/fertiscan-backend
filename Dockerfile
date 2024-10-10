@@ -36,6 +36,8 @@ RUN chown -R 1000:1000 /app
 RUN mkdir -p /cachedir_joblib && chown -R 1000:1000 /cachedir_joblib
 RUN mkdir -p /.dspy_cache && chown -R 1000:1000 /.dspy_cache
 
+RUN opentelemetry-bootstrap --action=install
+
 USER 1000
 
 CMD ["python", "app.py"]
