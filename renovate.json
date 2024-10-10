@@ -2,5 +2,12 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": ["requirements\\.txt$"],
+      "matchStrings": ["(?<depName>git\\+https://github.com/ai-cfia/ailab-datastore\\.git)@(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+-fertiscan-datastore)"],
+      "datasourceTemplate": "github-tags"
+    }
   ]
 }
