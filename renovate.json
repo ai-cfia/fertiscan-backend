@@ -5,9 +5,15 @@
   ],
   "regexManagers": [
     {
-      "fileMatch": ["requirements\\.txt$"],
-      "matchStrings": ["(?<depName>git\\+https://github.com/ai-cfia/ailab-datastore\\.git)@(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+-fertiscan-datastore)"],
-      "datasourceTemplate": "github-tags"
+      "fileMatch": [
+        ".*requirements\\.txt$"
+      ],
+      "matchStrings": [
+        "git\\+https://github.com/(?<orgName>[^/]+)/(?<depName>[^@]+)\\.git@(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+-fertiscan-datastore)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "{{{orgName}}}/{{{depName}}}",
+      "extractVersionTemplate": "{{{currentValue}}}"
     }
   ]
 }
