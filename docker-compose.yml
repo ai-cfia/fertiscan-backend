@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: ghcr.io/ai-cfia/nginx:0.0.4
+    container_name: fertiscan-nginx
+    restart: always
+    ports:
+      - "80:80"
+    environment:
+      - BACKEND_PORT=5000 # Needs to point to the internal port of the backend service (5000)
+      - FRONTEND_PORT=3000 # Needs to point to the internal port of the frontend service (3000)
+      - SWAGGER_PATH=swagger # Use anything but '/api' to avoid conflicts with the backend. Make sure to use the same value for API_BASE_PATH in the backend. e.g. 'API_BASE_PATH=/swagger'
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - fertiscan-network
+
+  frontend:
+    image: ghcr.io/ai-cfia/fertiscan-frontend:main
+    container_name: frontend
+    restart: always
+    ports:
+      - "3000:3000" # if you want to run the frontend on a different port, change the first port number
+    depends_on:
+      - postgres
+    networks:
+      - fertiscan-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    ports:
+      - "5001:5000" # if you want to run the backend on a different port, change the first port number
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - fertiscan-network
+
+  postgres:
+    image: ghcr.io/ai-cfia/postgres:0.0.5
+    container_name: fertiscan-postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=fertiscan
+      - PROJECT_NAME=fertiscan
+      - BB_URL=${BB_URL}
+      - BB_SERVICE_ACCOUNT=${BB_SERVICE_ACCOUNT}
+      - BB_SERVICE_KEY=${BB_SERVICE_KEY}
+      - INSTANCE_ID=${BB_INSTANCE_ID}
+      - DATABASE_ID=${BB_DATABASE_ID}
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      timeout: 10s
+      retries: 5
+    networks:
+      - fertiscan-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: fertiscan-pgadmin
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_LISTEN_PORT=5050
+    ports:
+      - "5050:5050"
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    networks:
+      - fertiscan-network
+    depends_on:
+      - postgres
+
+networks:
+  fertiscan-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  pgadmin:

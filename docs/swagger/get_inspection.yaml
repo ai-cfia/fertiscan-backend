@@ -1,0 +1,25 @@
+Retreive all the inspections for a given user.
+---
+security:
+  - basicAuth: []
+responses:
+  200:
+    description: "Inspections successfully retrieved"
+    schema:
+      type: object
+  400:
+    description: "Bad Request"
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Missing username!"
+  500:
+    description: "Internal Server Error"
+    schema:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Not yet implemented!"

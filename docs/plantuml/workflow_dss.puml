@@ -20,17 +20,17 @@ note left FE
   extracted from the
   fertiliser label.
 end note
-FE -> FE: create_form
-FE -> BE: POST forms/
+FE -> FE: create_inspection
+FE -> BE: POST inspections/
 note right BE
-  Add the form
+  Add the inspection
   to the database.
 end note
 FE <<-- BE: //JSON, 200//
 note left FE
   {
       "message": "...",
-      "form_id": "<form_id>"
+      "inspection_id": "<inspection_id>"
   }  
 end note
 @enduml

@@ -1,17 +1,16 @@
-Analyzes a document by performing OCR and generating a inspection.
-The inspection is a JSON with all the key informations of a fertiliser label.
+Retreive a specific inspection by its ID.
 ---
-consumes:
-  - multipart/inspection-data
+security:
+  - basicAuth: []
 parameters:
-  - name: images
-    in: formData
-    type: file
+  - name: inspection_id
+    in: path
+    type: string
     required: true
-    description: "Images to analyze"
+    description: "ID of the inspection to retrieve"
 responses:
   200:
-    description: "Document analyzed successfully"
+    description: "Inspection successfully retrieved"
     schema:
       type: object
   400:
@@ -21,6 +20,7 @@ responses:
       properties:
         error:
           type: string
+          example: "Missing username!"
   500:
     description: "Internal Server Error"
     schema:
@@ -28,3 +28,4 @@ responses:
       properties:
         error:
           type: string
+          example: "Not yet implemented!"

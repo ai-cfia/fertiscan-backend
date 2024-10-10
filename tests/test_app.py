@@ -1,83 +1,263 @@
+import base64
+import os
 import unittest
+import uuid
 from io import BytesIO
-from app import app
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-test_client = app.test_client()
+import requests
+from datastore import ContainerClient
+from azure.storage.blob import BlobServiceClient
+
+from app import app, connection_manager
 
 class APITestCase(unittest.TestCase):
-    def setUp(self):
-        app.testing = True
-        self.headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Basic ' + 'user1:password1'
+    @classmethod
+    def setUpClass(cls):
+        # Setup credentials and headers
+        cls.username = uuid.uuid4().hex
+        cls.password = "password1"
+        encoded_credentials = cls.credentials(cls.username, cls.password)
+
+        cls.headers = {
+            "Authorization": f"Basic {encoded_credentials}",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Methods": "*",
         }
 
-    def test_ping(self):
-        response = test_client.get('/ping', headers=self.headers)
+        response = app.test_client().post(
+            "/signup",
+            headers={
+                **cls.headers,
+                "Authorization": f'Basic {cls.credentials(cls.username, cls.password)}',
+            },
+            content_type="application/x-www-form-urlencoded",
+        )
+        cls.user_id = response.get_json()["user_id"]
+
+        # Fetch and save the JSON data in setUpClass
+        with requests.get(
+            "https://raw.githubusercontent.com/ai-cfia/fertiscan-pipeline/main/expected.json"
+        ) as response:
+            cls.analysis_json = response.json()
+
+    @classmethod
+    def credentials(cls, username, password) -> str:
+        credentials = f"{username}:{password}"
+        return base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
+
+    def setUp(self):
+        app.testing = True
+        self.client = app.test_client()
+
+    def tearDown(self):
+        connection_manager.rollback()
+        connection_manager.put()
+
+    @classmethod
+    def tearDownClass(self):
+        FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
+        container_client = ContainerClient.from_connection_string(
+            FERTISCAN_STORAGE_URL, container_name=f"user-{self.user_id}"
+        )
+        # Delete the content of the storage account
+        if container_client.exists():
+            container_client.delete_container()
+
+    def test_health(self):
+        response = self.client.get("/health", headers=self.headers)
         self.assertEqual(response.status_code, 200)
 
-    def test_create_form(self):
-        response = test_client.post('/forms', headers=self.headers)
-        self.assertEqual(response.status_code, 201)
-        self.assertIn('form_id', response.json)
+    def test_conn(self):
+        # Test the database connection using ConnectionManager
+        try:
+            with connection_manager as manager:
+                with manager.get_cursor() as cursor:
+                    cursor.execute(
+                        f"""SELECT 1 from "{os.getenv("FERTISCAN_SCHEMA")}".users"""
+                    )
+                    cursor.fetchall()
+        except Exception as e:
+            self.fail(f"Database connection failed: {str(e)}")
 
-    def test_update_form(self):
-        form_id = "some_form_id"
-        response = test_client.put(f'/forms/{form_id}', headers=self.headers, json={"form_data": {"key": "value"}})
-        self.assertEqual(response.status_code, 503)  # Service Unavailable
+    def test_blob_conn(self):
+        FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
+        self.assertIsNotNone(
+            FERTISCAN_STORAGE_URL,
+            "FERTISCAN_STORAGE_URL environment variable is not set.",
+        )
+        blob_service_client = BlobServiceClient.from_connection_string(
+            FERTISCAN_STORAGE_URL
+        )
+        service_properties = blob_service_client.get_service_properties()
+        self.assertIsNotNone(
+            service_properties, "Failed to retrieve service properties."
+        )
 
-    def test_discard_form(self):
-        form_id = "some_form_id"
-        response = test_client.delete(f'/forms/{form_id}', headers=self.headers)
-        self.assertEqual(response.status_code, 503)  # Service Unavailable
+    def test_signup_missing_username(self):
+        response = self.client.post(
+            "/signup",
+            headers={
+                **self.headers,
+                "Authorization": f'Basic {self.credentials("", self.password)}',
+            },
+            content_type="application/x-www-form-urlencoded",
+        )
+        self.assertEqual(response.status_code, 400, response.json)
 
-    def test_get_form(self):
-        form_id = "some_form_id"
-        response = test_client.get(f'/forms/{form_id}', headers=self.headers)
-        self.assertEqual(response.status_code, 503)  # Service Unavailable
+    def test_signup(self):
+        username = str(uuid.uuid4())
+        response = self.client.post(
+            "/signup",
+            headers={
+                **self.headers,
+                "Authorization": f'Basic {self.credentials(username, self.password)}',
+            },
+            content_type="application/x-www-form-urlencoded",
+        )
+        self.assertEqual(response.status_code, 201, response.json)
+
+    def test_login_missing_username(self):
+        response = self.client.post(
+            "/login",
+            headers={
+                **self.headers,
+                "Authorization": f'Basic {self.credentials("", self.password)}',
+            },
+        )
+        self.assertEqual(response.status_code, 400, response.json)
+
+    def test_login_unknown_username(self):
+        username = str(uuid.uuid4())
+        response = self.client.post(
+            "/login",
+            headers={
+                **self.headers,
+                "Authorization": f"Basic {self.credentials(username, self.password)}",
+            },
+            content_type="application/x-www-form-urlencoded",
+        )
+        self.assertEqual(response.status_code, 401, response.json)
+
+    def test_login(self):
+        response = self.client.post(
+            "/login",
+            headers=self.headers,
+        )
+        self.assertEqual(response.status_code, 200, response.json)
+
+    def test_create_empty_inspection(self):
+        response = self.client.post("/inspections", headers=self.headers)
+        self.assertEqual(response.status_code, 500, response.json)
+
+    def test_create_inspection(self):
+        response = self.client.post(
+            "/inspections", headers=self.headers, json=self.analysis_json
+        )
+        self.assertEqual(response.status_code, 201, response.get_json())
+        self.assertIn("inspection_id", response.get_json(), response.get_json())
+
+    def test_update_inspection_fake_id(self):
+        fake_inspection_id = str(uuid.uuid4())
+
+        response = self.client.put(
+            f"/inspections/{fake_inspection_id}",
+            headers=self.headers,
+            json=self.analysis_json,
+        )
+        self.assertEqual(response.status_code, 500, response.get_json())
+        self.assertIn("error", response.get_json(), response.get_json())
+
+    def test_update_empty_inspection(self):
+        inspection_id = str(uuid.uuid4())
+        response = self.client.put(
+            f"/inspections/{inspection_id}", headers=self.headers
+        )
+        self.assertEqual(response.status_code, 500, response.get_json())
+
+    def test_update_inspection(self):
+        # Create a new inspection first
+        response = self.client.post(
+            "/inspections", headers=self.headers, json=self.analysis_json
+        )
+        self.assertEqual(response.status_code, 201, response.get_json())
+
+        # Use the response data from the creation for the update
+        update_data = response.get_json()
+        inspection_id = update_data["inspection_id"]
+
+        response = self.client.put(
+            f"/inspections/{inspection_id}", headers=self.headers, json=update_data
+        )
+        self.assertEqual(response.status_code, 200, response.get_json())
+
+    def test_get_inspection_from_unknown_user(self):
+        username = str(uuid.uuid4())
+        response = self.client.get(
+            "/inspections",
+            headers={
+                **self.headers,
+                "Authorization": f"Basic {self.credentials(username, self.password)}",
+            },
+        )
+        self.assertEqual(response.status_code, 500, response.json)
+
+    def test_get_inspection(self):
+        response = self.client.get(
+            "/inspections",
+            headers=self.headers,
+        )
+        self.assertEqual(response.status_code, 200, response.json)
+
+    def test_get_inspection_by_id(self):
+        # Create a new inspection first
+        response = self.client.post(
+            "/inspections", headers=self.headers, json=self.analysis_json
+        )
+        self.assertEqual(response.status_code, 201, response.get_json())
+
+        # Use the response data from the creation for the update
+        update_data = response.get_json()
+        inspection_id = update_data["inspection_id"]
+
+        response = self.client.get(
+            f"/inspections/{inspection_id}",
+            headers=self.headers,
+        )
+        self.assertEqual(response.status_code, 200, response.json)
 
     def test_analyze_document_no_files(self):
-        response = test_client.post('/analyze', headers=self.headers)
-        self.assertEqual(response.status_code, 400)
+        response = self.client.post("/analyze", headers=self.headers)
+        self.assertEqual(response.status_code, 400, response.json)
 
     def test_analyze_invalid_document(self):
         # Create a sample file to upload
-        data = {
-            'images': (BytesIO(b"sample image content"), 'test_image.png')
-        }
-        
-        response = test_client.post(
-            '/analyze',
-            content_type='multipart/form-data',
-            data=data
+        data = {"images": (BytesIO(b"sample image content"), "test_image.png")}
+
+        response = self.client.post(
+            "/analyze", content_type="multipart/form-data", data=data
         )
 
         # Document Intelligence throws an error
-        self.assertEqual(response.status_code, 500)
-        self.assertIn('error', response.json)
+        self.assertEqual(response.status_code, 500, response.json)
+        self.assertIn("error", response.json)
 
-    @patch('app.gpt.generate_form')
-    @patch('app.ocr.extract_text')
+    @patch("app.gpt.create_inspection")
+    @patch("app.ocr.extract_text")
     def test_analyze_document_gpt_error(self, mock_ocr, mock_gpt):
         mock_ocr.return_value = MagicMock(content="OCR result")
         mock_gpt.side_effect = Exception("GPT error")
 
-        data = {
-            'images': (BytesIO(b"sample image content"), 'test_image.png')
-        }
+        data = {"images": (BytesIO(b"sample image content"), "test_image.png")}
 
-        response = test_client.post(
-            '/analyze',
-            content_type='multipart/form-data',
-            data=data
+        response = self.client.post(
+            "/analyze", content_type="multipart/form-data", data=data
         )
 
-        self.assertEqual(response.status_code, 500)
-        self.assertIn('error', response.json)
-    def tearDown(self):
-        """Executed after reach test"""
-        app.testing = False
+        self.assertEqual(response.status_code, 500, response.json)
+        self.assertIn("error", response.json)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

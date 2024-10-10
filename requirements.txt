@@ -1,7 +1,10 @@
-flask
+flask[async]
 python-dotenv
 flask-cors
 flask_httpauth
 flasgger==0.9.7.1
 # Add the fertiscan-pipeline package from GitHub
 git+https://github.com/ai-cfia/fertiscan-pipeline.git@main
+# Add the datastore to interact with the database
+git+https://github.com/ai-cfia/ailab-datastore.git@v1.0.1-fertiscan-datastore
+psycopg[pool]
