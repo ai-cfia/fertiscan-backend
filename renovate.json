@@ -1,19 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "logLevel": "debug",
   "extends": [
     "config:recommended"
-  ],
- "customManagers": [
-    {
-      "fileMatch": [
-        ".*requirements\\.txt$"
-      ],
-      "matchStrings": [
-        "git\\+https://github.com/(?<orgName>[^/]+)/(?<depName>[^@]+)\\.git@v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)-fertiscan-datastore"
-      ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "{{{orgName}}}/{{{depName}}}"
-    }
   ],
   "packageRules": [
     {
