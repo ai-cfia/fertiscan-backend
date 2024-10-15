@@ -17,8 +17,9 @@
   ],
   "packageRules": [
     {
+      "matchDatasources": ["github-tags"],
       "matchPackageNames": ["ai-cfia/ailab-datastore"],
-      "versioning": "semver"
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-fertiscan-datastore$"
     }
   ]
 }
