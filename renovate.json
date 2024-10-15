@@ -12,7 +12,12 @@
         "git\\+https://github.com/(?<orgName>[^/]+)/(?<depName>[^@]+)\\.git@v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)-fertiscan-datastore"
       ],
       "datasourceTemplate": "github-tags",
-      "depNameTemplate": "{{{orgName}}}/{{{depName}}}",
+      "depNameTemplate": "{{{orgName}}}/{{{depName}}}"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": ["ai-cfia/ailab-datastore"],
       "versioning": "semver"
     }
   ]
