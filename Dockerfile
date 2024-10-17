@@ -40,4 +40,4 @@ RUN opentelemetry-bootstrap --action=install
 
 USER 1000
 
-CMD ["python", "app.py"]
+CMD ["opentelemetry-instrument", "python", "app.py"]
