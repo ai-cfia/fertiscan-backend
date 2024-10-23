@@ -15,3 +15,4 @@ opentelemetry-instrumentation
 opentelemetry-instrumentation-flask
 opentelemetry-instrumentation-logging
 openinference-instrumentation-dspy
+fastapi[standard]
