@@ -1,18 +1,23 @@
 import logging
 import os
 import traceback
+
+from typing import Optional
 from werkzeug.utils import secure_filename
 from http import HTTPStatus
 
 from azure.core.exceptions import HttpResponseError
 from datastore import ContainerClient, fertiscan, get_user, new_user
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pipeline import GPT, OCR, LabelStorage, analyze
 from psycopg_pool import ConnectionPool
 from backend.connection_manager import ConnectionManager
+
+from pipeline import FertilizerInspection
+import uvicorn
 
 # Load environment variables
 load_dotenv()
@@ -133,7 +138,7 @@ async def verify_password(username: str, password: str):
                 except Exception as e:
                     logger.error(f"Error occurred: {e}")
                     logger.error("Traceback: " + traceback.format_exc())
-                    raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED, detail="Authentication error!")
+                    raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED, detail=str(e))
 
         if user is None:
             raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED, detail="Unknown user!")
@@ -143,11 +148,11 @@ async def verify_password(username: str, password: str):
     except Exception as err:
         logger.error(f"Error occurred: {err}")
         logger.error("Traceback: " + traceback.format_exc())
-        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Internal server error!")
+        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=str(err))
 
 
 @app.post("/inspections")
-async def create_inspection(form: dict, files: list[UploadFile] = File(...), credentials: HTTPBasicCredentials = Depends(auth)):
+async def create_inspection(inspection: str = Form(...), files: Optional[list[UploadFile]] = File(None), credentials: HTTPBasicCredentials = Depends(auth)):
     try:
         async with connection_manager as manager:
             async with manager.get_cursor() as cursor:
@@ -156,11 +161,13 @@ async def create_inspection(form: dict, files: list[UploadFile] = File(...), cre
                 db_user = await get_user(cursor, username)
                 user_id = db_user.id
 
+                inspection = FertilizerInspection.model_validate(inspection)
+
                 container_client = ContainerClient.from_connection_string(
                     FERTISCAN_STORAGE_URL, container_name=f"user-{user_id}"
                 )
 
-                if form is None:
+                if inspection is None:
                     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Missing fertiliser form!")
 
                 # Collect files in a list
@@ -171,7 +178,7 @@ async def create_inspection(form: dict, files: list[UploadFile] = File(...), cre
                     cursor=cursor,
                     container_client=container_client,
                     user_id=user_id,
-                    analysis_dict=form,
+                    analysis_dict=inspection.model_dump(),
                     hashed_pictures=images,
                 )
 
@@ -185,7 +192,7 @@ async def create_inspection(form: dict, files: list[UploadFile] = File(...), cre
 
 
 @app.put("/inspections/{inspection_id}")
-async def update_inspection(inspection_id: str, inspection: dict, credentials: HTTPBasicCredentials = Depends(auth)):
+async def update_inspection(inspection_id: str, inspection: FertilizerInspection, credentials: HTTPBasicCredentials = Depends(auth)):
     try:
         async with connection_manager as manager:
             async with manager.get_cursor() as cursor:
@@ -194,7 +201,7 @@ async def update_inspection(inspection_id: str, inspection: dict, credentials: H
                 db_user = await get_user(cursor, username)
 
                 inspection = await fertiscan.update_inspection(
-                    cursor, inspection_id, db_user.id, inspection
+                    cursor, inspection_id, db_user.id, inspection.model_dump()
                 )
                 return inspection.model_dump_json(indent=2)
 
@@ -299,5 +306,5 @@ if __name__ == "__main__":
     if FERTISCAN_STORAGE_URL is None:
         raise ValueError("FERTISCAN_STORAGE_URL is not set")
 
-    app.run(app, host="0.0.0.0", port=8000, log_level="info")
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
 
