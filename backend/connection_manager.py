@@ -1,44 +1,44 @@
-from flask import Flask
+import os
+
 from psycopg_pool import ConnectionPool
 
 
 class ConnectionManager:
     """
-    Manages database connections using a connection pool for a Flask application.
+    Manages database connections using a connection pool for PostgreSQL.
 
-    This class provides methods to get and release connections, manage transactions,
-    and handle connection pooling for a PostgreSQL database. It is designed to be
-    used as a context manager with the 'with' statement to ensure proper resource management.
+    This class is used for managing database connections, transactions, and pooling
+    efficiently. It can be utilized as a context manager, making sure that resources
+    are properly managed (connections are committed, rolled back, and released).
 
-    When the app is in testing mode, the manager avoids committing transactions
-    and releasing connections back to the pool, allowing for more control over the connection.
+    In testing mode, it avoids committing transactions and releasing connections
+    back to the pool, enabling more control over connections.
 
     Attributes:
-        app (Flask): The Flask application instance.
-        pool (ConnectionPool): The connection pool used to manage database connections.
+        testing (bool): Indicates if the application is in testing mode.
+        pool (ConnectionPool): The connection pool for managing database connections.
         connection (Connection): The active database connection, if any.
     """
 
-    def __init__(self, app: Flask, pool: ConnectionPool):
+    def __init__(self, pool: ConnectionPool):
         """
-        Initializes the ConnectionManager with a Flask app and a connection pool.
+        Initializes the ConnectionManager with a connection pool.
 
         Args:
-            app (Flask): The Flask application instance.
             pool (ConnectionPool): The connection pool used to manage database connections.
         """
-        self.app = app
+        self.testing = os.getenv("TESTING", "") == "True"
         self.pool = pool
         self.connection = None
 
     def get(self):
         """
-        Retrieves a connection from the connection pool.
+        Retrieves an active connection from the connection pool.
 
-        If no connection is currently active, a new connection is obtained from the pool.
+        If no connection is active, it acquires a new one from the pool.
 
         Returns:
-            Connection: The active database connection.
+            Connection: An active database connection.
         """
         if self.connection is None:
             self.connection = self.pool.getconn()
@@ -48,40 +48,41 @@ class ConnectionManager:
         """
         Retrieves a cursor from the active connection.
 
-        If no connection is currently active, a new connection is obtained from the pool,
-        and a cursor is created from it.
+        If no connection is active, it obtains a new one from the pool
+        and creates a cursor from it.
 
         Returns:
-            Cursor: A cursor object for executing SQL queries.
+            Cursor: A cursor for executing SQL queries.
         """
         return self.get().cursor()
 
     def put(self):
         """
-        Releases the active connection back to the pool if the Flask application is not
-        in testing.
+        Releases the active connection back to the pool if not in testing mode.
+
+        If in testing mode, the connection is not released to the pool.
         """
-        if not self.app.testing and self.connection is not None:
+        if not self.testing and self.connection is not None:
             self.pool.putconn(self.connection)
             self.connection = None
 
     def commit(self):
         """
-        Commits the current transaction if the Flask application is not in testing mode.
+        Commits the current transaction if not in testing mode.
         """
-        if not self.app.testing and self.connection is not None:
+        if not self.testing and self.connection is not None:
             self.connection.commit()
 
     def rollback(self):
         """
-        Rolls back the current transaction.
+        Rolls back the current transaction, if an active connection exists.
         """
         if self.connection is not None:
             self.connection.rollback()
 
     def __enter__(self):
         """
-        Enters the runtime context related to this object.
+        Enters the context and returns the ConnectionManager instance.
 
         Returns:
             ConnectionManager: The current instance of ConnectionManager.
@@ -90,13 +91,13 @@ class ConnectionManager:
 
     def __exit__(self, exc_type, exc_value, tb):
         """
-        Exits the runtime context related to this object.
+        Exits the context, managing transactions based on exceptions.
 
-        Commits the transaction if no exception occurred; otherwise, rolls it back.
+        Commits the transaction if no exception occurred, otherwise rolls it back.
         Finally, releases the connection back to the pool.
 
         Args:
-            exc_type (type): The exception type (if any).
+            exc_type (type): The type of the exception (if any).
             exc_value (Exception): The exception instance (if any).
             tb (traceback): The traceback object (if any).
         """

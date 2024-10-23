@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from flask import Flask
 from psycopg import Connection
 from psycopg_pool import ConnectionPool
 
@@ -10,11 +9,10 @@ from backend.connection_manager import ConnectionManager
 
 class TestConnectionManager(unittest.TestCase):
     def setUp(self):
-        self.app = Flask(__name__)
         self.pool = MagicMock(spec=ConnectionPool)
         self.connection = MagicMock(spec=Connection)
         self.pool.getconn.return_value = self.connection
-        self.conn_manager = ConnectionManager(self.app, self.pool)
+        self.conn_manager = ConnectionManager(self.pool)
 
     def tearDown(self):
         self.conn_manager = None
@@ -49,7 +47,7 @@ class TestConnectionManager(unittest.TestCase):
     def test_put_connection_not_testing(self):
         """Test that the 'put' method releases the connection when not in testing mode."""
         self.conn_manager.get()
-        self.app.testing = False
+        self.conn_manager.testing = False
         self.conn_manager.put()
         # Assert that the connection was released back to the pool
         self.pool.putconn.assert_called_once_with(self.connection)
@@ -59,7 +57,7 @@ class TestConnectionManager(unittest.TestCase):
     def test_put_connection_in_testing(self):
         """Test that the 'put' method does not release the connection when in testing mode."""
         self.conn_manager.get()
-        self.app.testing = True
+        self.conn_manager.testing = True
         self.conn_manager.put()
         # Assert that the connection was not released back to the pool
         self.pool.putconn.assert_not_called()
@@ -69,7 +67,7 @@ class TestConnectionManager(unittest.TestCase):
     def test_commit_not_testing(self):
         """Test that the 'commit' method commits the transaction when not in testing mode."""
         self.conn_manager.get()
-        self.app.testing = False
+        self.conn_manager.testing = False
         self.conn_manager.commit()
         # Assert that the commit was called on the connection
         self.connection.commit.assert_called_once()
@@ -77,7 +75,7 @@ class TestConnectionManager(unittest.TestCase):
     def test_commit_in_testing(self):
         """Test that the 'commit' method does not commit the transaction when in testing mode."""
         self.conn_manager.get()
-        self.app.testing = True
+        self.conn_manager.testing = True
         self.conn_manager.commit()
         # Assert that the commit was not called on the connection
         self.connection.commit.assert_not_called()
