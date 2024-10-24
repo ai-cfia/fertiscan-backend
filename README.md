@@ -1,11 +1,11 @@
-# Festiscan backend
+# Festiscan Backend
 
 FertiScan helps inspectors analyze and process fertilizer labels by extracting
 text and generating structured forms.
 
 ## Overview
 
-This repository contains the backend for FertiScan, a Flask-based server
+This repository contains the backend for FertiScan, a FastAPI-based server
 designed to work with the
 [frontend](https://github.com/ai-cfia/fertiscan-frontend/). It handles image
 uploads, document analysis using
@@ -18,7 +18,7 @@ generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
 
 ### Prerequisites
 
-- Python 3.8+
+- Python 3.11+
 - [pip](https://pip.pypa.io/en/stable/installation/)
 - [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html)
 - Azure Document Intelligence and OpenAI API keys
@@ -38,10 +38,10 @@ generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
     pip install -r requirements.txt
     ```
 
-3. Start the server:
+3. Start the server in development mode:
 
     ```sh
-    python ./app.py
+    fastapi dev app/main.py --port 5000
     ```
 
 ### Running with Docker
@@ -59,6 +59,7 @@ generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
     --build-arg ARG_FERTISCAN_DB_URL=your_fertiscan_db_url \
     --build-arg ARG_FERTISCAN_SCHEMA=your_fertiscan_schema \
     --build-arg ARG_FRONTEND_URL=http://url.to_frontend/ \
+    --build-arg ARG_PROMPT_PATH=path/to/file \
     --build-arg ARG_UPLOAD_PATH=path/to/file \
     .
     ```
@@ -91,13 +92,13 @@ generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
     docker-compose up --build
     ```
 
-> **Side note : If you are on a ARM based machine, you will need to build the
-image with the `docker-compose build --build-arg TARGETARCH=arm64` command.**
+> **Side note:** If you are on an ARM-based machine, you will need to build the
+> image with the `docker-compose build --build-arg TARGETARCH=arm64` command.
 
 The application will be available at `http://localhost:80`. The database should
-be dynamically built based on latest schema from Bytebase.
+be dynamically built based on the latest schema from Bytebase.
 
-To use pgAdmin, navigate to `http://localhost:5050` and login with
+To use pgAdmin, navigate to `http://localhost:5050` and log in with
 `admin@example.com` and `admin`. You can then register a new server with the
 following details:
 
@@ -128,6 +129,6 @@ FRONTEND_URL=http://url.to_frontend/
 ## API Endpoints
 
 The [Swagger UI](https://swagger.io/tools/swagger-ui/) for the API of FertiScan
-is available at `/apidocs`.
+is available at `/docs`.
 
 More details in the developer [documentation](./docs/README.md).

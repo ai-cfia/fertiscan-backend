@@ -40,4 +40,4 @@ RUN opentelemetry-bootstrap --action=install
 
 USER 1000
 
-CMD ["opentelemetry-instrument", "python3", "app.py"]
+CMD ["opentelemetry-instrument", "fastapi", "run", "app/main.py", "--port", "5000"]
