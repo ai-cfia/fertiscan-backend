@@ -1,8 +1,8 @@
 # CONTRIBUTING
 
 Thank you for your interest in contributing to the FertiScan backend project!
- Your contributions help make this project better for everyone.
- This guide will help you get started with contributing.
+Your contributions help make this project better for everyone. This guide will
+help you get started with contributing.
 
 ## Table of Contents
 
@@ -23,32 +23,33 @@ Thank you for your interest in contributing to the FertiScan backend project!
 
 ## Code of Conduct
 
-This project adheres to the [Code of Conduct](https://www.canada.ca/fr/gouvernement/systeme/gouvernement-numerique/normes-numeriques-gouvernement-canada.html).
- By participating, you are expected to uphold this code.
+This project adheres to the [Code of
+Conduct](https://www.canada.ca/fr/gouvernement/systeme/gouvernement-numerique/normes-numeriques-gouvernement-canada.html).
+By participating, you are expected to uphold this code.
 
 ## How to Contribute
 
 ### Reporting Bugs
 
-If you find a bug, please create an issue and provide detailed
-information about the bug, including steps to reproduce it,
-the expected behavior, and the actual behavior.
+If you find a bug, please create an issue and provide detailed information about
+the bug, including steps to reproduce it, the expected behavior, and the actual
+behavior.
 
 ### Suggesting Enhancements
 
-We welcome suggestions for new features and enhancements.
- Please create an issue to discuss your ideas and
- explain the benefits and potential use cases.
+We welcome suggestions for new features and enhancements. Please create an issue
+to discuss your ideas and explain the benefits and potential use cases.
 
 ### Submitting Pull Requests
 
-Follow the guidelines in [dev-rel-docs](https://github.com/ai-cfia/dev-rel-docs/blob/main/TRAINING.md).
+Follow the guidelines in
+[dev-rel-docs](https://github.com/ai-cfia/dev-rel-docs/blob/main/TRAINING.md).
 
 ## Development Setup
 
 ### Prerequisites
 
-- Python 3.8+
+- Python 3.11+
 - [pip](https://pip.pypa.io/en/stable/installation/)
 - [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html)
 - Azure Document Intelligence and OpenAI API keys
@@ -68,10 +69,10 @@ Follow the guidelines in [dev-rel-docs](https://github.com/ai-cfia/dev-rel-docs/
     pip install -r requirements.txt
     ```
 
-3. Start the server:
+3. Start the server in development mode:
 
     ```sh
-    python ./app.py
+    fastapi dev app/main.py --port 5000
     ```
 
 ### Running with Docker
@@ -121,7 +122,8 @@ FRONTEND_URL=http://url.to_frontend/
 
 ### Git Commit Messages
 
-<https://www.conventionalcommits.org/en/v1.0.0/>
+Follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+for writing commit messages.
 
 ## Additional Resources
 
