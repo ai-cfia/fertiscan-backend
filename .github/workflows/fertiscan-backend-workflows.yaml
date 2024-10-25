@@ -20,13 +20,13 @@ jobs:
     uses: ai-cfia/github-workflows/.github/workflows/workflow-repo-standards-validation.yml@main
     secrets: inherit
 
-  # deploy-to-ghcr:
-  #   uses: ai-cfia/github-workflows/.github/workflows/workflow-build-push-container-github-registry.yml@main
-  #   with:
-  #     container-name: ${{ github.event.repository.name }}
-  #     tag: ${{ github.sha }}
-  #     registry: ghcr.io/ai-cfia
-  #   secrets: inherit
+  deploy-to-ghcr:
+    uses: ai-cfia/github-workflows/.github/workflows/workflow-build-push-container-github-registry.yml@main
+    with:
+      container-name: ${{ github.event.repository.name }}
+      tag: ${{ github.sha }}
+      registry: ghcr.io/ai-cfia
+    secrets: inherit
   
   pr-labelling:
     uses: ai-cfia/github-workflows/.github/workflows/workflow-pr-labelling.yml@main

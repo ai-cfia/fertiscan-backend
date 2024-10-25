@@ -1,57 +1,53 @@
-import os
 import unittest
-import uuid
 
 from fastapi.testclient import TestClient
 
-from app import app
+from app.main import app
+from app.models.items import ItemCreate, ItemResponse
 
 
 class TestAPI(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        # Set up the environment variable to indicate testing mode
-        os.environ["TESTING"] = "True"
-
     def setUp(self):
-        # Generate unique IDs and values for each test run
-        self.subtype_id = uuid.uuid4()
-        self.type_en = uuid.uuid4().hex
-        self.type_fr = uuid.uuid4().hex
+        self.client = TestClient(app)
 
-    def test_rollbacks(self):
-        # Test inserting a new subtype
-        with TestClient(app) as client:
-            response = client.post(
-                "/subtypes",
-                params={
-                    "id": self.subtype_id,
-                    "type_en": self.type_en,
-                    "type_fr": self.type_fr,
-                },
-            )
-            # Check if the POST request was successful
-            self.assertEqual(response.status_code, 200)
+    def test_health_check(self):
+        response = self.client.get("/health")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok"})
 
-            # Validate the response content
-            results = response.json().get("message")
-            self.assertIsNotNone(results)
+    def test_create_item(self):
+        item = ItemCreate(name="Test Item", description="This is a test item")
+        response = self.client.post("/items/", json=item.model_dump())
+        self.assertEqual(response.status_code, 200)
+        data = ItemResponse.model_validate(response.json())
+        self.assertEqual(data.name, item.name)
+        self.assertEqual(data.description, item.description)
+        self.assertIsNotNone(data.id)
 
-            # Check if the inserted subtype matches the expected values
-            response = client.get(f"/subtypes/{self.subtype_id}")
-            self.assertEqual(response.status_code, 200)
-            # Validate the response content
-            results = response.json().get("message")
-            self.assertIsNotNone(results)
-            self.assertEqual(results[0], str(self.subtype_id))
-            self.assertEqual(results[1], self.type_fr)
-            self.assertEqual(results[2], self.type_en)
+    def test_read_items(self):
+        response = self.client.get("/items/")
+        self.assertEqual(response.status_code, 200)
+        items = [ItemResponse.model_validate(item) for item in response.json()]
+        self.assertIsInstance(items, list)
 
-        # Test if the subtype was rolled back (i.e., not found)
-        with TestClient(app) as client:
-            response = client.get(f"/{self.subtype_id}")
-            # Expect a 404 status code, indicating that the subtype was not found
-            self.assertEqual(response.status_code, 404)
+    def test_read_item(self):
+        # First, create an item to read
+        item = ItemCreate(name="Test Item", description="This is a test item")
+        create_response = self.client.post("/items/", json=item.model_dump())
+        created_item = ItemResponse(**create_response.json())
+
+        # Now, read the item
+        response = self.client.get(f"/items/{created_item.id}")
+        self.assertEqual(response.status_code, 200)
+        data = ItemResponse(**response.json())
+        self.assertEqual(data.name, item.name)
+        self.assertEqual(data.description, item.description)
+        self.assertEqual(data.id, created_item.id)
+
+    def test_read_item_not_found(self):
+        response = self.client.get("/items/non_existent_id")
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json(), {"detail": "Item not found"})
 
 
 if __name__ == "__main__":
