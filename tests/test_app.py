@@ -4,7 +4,7 @@ import uuid
 
 from fastapi.testclient import TestClient
 
-from app import app
+from app.main import app
 
 
 class TestAPI(unittest.TestCase):
@@ -52,7 +52,3 @@ class TestAPI(unittest.TestCase):
             response = client.get(f"/{self.subtype_id}")
             # Expect a 404 status code, indicating that the subtype was not found
             self.assertEqual(response.status_code, 404)
-
-
-if __name__ == "__main__":
-    unittest.main()
