@@ -1,7 +1,12 @@
+import os
+import traceback
+from dotenv import load_dotenv
+
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, logger
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from psycopg_pool import ConnectionPool
 from pydantic import UUID4
 
@@ -11,6 +16,17 @@ from app.controllers.items import create, read, read_all
 from app.dependencies import get_connection_manager
 from app.models.items import ItemCreate, ItemResponse
 
+from http import HTTPStatus
+
+from datastore import new_user
+
+# Load environment variables
+load_dotenv("../.env")
+
+# fertiscan storage config vars
+FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA")
+FERTISCAN_DB_URL = os.getenv("FERTISCAN_DB_URL")
+FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,6 +40,7 @@ async def lifespan(app: FastAPI):
     yield
     pool.close()
 
+auth = HTTPBasic()
 
 app = FastAPI(lifespan=lifespan)
 
@@ -96,3 +113,27 @@ async def get_subtype(
                 raise HTTPException(status_code=404, detail="Subtype not found")
 
     return {"message": result}
+
+@app.post("/signup")
+async def signup(
+    cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
+    credentials: HTTPBasicCredentials = Depends(auth)
+):
+    return {"username": credentials.username}
+    # username = credentials.username
+
+    # if not username:
+    #     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Missing email address!")
+
+    # try:
+    #     with cm as connection_manager:
+    #         with connection_manager.get_cursor() as cursor:
+    #             logger.info(f"Creating user: {username}")
+    #             user = await new_user(cursor, username, FERTISCAN_STORAGE_URL)
+    #         cm.commit()
+    #     return {"user_id": user.get_id()}
+
+    # except Exception as e:
+    #     logger.error(f"Error occurred: {e}")
+    #     logger.error("Traceback: " + traceback.format_exc())
+    #     raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Failed to create user!")
