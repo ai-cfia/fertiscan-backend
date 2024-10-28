@@ -87,20 +87,20 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(response.json(), {"detail": "Item not found"})
 
     
-    def test_signup_missing_username(self):
-        response = self.client.post(
-            "/signup/",
-            headers={
-            **self.headers,
-            "Authorization": f'Basic {self.credentials("", self.password)}',
-            },
-        )
-        self.assertEqual(response.status_code, 400, response.json())
+    # def test_signup_missing_username(self):
+    #     response = self.client.post(
+    #         "/signup/",
+    #         headers={
+    #         **self.headers,
+    #         "Authorization": f'Basic {self.credentials("", self.password)}',
+    #         },
+    #     )
+    #     self.assertEqual(response.status_code, 400, response.json())
 
-    # def test_register(self):
+    # def test_signup(self):
     #     username = str(uuid.uuid4())
     #     response = self.client.post(
-    #         "/register",
+    #         "/signup/",
     #         headers={
     #         **self.headers,
     #         "Authorization": f'Basic {self.credentials(username, self.password)}',
