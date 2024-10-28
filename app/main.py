@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import os
 import traceback
 from dotenv import load_dotenv
@@ -7,6 +8,12 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, logger
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+=======
+from contextlib import asynccontextmanager
+from typing import Annotated
+
+from fastapi import Depends, FastAPI, HTTPException
+>>>>>>> origin/main
 from psycopg_pool import ConnectionPool
 from pydantic import UUID4
 
@@ -16,6 +23,7 @@ from app.controllers.items import create, read, read_all
 from app.dependencies import get_connection_manager
 from app.models.items import ItemCreate, ItemResponse
 
+<<<<<<< HEAD
 from http import HTTPStatus
 
 from datastore import new_user
@@ -27,6 +35,8 @@ load_dotenv("../.env")
 FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA")
 FERTISCAN_DB_URL = os.getenv("FERTISCAN_DB_URL")
 FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
+=======
+>>>>>>> origin/main
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,7 +50,10 @@ async def lifespan(app: FastAPI):
     yield
     pool.close()
 
+<<<<<<< HEAD
 auth = HTTPBasic()
+=======
+>>>>>>> origin/main
 
 app = FastAPI(lifespan=lifespan)
 

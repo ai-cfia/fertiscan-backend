@@ -21,6 +21,18 @@ class TestConnectionManager(unittest.TestCase):
     def tearDown(self):
         self.conn_manager = None
 
+    def test_init_with_none(self):
+        """Test that initializing ConnectionManager with None raises ValueError."""
+        with self.assertRaises(ValueError) as context:
+            ConnectionManager(None)
+        self.assertEqual(str(context.exception), "A connection pool is required.")
+
+    def test_init_with_invalid_type(self):
+        """Test that initializing ConnectionManager with invalid type raises ValueError."""
+        with self.assertRaises(ValueError) as context:
+            ConnectionManager("invalid_type")
+        self.assertEqual(str(context.exception), "A connection pool is required.")
+
     def test_get_connection(self):
         """Test that the 'get' method retrieves a connection from the pool."""
         conn = self.conn_manager.get()

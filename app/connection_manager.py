@@ -27,6 +27,10 @@ class ConnectionManager:
         Args:
             pool (ConnectionPool): The connection pool used to manage database connections.
         """
+
+        if not isinstance(pool, ConnectionPool):
+            raise ValueError("A connection pool is required.")
+
         self.testing = os.getenv("TESTING", "") == "True"
         self.pool = pool
         self.connection = None

@@ -6,7 +6,10 @@ from fastapi.testclient import TestClient
 import requests
 
 from app.main import app
+<<<<<<< HEAD
 from app.models.items import ItemCreate, ItemResponse
+=======
+>>>>>>> origin/main
 
 
 class TestAPI(unittest.TestCase):
@@ -73,46 +76,8 @@ class TestAPI(unittest.TestCase):
         create_response = self.client.post("/items/", json=item.model_dump())
         created_item = ItemResponse(**create_response.json())
 
-        # Now, read the item
-        response = self.client.get(f"/items/{created_item.id}")
-        self.assertEqual(response.status_code, 200)
-        data = ItemResponse(**response.json())
-        self.assertEqual(data.name, item.name)
-        self.assertEqual(data.description, item.description)
-        self.assertEqual(data.id, created_item.id)
-
-    def test_read_item_not_found(self):
-        response = self.client.get("/items/non_existent_id")
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.json(), {"detail": "Item not found"})
-
-    
-    # def test_signup_missing_username(self):
-    #     response = self.client.post(
-    #         "/signup/",
-    #         headers={
-    #         **self.headers,
-    #         "Authorization": f'Basic {self.credentials("", self.password)}',
-    #         },
-    #     )
-    #     self.assertEqual(response.status_code, 400, response.json())
-
-    # def test_signup(self):
-    #     username = str(uuid.uuid4())
-    #     response = self.client.post(
-    #         "/signup/",
-    #         headers={
-    #         **self.headers,
-    #         "Authorization": f'Basic {self.credentials(username, self.password)}',
-    #         "Content-Type": "application/x-www-form-urlencoded",
-    #         },
-    #     )
-    #     self.assertEqual(response.status_code, 201, response.json())
-
-    def tearDown(self):
-        # Clean up any created items if necessary
-        pass
-
-
-if __name__ == "__main__":
-    unittest.main()
+        # Test if the subtype was rolled back (i.e., not found)
+        with TestClient(app) as client:
+            response = client.get(f"/{self.subtype_id}")
+            # Expect a 404 status code, indicating that the subtype was not found
+            self.assertEqual(response.status_code, 404)
