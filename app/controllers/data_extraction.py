@@ -8,7 +8,7 @@ from app.constants import UPLOAD_FOLDER
 
 def extract_data(files: dict[str, BinaryIO], ocr, gpt):
     """
-    Extracts data from provided files using OCR and GPT.
+    Extracts data from provided image files using OCR and GPT.
 
     Args:
         files (dict[str, BinaryIO]): A dictionary where keys are filenames
@@ -24,6 +24,8 @@ def extract_data(files: dict[str, BinaryIO], ocr, gpt):
     """
     if not files:
         raise ValueError("No files to analyze")
+    
+    # TODO: should probably validate file type
 
     label_storage = LabelStorage()
 
