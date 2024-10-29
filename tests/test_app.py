@@ -1,4 +1,5 @@
 import base64
+import os
 import unittest
 import uuid
 
@@ -6,10 +7,7 @@ from fastapi.testclient import TestClient
 import requests
 
 from app.main import app
-<<<<<<< HEAD
 from app.models.items import ItemCreate, ItemResponse
-=======
->>>>>>> origin/main
 
 
 class TestAPI(unittest.TestCase):
@@ -27,6 +25,8 @@ class TestAPI(unittest.TestCase):
             "Access-Control-Allow-Methods": "*",
         }
 
+        os.environ["TESTING"] = "True"
+
         # Fetch and save the JSON data in setUpClass
         with requests.get(
             "https://raw.githubusercontent.com/ai-cfia/fertiscan-pipeline/main/expected.json"
@@ -40,44 +40,90 @@ class TestAPI(unittest.TestCase):
     
     def setUp(self):
         app.testing = True
-        self.client = TestClient(app)
-        self.client.headers.update(self.headers)
-        self.client.post(
-            "/signup",
-            headers={
-                **self.headers,
-                "Authorization": f'Basic {self.credentials(self.username, self.password)}',
-            },
-        )
+        with TestClient(app) as client:
+            client.post(
+                "/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f'Basic {self.credentials(self.username, self.password)}',
+                },
+            )
         
     def test_health_check(self):
-        response = self.client.get("/health")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"status": "ok"})
+        with TestClient(app) as client:
+            response = client.get("/health")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json(), {"status": "ok"})
 
     def test_create_item(self):
-        item = ItemCreate(name="Test Item", description="This is a test item")
-        response = self.client.post("/items/", json=item.model_dump())
-        self.assertEqual(response.status_code, 200)
-        data = ItemResponse.model_validate(response.json())
-        self.assertEqual(data.name, item.name)
-        self.assertEqual(data.description, item.description)
-        self.assertIsNotNone(data.id)
+        with TestClient(app) as client:
+            item = ItemCreate(name="Test Item", description="This is a test item")
+            response = client.post("/items/", json=item.model_dump())
+            self.assertEqual(response.status_code, 200)
+            data = ItemResponse.model_validate(response.json())
+            self.assertEqual(data.name, item.name)
+            self.assertEqual(data.description, item.description)
+            self.assertIsNotNone(data.id)
 
     def test_read_items(self):
-        response = self.client.get("/items/")
-        self.assertEqual(response.status_code, 200)
-        items = [ItemResponse.model_validate(item) for item in response.json()]
-        self.assertIsInstance(items, list)
+        with TestClient(app) as client:
+            response = client.get("/items/")
+            self.assertEqual(response.status_code, 200)
+            items = [ItemResponse.model_validate(item) for item in response.json()]
+            self.assertIsInstance(items, list)
 
     def test_read_item(self):
-        # First, create an item to read
-        item = ItemCreate(name="Test Item", description="This is a test item")
-        create_response = self.client.post("/items/", json=item.model_dump())
-        created_item = ItemResponse(**create_response.json())
-
-        # Test if the subtype was rolled back (i.e., not found)
         with TestClient(app) as client:
-            response = client.get(f"/{self.subtype_id}")
+            # First, create an item to read
+            item = ItemCreate(name="Test Item", description="This is a test item")
+            create_response = client.post("/items/", json=item.model_dump())
+            created_item = ItemResponse(**create_response.json())
+
+            # Test if the subtype was rolled back (i.e., not found)
+            response = client.get(f"/{created_item.id}")
             # Expect a 404 status code, indicating that the subtype was not found
             self.assertEqual(response.status_code, 404)
+
+    def test_user_signup_missing_username(self):
+        with TestClient(app) as client:
+            response = client.post(
+                "/user/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f'Basic {self.credentials("", self.password)}',
+                },
+            )
+            self.assertEqual(response.status_code, 400, response.json())
+
+    def test_user_signup(self):
+        with TestClient(app) as client:
+            username = str(uuid.uuid4())
+            response = client.post(
+                "/user/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f'Basic {self.credentials(username, self.password)}',
+                },
+            )
+            self.assertEqual(response.status_code, 201, response.json())
+
+    def test_user_login_missing_username(self):
+        with TestClient(app) as client:
+            response = client.post(
+                "/user/login",
+                headers={
+                    **self.headers,
+                    "Authorization": f'Basic {self.credentials("", self.password)}',
+                },
+            )
+            self.assertEqual(response.status_code, 400, response.json())
+    def test_user_login(self):
+        with TestClient(app) as client:
+            response = client.post(
+                "/user/login",
+                headers={
+                    **self.headers,
+                    "Authorization": f'Basic {self.credentials(self.username, self.password)}',
+                },
+            )
+            self.assertEqual(response.status_code, 200, response.json())
