@@ -1,7 +1,7 @@
 import re
 
 
-def custom_secure_filename(filename):
+def custom_secure_filename(filename: str):
     """
     Sanitize filename by removing paths, replacing spaces, and keeping only safe characters.
 

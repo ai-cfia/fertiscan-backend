@@ -1,12 +1,12 @@
 import os
 from typing import BinaryIO
 
-from pipeline import LabelStorage, analyze
+from pipeline import FertilizerInspection, LabelStorage, analyze
 
 from app.constants import UPLOAD_FOLDER
 
 
-def extract_data(files: dict[str, BinaryIO], ocr, gpt):
+def extract_data(files: dict[str, BinaryIO], ocr, gpt) -> FertilizerInspection:
     """
     Extracts data from provided image files using OCR and GPT.
 
@@ -24,7 +24,7 @@ def extract_data(files: dict[str, BinaryIO], ocr, gpt):
     """
     if not files:
         raise ValueError("No files to analyze")
-    
+
     # TODO: should probably validate file type
 
     label_storage = LabelStorage()

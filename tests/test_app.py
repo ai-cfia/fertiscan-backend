@@ -94,3 +94,46 @@ class TestAPI(unittest.TestCase):
                 validated_inspection.registration_number,
                 mock_inspection.registration_number,
             )
+
+    @patch("app.main.extract_data")
+    def test_analyze_empty_file(self, mock_extract_data):
+        """Test analyze_document with an empty file that triggers ResponseValidationError"""
+        mock_extract_data.return_value = None
+
+        files = [("files", ("empty.txt", b"", "text/plain"))]
+
+        with TestClient(app) as client:
+            response = client.post("/analyze", files=files)
+            self.assertEqual(response.status_code, 422)
+
+    @patch("app.main.extract_data")
+    def test_analyze_file_list_with_empty_files(self, mock_extract_data):
+        """Test analyze_document with a file list containing empty files"""
+        mock_inspection_data = {
+            "company_name": "Test Company",
+            "fertiliser_name": "Mock Fertilizer",
+            "registration_number": "REG123",
+        }
+        mock_inspection = FertilizerInspection.model_validate(mock_inspection_data)
+        mock_extract_data.return_value = mock_inspection
+
+        files = [
+            ("files", ("file1.txt", b"Sample content", "text/plain")),
+            ("files", ("empty.txt", b"", "text/plain")),
+        ]
+
+        with TestClient(app) as client:
+            response = client.post("/analyze", files=files)
+            self.assertEqual(response.status_code, 422)
+
+    @patch("app.main.extract_data")
+    def test_analyze_empty_file_list(self, mock_extract_data):
+        """Test analyze_document with an empty file list"""
+        mock_extract_data.return_value = None
+
+        files = []
+
+        with TestClient(app) as client:
+            response = client.post("/analyze", files=files)
+            print("response.status_code", response.status_code)
+            self.assertEqual(response.status_code, 422)

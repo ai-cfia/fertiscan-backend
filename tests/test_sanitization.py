@@ -27,6 +27,17 @@ class TestCustomSecureFilename(unittest.TestCase):
             custom_secure_filename("valid_filename.doc"), "valid_filename.doc"
         )
 
+    def test_sql_injection_semicolon(self):
+        self.assertEqual(
+            custom_secure_filename("5; DROP TABLE users; --.txt"),
+            "5_DROP_TABLE_users_--.txt",
+        )
+
+    def test_sql_injection_drop_table(self):
+        self.assertEqual(
+            custom_secure_filename("DROP Table users;--.csv"), "DROP_Table_users--.csv"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,13 +1,13 @@
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from pipeline import GPT, OCR, FertilizerInspection
 from pydantic import UUID4
 
 from app.config import lifespan
 from app.connection_manager import ConnectionManager
-from app.controllers.items import create, read, read_all
 from app.controllers.data_extraction import extract_data
+from app.controllers.items import create, read, read_all
 from app.dependencies import get_connection_manager, get_gpt, get_ocr
 from app.models.items import ItemCreate, ItemResponse
 from app.sanitization import custom_secure_filename
@@ -24,9 +24,18 @@ async def health_check():
 async def analyze_document(
     ocr: OCR = Depends(get_ocr),
     gpt: GPT = Depends(get_gpt),
-    files: list[UploadFile] = File(...),
+    files: list[UploadFile] = File(..., min_length=1),
 ):
-    files = {custom_secure_filename(f.filename): f.file for f in files}
+    file_dict = {}
+    for f in files:
+        if f.size == 0:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"File {f.filename} is empty",
+            )
+        file_dict[custom_secure_filename(f.filename)] = f.file
+
+    print("files", files)
     return extract_data(files, ocr, gpt)
 
 
