@@ -1,29 +1,16 @@
-from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException
-from psycopg_pool import ConnectionPool
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from pipeline import GPT, OCR, FertilizerInspection
 from pydantic import UUID4
 
-import app.constants as c
+from app.config import lifespan
 from app.connection_manager import ConnectionManager
 from app.controllers.items import create, read, read_all
-from app.dependencies import get_connection_manager
+from app.controllers.data_extraction import extract_data
+from app.dependencies import get_connection_manager, get_gpt, get_ocr
 from app.models.items import ItemCreate, ItemResponse
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    pool = ConnectionPool(
-        conninfo=c.FERTISCAN_DB_URL,
-        open=True,
-        kwargs={"options": f"-c search_path={c.FERTISCAN_SCHEMA},public"},
-    )
-    connection_manager = ConnectionManager(pool)
-    app.connection_manager = connection_manager
-    yield
-    pool.close()
-
+from app.sanitization import custom_secure_filename
 
 app = FastAPI(lifespan=lifespan)
 
@@ -31,6 +18,16 @@ app = FastAPI(lifespan=lifespan)
 @app.get("/health", tags=["Monitoring"])
 async def health_check():
     return {"status": "ok"}
+
+
+@app.post("/analyze", response_model=FertilizerInspection, tags=["Pipeline"])
+async def analyze_document(
+    ocr: OCR = Depends(get_ocr),
+    gpt: GPT = Depends(get_gpt),
+    files: list[UploadFile] = File(...),
+):
+    files = {custom_secure_filename(f.filename): f.file for f in files}
+    return extract_data(files, ocr, gpt)
 
 
 # Just for demonstration
