@@ -115,7 +115,7 @@ async def get_subtype(
 
     return {"message": result}
 
-@app.post("/user/signup", tags=["User"], status_code=201)
+@app.post("/signup", tags=["User"], status_code=201)
 async def signup(
     cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
     credentials: HTTPBasicCredentials = Depends(auth)
@@ -130,7 +130,6 @@ async def signup(
             with connection_manager.get_cursor() as cursor:
                 logger.info(f"Creating user: {username}")
                 user = await new_user(cursor, username, FERTISCAN_STORAGE_URL)
-                cm.commit()
         return {"user_id": user.get_id()}
 
     except Exception as e:
@@ -138,7 +137,7 @@ async def signup(
         logger.error("Traceback: " + traceback.format_exc())
         raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Failed to create user!")
 
-@app.post("/user/login", tags=["User"], status_code=200)
+@app.post("/login", tags=["User"], status_code=200)
 async def login(
     cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
     credentials: HTTPBasicCredentials = Depends(auth)

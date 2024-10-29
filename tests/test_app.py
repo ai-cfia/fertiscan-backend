@@ -14,7 +14,7 @@ class TestAPI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Setup credentials and headers
-        cls.username = "test-user-10"
+        cls.username = "test-user-1"
         cls.password = "password1"
         encoded_credentials = cls.credentials(cls.username, cls.password)
 
@@ -40,14 +40,6 @@ class TestAPI(unittest.TestCase):
     
     def setUp(self):
         app.testing = True
-        with TestClient(app) as client:
-            client.post(
-                "/signup",
-                headers={
-                    **self.headers,
-                    "Authorization": f'Basic {self.credentials(self.username, self.password)}',
-                },
-            )
         
     def test_health_check(self):
         with TestClient(app) as client:
@@ -87,7 +79,7 @@ class TestAPI(unittest.TestCase):
     def test_user_signup_missing_username(self):
         with TestClient(app) as client:
             response = client.post(
-                "/user/signup",
+                "/signup",
                 headers={
                     **self.headers,
                     "Authorization": f'Basic {self.credentials("", self.password)}',
@@ -99,7 +91,7 @@ class TestAPI(unittest.TestCase):
         with TestClient(app) as client:
             username = str(uuid.uuid4())
             response = client.post(
-                "/user/signup",
+                "/signup",
                 headers={
                     **self.headers,
                     "Authorization": f'Basic {self.credentials(username, self.password)}',
@@ -110,7 +102,7 @@ class TestAPI(unittest.TestCase):
     def test_user_login_missing_username(self):
         with TestClient(app) as client:
             response = client.post(
-                "/user/login",
+                "/login",
                 headers={
                     **self.headers,
                     "Authorization": f'Basic {self.credentials("", self.password)}',
@@ -119,8 +111,15 @@ class TestAPI(unittest.TestCase):
             self.assertEqual(response.status_code, 400, response.json())
     def test_user_login(self):
         with TestClient(app) as client:
+            client.post(
+                "/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f'Basic {self.credentials(self.username, self.password)}',
+                },
+            )
             response = client.post(
-                "/user/login",
+                "/login",
                 headers={
                     **self.headers,
                     "Authorization": f'Basic {self.credentials(self.username, self.password)}',
