@@ -1,33 +1,19 @@
-import os
-import traceback
-from dotenv import load_dotenv
-
 from contextlib import asynccontextmanager
+from http import HTTPStatus
 from typing import Annotated
 
-from fastapi.logger import logger
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from psycopg_pool import ConnectionPool
-from pydantic import UUID4
 
 import app.constants as c
 from app.connection_manager import ConnectionManager
-from app.controllers.items import create, read, read_all
-from app.dependencies import get_connection_manager
-from app.models.items import ItemCreate, ItemResponse
+from app.controllers.users import sign_in, sign_up
+from app.dependencies import authenticate_user, get_connection_manager
+from app.exceptions import UserConflictError, UserNotFoundError, log_error
+from app.models.monitoring import HealthStatus
+from app.models.users import User
 
-from http import HTTPStatus
-
-from datastore import new_user, get_user
-
-# Load environment variables
-load_dotenv("../.env")
-
-# fertiscan storage config vars
-FERTISCAN_SCHEMA = os.getenv("FERTISCAN_SCHEMA")
-FERTISCAN_DB_URL = os.getenv("FERTISCAN_DB_URL")
-FERTISCAN_STORAGE_URL = os.getenv("FERTISCAN_STORAGE_URL")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -41,120 +27,54 @@ async def lifespan(app: FastAPI):
     yield
     pool.close()
 
-auth = HTTPBasic()
 
 app = FastAPI(lifespan=lifespan)
 
 
-@app.get("/health", tags=["Monitoring"])
+@app.exception_handler(Exception)
+async def global_exception_handler(_: Request, e: Exception):
+    log_error(e)
+    return JSONResponse(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content=str(e))
+
+
+@app.get("/health", tags=["Monitoring"], response_model=HealthStatus)
 async def health_check():
-    return {"status": "ok"}
+    return HealthStatus()
 
 
-# Just for demonstration
-@app.post("/items/", response_model=ItemResponse, tags=["Items"])
-async def create_item(item: ItemCreate):
-    return create(item)
-
-
-# Just for demonstration
-@app.get("/items/", response_model=list[ItemResponse], tags=["Items"])
-async def read_items():
-    return read_all()
-
-
-# Just for demonstration
-@app.get(
-    "/items/{item_id}",
+@app.post(
+    "/signup",
+    tags=["Users"],
+    status_code=201,
+    response_model=User,
     responses={
-        400: {"description": "Invalid token header"},
-        404: {"description": "Item not found"},
+        HTTPStatus.CONFLICT: {"description": "User exists"},
     },
-    response_model=ItemResponse,
-    tags=["Items"],
 )
-async def read_item(item_id: str):
-    try:
-        return read(item_id)
-    except KeyError:
-        raise HTTPException(status_code=404, detail="Item not found")
-
-
-# Just for demonstration
-@app.post("/subtypes")
-async def insert(
-    cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
-    id: UUID4 | str,
-    type_fr: str,
-    type_en: str,
-):
-    with cm as connection_manager:
-        with connection_manager.get_cursor() as cur:
-            cur.execute(
-                "INSERT INTO sub_type VALUES (%s, %s, %s) returning *",
-                (id, type_fr, type_en),
-            )
-            result = cur.fetchone()
-
-    return {"message": result}
-
-
-# Just for demonstration
-@app.get("/subtypes/{id}")
-async def get_subtype(
-    cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
-    id: UUID4 | str,
-):
-    with cm as connection_manager:
-        with connection_manager.get_cursor() as cur:
-            cur.execute("SELECT * FROM sub_type WHERE id = %s", (id,))
-            result = cur.fetchone()
-
-            if not result:
-                raise HTTPException(status_code=404, detail="Subtype not found")
-
-    return {"message": result}
-
-@app.post("/signup", tags=["User"], status_code=201)
 async def signup(
     cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
-    credentials: HTTPBasicCredentials = Depends(auth)
+    user: User = Depends(authenticate_user),
 ):
-    username = credentials.username
-
-    if not username:
-        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Missing email address!")
-
     try:
-        with cm as connection_manager:
-            with connection_manager.get_cursor() as cursor:
-                logger.info(f"Creating user: {username}")
-                user = await new_user(cursor, username, FERTISCAN_STORAGE_URL)
-        return {"user_id": user.get_id()}
+        return await sign_up(cm, user)
+    except UserConflictError:
+        raise HTTPException(status_code=HTTPStatus.CONFLICT, detail="User exists!")
 
-    except Exception as e:
-        logger.error(f"Error occurred: {e}")
-        logger.error("Traceback: " + traceback.format_exc())
-        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail="Failed to create user!")
 
-@app.post("/login", tags=["User"], status_code=200)
+@app.post(
+    "/login",
+    tags=["Users"],
+    status_code=200,
+    response_model=User,
+    responses={
+        HTTPStatus.NOT_FOUND: {"description": "User not found"},
+    },
+)
 async def login(
     cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
-    credentials: HTTPBasicCredentials = Depends(auth)
+    user: User = Depends(authenticate_user),
 ):
-    username = credentials.username
-    # password = credentials.password()
-
-    if not username:
-        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Missing email address!")
-    
     try:
-        with cm as connection_manager:
-            with connection_manager.get_cursor() as cursor:
-                logger.info(f"Fetching user ID for username: {username}")
-                user = await get_user(cursor, username)
-                return {"user_id": user.get_id()}
-    except Exception as e:
-        logger.error(f"Error occurred: {e}")
-        logger.error("Traceback: " + traceback.format_exc())
-        return HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=str(e))
+        return await sign_in(cm, user)
+    except UserNotFoundError:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User not found!")
