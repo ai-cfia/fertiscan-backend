@@ -6,8 +6,6 @@ load_dotenv()
 
 # TODO: https://fastapi.tiangolo.com/advanced/settings/#use-the-settings
 
-# API_ENDPOINT = os.getenv("AZURE_API_ENDPOINT")
-# API_KEY = os.getenv("AZURE_API_KEY")
 API_ENDPOINT = os.getenv("AZURE_API_ENDPOINT")
 API_KEY = os.getenv("AZURE_API_KEY")
 # BASE_PATH = os.getenv("API_BASE_PATH", "")
