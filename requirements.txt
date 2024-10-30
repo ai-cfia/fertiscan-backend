@@ -1,5 +1,5 @@
 python-dotenv
-git+https://github.com/ai-cfia/fertiscan-pipeline.git@v0.0.2
+git+https://github.com/ai-cfia/fertiscan-pipeline.git@v0.0.6
 git+https://github.com/ai-cfia/ailab-datastore.git@v1.0.1-fertiscan-datastore
 psycopg[pool]
 opentelemetry-api

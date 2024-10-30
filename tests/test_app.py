@@ -1,13 +1,15 @@
 import base64
 import os
+import tempfile
 import unittest
 import uuid
+from unittest.mock import patch
 
-from fastapi.testclient import TestClient
 import requests
+from fastapi.testclient import TestClient
+from pipeline import FertilizerInspection
 
 from app.main import app
-from app.models.items import ItemCreate, ItemResponse
 
 
 class TestAPI(unittest.TestCase):
@@ -32,49 +34,17 @@ class TestAPI(unittest.TestCase):
             "https://raw.githubusercontent.com/ai-cfia/fertiscan-pipeline/main/expected.json"
         ) as response:
             cls.analysis_json = response.json()
-    
+
     @classmethod
     def credentials(cls, username, password) -> str:
         credentials = f"{username}:{password}"
         return base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
-    
-    def setUp(self):
-        app.testing = True
-        
+
     def test_health_check(self):
         with TestClient(app) as client:
             response = client.get("/health")
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.json(), {"status": "ok"})
-
-    def test_create_item(self):
-        with TestClient(app) as client:
-            item = ItemCreate(name="Test Item", description="This is a test item")
-            response = client.post("/items/", json=item.model_dump())
-            self.assertEqual(response.status_code, 200)
-            data = ItemResponse.model_validate(response.json())
-            self.assertEqual(data.name, item.name)
-            self.assertEqual(data.description, item.description)
-            self.assertIsNotNone(data.id)
-
-    def test_read_items(self):
-        with TestClient(app) as client:
-            response = client.get("/items/")
-            self.assertEqual(response.status_code, 200)
-            items = [ItemResponse.model_validate(item) for item in response.json()]
-            self.assertIsInstance(items, list)
-
-    def test_read_item(self):
-        with TestClient(app) as client:
-            # First, create an item to read
-            item = ItemCreate(name="Test Item", description="This is a test item")
-            create_response = client.post("/items/", json=item.model_dump())
-            created_item = ItemResponse(**create_response.json())
-
-            # Test if the subtype was rolled back (i.e., not found)
-            response = client.get(f"/{created_item.id}")
-            # Expect a 404 status code, indicating that the subtype was not found
-            self.assertEqual(response.status_code, 404)
+            self.assertDictEqual(response.json(), {"status": "ok"})
 
     def test_user_signup_missing_username(self):
         with TestClient(app) as client:
@@ -87,6 +57,26 @@ class TestAPI(unittest.TestCase):
             )
             self.assertEqual(response.status_code, 400, response.json())
 
+    def test_user_signup_conflict(self):
+        with TestClient(app) as client:
+            response = client.post(
+                "/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+                },
+            )
+            self.assertEqual(response.status_code, 201, response.json())
+
+            response = client.post(
+                "/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+                },
+            )
+            self.assertEqual(response.status_code, 409, response.json())
+
     def test_user_signup(self):
         with TestClient(app) as client:
             username = str(uuid.uuid4())
@@ -94,7 +84,7 @@ class TestAPI(unittest.TestCase):
                 "/signup",
                 headers={
                     **self.headers,
-                    "Authorization": f'Basic {self.credentials(username, self.password)}',
+                    "Authorization": f"Basic {self.credentials(username, self.password)}",
                 },
             )
             self.assertEqual(response.status_code, 201, response.json())
@@ -109,20 +99,133 @@ class TestAPI(unittest.TestCase):
                 },
             )
             self.assertEqual(response.status_code, 400, response.json())
+
     def test_user_login(self):
         with TestClient(app) as client:
             client.post(
                 "/signup",
                 headers={
                     **self.headers,
-                    "Authorization": f'Basic {self.credentials(self.username, self.password)}',
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
                 },
             )
             response = client.post(
                 "/login",
                 headers={
                     **self.headers,
-                    "Authorization": f'Basic {self.credentials(self.username, self.password)}',
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
                 },
             )
             self.assertEqual(response.status_code, 200, response.json())
+
+    def test_user_login_not_found(self):
+        new_username = uuid.uuid4().hex
+        with TestClient(app) as client:
+            response = client.post(
+                "/login",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(new_username, self.password)}",
+                },
+            )
+            self.assertEqual(response.status_code, 404, response.json())
+
+    @patch("app.main.extract_data")
+    def test_analyze_document(self, mock_extract_data):
+        mock_inspection_data = {
+            "company_name": "Test Company",
+            "fertiliser_name": "Mock Fertilizer",
+            "registration_number": "REG123",
+        }
+        mock_inspection = FertilizerInspection.model_validate(mock_inspection_data)
+        mock_extract_data.return_value = mock_inspection
+
+        # Mock files for testing
+        file_content_1 = b"Sample content 1"
+        file_content_2 = b"Sample content 2"
+
+        files = [
+            ("files", ("file1.txt", file_content_1, "text/plain")),
+            ("files", ("file2.txt", file_content_2, "text/plain")),
+        ]
+
+        with TestClient(app) as client:
+            response = client.post("/analyze", files=files)
+
+            # Check if the request was successful
+            self.assertEqual(response.status_code, 200)
+
+            response_data = response.json()
+            validated_inspection = FertilizerInspection.model_validate(response_data)
+
+            # Compare fields
+            self.assertEqual(
+                validated_inspection.company_name, mock_inspection.company_name
+            )
+            self.assertEqual(
+                validated_inspection.fertiliser_name, mock_inspection.fertiliser_name
+            )
+            self.assertEqual(
+                validated_inspection.registration_number,
+                mock_inspection.registration_number,
+            )
+
+    @patch("app.main.extract_data")
+    def test_analyze_empty_file(self, mock_extract_data):
+        """Test analyze_document with an empty file that triggers ResponseValidationError"""
+        mock_extract_data.return_value = None
+
+        files = [("files", ("empty.txt", b"", "text/plain"))]
+
+        with TestClient(app) as client:
+            response = client.post("/analyze", files=files)
+            self.assertEqual(response.status_code, 422)
+
+    @patch("app.main.extract_data")
+    def test_analyze_file_list_with_empty_files(self, mock_extract_data):
+        """Test analyze_document with a file list containing empty files"""
+        mock_inspection_data = {
+            "company_name": "Test Company",
+            "fertiliser_name": "Mock Fertilizer",
+            "registration_number": "REG123",
+        }
+        mock_inspection = FertilizerInspection.model_validate(mock_inspection_data)
+        mock_extract_data.return_value = mock_inspection
+
+        files = [
+            ("files", ("file1.txt", b"Sample content", "text/plain")),
+            ("files", ("empty.txt", b"", "text/plain")),
+        ]
+
+        with TestClient(app) as client:
+            response = client.post("/analyze", files=files)
+            self.assertEqual(response.status_code, 422)
+
+    @patch("app.main.extract_data")
+    def test_analyze_empty_file_list(self, mock_extract_data):
+        """Test analyze_document with an empty file list"""
+        mock_extract_data.return_value = None
+
+        files = []
+
+        with TestClient(app) as client:
+            response = client.post("/analyze", files=files)
+            print("response.status_code", response.status_code)
+            self.assertEqual(response.status_code, 422)
+
+    @patch("app.constants.UPLOAD_FOLDER", new_callable=tempfile.TemporaryDirectory)
+    def test_analyze_integration(self, temp_upload_folder):
+        with TestClient(app) as client:
+            # Read the image file from the same directory
+            with open("tests/label.png", "rb") as img_file:
+                image_content = img_file.read()
+
+            files = [("files", ("label.png", image_content, "image/png"))]
+
+            response = client.post("/analyze", files=files)
+
+            # Check if the request was successful
+            self.assertEqual(response.status_code, 200)
+
+            response_data = response.json()
+            FertilizerInspection.model_validate(response_data)
