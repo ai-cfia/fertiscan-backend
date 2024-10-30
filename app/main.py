@@ -1,32 +1,19 @@
-from contextlib import asynccontextmanager
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, status
 from fastapi.responses import JSONResponse
-from psycopg_pool import ConnectionPool
+from pipeline import GPT, OCR, FertilizerInspection
 
-import app.constants as c
+from app.config import lifespan
 from app.connection_manager import ConnectionManager
+from app.controllers.data_extraction import extract_data
 from app.controllers.users import sign_in, sign_up
-from app.dependencies import authenticate_user, get_connection_manager
+from app.dependencies import authenticate_user, get_connection_manager, get_gpt, get_ocr
 from app.exceptions import UserConflictError, UserNotFoundError, log_error
 from app.models.monitoring import HealthStatus
 from app.models.users import User
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    pool = ConnectionPool(
-        conninfo=c.FERTISCAN_DB_URL,
-        open=True,
-        kwargs={"options": f"-c search_path={c.FERTISCAN_SCHEMA},public"},
-    )
-    connection_manager = ConnectionManager(pool)
-    app.connection_manager = connection_manager
-    yield
-    pool.close()
-
+from app.sanitization import custom_secure_filename
 
 app = FastAPI(lifespan=lifespan)
 
@@ -40,6 +27,25 @@ async def global_exception_handler(_: Request, e: Exception):
 @app.get("/health", tags=["Monitoring"], response_model=HealthStatus)
 async def health_check():
     return HealthStatus()
+
+
+@app.post("/analyze", response_model=FertilizerInspection, tags=["Pipeline"])
+async def analyze_document(
+    ocr: OCR = Depends(get_ocr),
+    gpt: GPT = Depends(get_gpt),
+    files: list[UploadFile] = File(..., min_length=1),
+):
+    file_dict = {}
+    for f in files:
+        if f.size == 0:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"File {f.filename} is empty",
+            )
+        file_dict[custom_secure_filename(f.filename)] = f.file
+
+    print("files", files)
+    return extract_data(files, ocr, gpt)
 
 
 @app.post(

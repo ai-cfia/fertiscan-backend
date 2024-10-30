@@ -2,9 +2,11 @@ import base64
 import os
 import unittest
 import uuid
+from unittest.mock import patch
 
 import requests
 from fastapi.testclient import TestClient
+from pipeline import FertilizerInspection
 
 from app.main import app
 
@@ -126,3 +128,86 @@ class TestAPI(unittest.TestCase):
                 },
             )
             self.assertEqual(response.status_code, 404, response.json())
+
+    @patch("app.main.extract_data")
+    def test_analyze_document(self, mock_extract_data):
+        mock_inspection_data = {
+            "company_name": "Test Company",
+            "fertiliser_name": "Mock Fertilizer",
+            "registration_number": "REG123",
+        }
+        mock_inspection = FertilizerInspection.model_validate(mock_inspection_data)
+        mock_extract_data.return_value = mock_inspection
+
+        # Mock files for testing
+        file_content_1 = b"Sample content 1"
+        file_content_2 = b"Sample content 2"
+
+        files = [
+            ("files", ("file1.txt", file_content_1, "text/plain")),
+            ("files", ("file2.txt", file_content_2, "text/plain")),
+        ]
+
+        with TestClient(app) as client:
+            response = client.post("/analyze", files=files)
+
+            # Check if the request was successful
+            self.assertEqual(response.status_code, 200)
+
+            response_data = response.json()
+            validated_inspection = FertilizerInspection.model_validate(response_data)
+
+            # Compare fields
+            self.assertEqual(
+                validated_inspection.company_name, mock_inspection.company_name
+            )
+            self.assertEqual(
+                validated_inspection.fertiliser_name, mock_inspection.fertiliser_name
+            )
+            self.assertEqual(
+                validated_inspection.registration_number,
+                mock_inspection.registration_number,
+            )
+
+    @patch("app.main.extract_data")
+    def test_analyze_empty_file(self, mock_extract_data):
+        """Test analyze_document with an empty file that triggers ResponseValidationError"""
+        mock_extract_data.return_value = None
+
+        files = [("files", ("empty.txt", b"", "text/plain"))]
+
+        with TestClient(app) as client:
+            response = client.post("/analyze", files=files)
+            self.assertEqual(response.status_code, 422)
+
+    @patch("app.main.extract_data")
+    def test_analyze_file_list_with_empty_files(self, mock_extract_data):
+        """Test analyze_document with a file list containing empty files"""
+        mock_inspection_data = {
+            "company_name": "Test Company",
+            "fertiliser_name": "Mock Fertilizer",
+            "registration_number": "REG123",
+        }
+        mock_inspection = FertilizerInspection.model_validate(mock_inspection_data)
+        mock_extract_data.return_value = mock_inspection
+
+        files = [
+            ("files", ("file1.txt", b"Sample content", "text/plain")),
+            ("files", ("empty.txt", b"", "text/plain")),
+        ]
+
+        with TestClient(app) as client:
+            response = client.post("/analyze", files=files)
+            self.assertEqual(response.status_code, 422)
+
+    @patch("app.main.extract_data")
+    def test_analyze_empty_file_list(self, mock_extract_data):
+        """Test analyze_document with an empty file list"""
+        mock_extract_data.return_value = None
+
+        files = []
+
+        with TestClient(app) as client:
+            response = client.post("/analyze", files=files)
+            print("response.status_code", response.status_code)
+            self.assertEqual(response.status_code, 422)
