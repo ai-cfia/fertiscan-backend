@@ -7,6 +7,8 @@ from psycopg_pool import ConnectionPool
 import app.constants as c
 from app.connection_manager import ConnectionManager
 
+# TODO: https://fastapi.tiangolo.com/advanced/settings/#use-the-settings
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

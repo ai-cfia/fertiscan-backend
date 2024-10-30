@@ -1,23 +1,32 @@
+from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, status
+from fastapi.responses import JSONResponse
 from pipeline import GPT, OCR, FertilizerInspection
-from pydantic import UUID4
 
 from app.config import lifespan
 from app.connection_manager import ConnectionManager
 from app.controllers.data_extraction import extract_data
-from app.controllers.items import create, read, read_all
-from app.dependencies import get_connection_manager, get_gpt, get_ocr
-from app.models.items import ItemCreate, ItemResponse
+from app.controllers.users import sign_in, sign_up
+from app.dependencies import authenticate_user, get_connection_manager, get_gpt, get_ocr
+from app.exceptions import UserConflictError, UserNotFoundError, log_error
+from app.models.monitoring import HealthStatus
+from app.models.users import User
 from app.sanitization import custom_secure_filename
 
 app = FastAPI(lifespan=lifespan)
 
 
-@app.get("/health", tags=["Monitoring"])
+@app.exception_handler(Exception)
+async def global_exception_handler(_: Request, e: Exception):
+    log_error(e)
+    return JSONResponse(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content=str(e))
+
+
+@app.get("/health", tags=["Monitoring"], response_model=HealthStatus)
 async def health_check():
-    return {"status": "ok"}
+    return HealthStatus()
 
 
 @app.post("/analyze", response_model=FertilizerInspection, tags=["Pipeline"])
@@ -35,70 +44,38 @@ async def analyze_document(
             )
         file_dict[custom_secure_filename(f.filename)] = f.file
 
-    print("files", files)
-    return extract_data(files, ocr, gpt)
+    return extract_data(file_dict, ocr, gpt)
 
 
-# Just for demonstration
-@app.post("/items/", response_model=ItemResponse, tags=["Items"])
-async def create_item(item: ItemCreate):
-    return create(item)
-
-
-# Just for demonstration
-@app.get("/items/", response_model=list[ItemResponse], tags=["Items"])
-async def read_items():
-    return read_all()
-
-
-# Just for demonstration
-@app.get(
-    "/items/{item_id}",
-    responses={
-        400: {"description": "Invalid token header"},
-        404: {"description": "Item not found"},
-    },
-    response_model=ItemResponse,
-    tags=["Items"],
+@app.post(
+    "/signup",
+    tags=["Users"],
+    status_code=201,
+    response_model=User,
+    responses={HTTPStatus.CONFLICT: {"description": "User exists"}},
 )
-async def read_item(item_id: str):
+async def signup(
+    cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
+    user: User = Depends(authenticate_user),
+):
     try:
-        return read(item_id)
-    except KeyError:
-        raise HTTPException(status_code=404, detail="Item not found")
+        return await sign_up(cm, user)
+    except UserConflictError:
+        raise HTTPException(status_code=HTTPStatus.CONFLICT, detail="User exists!")
 
 
-# Just for demonstration
-@app.post("/subtypes")
-async def insert(
+@app.post(
+    "/login",
+    tags=["Users"],
+    status_code=200,
+    response_model=User,
+    responses={HTTPStatus.NOT_FOUND: {"description": "User not found"}},
+)
+async def login(
     cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
-    id: UUID4 | str,
-    type_fr: str,
-    type_en: str,
+    user: User = Depends(authenticate_user),
 ):
-    with cm as connection_manager:
-        with connection_manager.get_cursor() as cur:
-            cur.execute(
-                "INSERT INTO sub_type VALUES (%s, %s, %s) returning *",
-                (id, type_fr, type_en),
-            )
-            result = cur.fetchone()
-
-    return {"message": result}
-
-
-# Just for demonstration
-@app.get("/subtypes/{id}")
-async def get_subtype(
-    cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
-    id: UUID4 | str,
-):
-    with cm as connection_manager:
-        with connection_manager.get_cursor() as cur:
-            cur.execute("SELECT * FROM sub_type WHERE id = %s", (id,))
-            result = cur.fetchone()
-
-            if not result:
-                raise HTTPException(status_code=404, detail="Subtype not found")
-
-    return {"message": result}
+    try:
+        return await sign_in(cm, user)
+    except UserNotFoundError:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User not found!")

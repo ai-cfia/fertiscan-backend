@@ -1,8 +1,11 @@
+import base64
 import os
+import tempfile
 import unittest
 import uuid
 from unittest.mock import patch
 
+import requests
 from fastapi.testclient import TestClient
 from pipeline import FertilizerInspection
 
@@ -12,48 +15,120 @@ from app.main import app
 class TestAPI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Set up the environment variable to indicate testing mode
+        # Setup credentials and headers
+        cls.username = "test-user-1"
+        cls.password = "password1"
+        encoded_credentials = cls.credentials(cls.username, cls.password)
+
+        cls.headers = {
+            "Authorization": f"Basic {encoded_credentials}",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Methods": "*",
+        }
+
         os.environ["TESTING"] = "True"
 
-    def setUp(self):
-        # Generate unique IDs and values for each test run
-        self.subtype_id = uuid.uuid4()
-        self.type_en = uuid.uuid4().hex
-        self.type_fr = uuid.uuid4().hex
+        # Fetch and save the JSON data in setUpClass
+        with requests.get(
+            "https://raw.githubusercontent.com/ai-cfia/fertiscan-pipeline/main/expected.json"
+        ) as response:
+            cls.analysis_json = response.json()
 
-    def test_rollbacks(self):
-        # Test inserting a new subtype
+    @classmethod
+    def credentials(cls, username, password) -> str:
+        credentials = f"{username}:{password}"
+        return base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
+
+    def test_health_check(self):
+        with TestClient(app) as client:
+            response = client.get("/health")
+            self.assertEqual(response.status_code, 200)
+            self.assertDictEqual(response.json(), {"status": "ok"})
+
+    def test_user_signup_missing_username(self):
         with TestClient(app) as client:
             response = client.post(
-                "/subtypes",
-                params={
-                    "id": self.subtype_id,
-                    "type_en": self.type_en,
-                    "type_fr": self.type_fr,
+                "/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f'Basic {self.credentials("", self.password)}',
                 },
             )
-            # Check if the POST request was successful
-            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.status_code, 400, response.json())
 
-            # Validate the response content
-            results = response.json().get("message")
-            self.assertIsNotNone(results)
-
-            # Check if the inserted subtype matches the expected values
-            response = client.get(f"/subtypes/{self.subtype_id}")
-            self.assertEqual(response.status_code, 200)
-            # Validate the response content
-            results = response.json().get("message")
-            self.assertIsNotNone(results)
-            self.assertEqual(results[0], str(self.subtype_id))
-            self.assertEqual(results[1], self.type_fr)
-            self.assertEqual(results[2], self.type_en)
-
-        # Test if the subtype was rolled back (i.e., not found)
+    def test_user_signup_conflict(self):
         with TestClient(app) as client:
-            response = client.get(f"/{self.subtype_id}")
-            # Expect a 404 status code, indicating that the subtype was not found
-            self.assertEqual(response.status_code, 404)
+            response = client.post(
+                "/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+                },
+            )
+            self.assertEqual(response.status_code, 201, response.json())
+
+            response = client.post(
+                "/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+                },
+            )
+            self.assertEqual(response.status_code, 409, response.json())
+
+    def test_user_signup(self):
+        with TestClient(app) as client:
+            username = str(uuid.uuid4())
+            response = client.post(
+                "/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(username, self.password)}",
+                },
+            )
+            self.assertEqual(response.status_code, 201, response.json())
+
+    def test_user_login_missing_username(self):
+        with TestClient(app) as client:
+            response = client.post(
+                "/login",
+                headers={
+                    **self.headers,
+                    "Authorization": f'Basic {self.credentials("", self.password)}',
+                },
+            )
+            self.assertEqual(response.status_code, 400, response.json())
+
+    def test_user_login(self):
+        with TestClient(app) as client:
+            client.post(
+                "/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+                },
+            )
+            response = client.post(
+                "/login",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+                },
+            )
+            self.assertEqual(response.status_code, 200, response.json())
+
+    def test_user_login_not_found(self):
+        new_username = uuid.uuid4().hex
+        with TestClient(app) as client:
+            response = client.post(
+                "/login",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(new_username, self.password)}",
+                },
+            )
+            self.assertEqual(response.status_code, 404, response.json())
 
     @patch("app.main.extract_data")
     def test_analyze_document(self, mock_extract_data):
@@ -137,3 +212,20 @@ class TestAPI(unittest.TestCase):
             response = client.post("/analyze", files=files)
             print("response.status_code", response.status_code)
             self.assertEqual(response.status_code, 422)
+
+    @patch("app.constants.UPLOAD_FOLDER", new_callable=tempfile.TemporaryDirectory)
+    def test_analyze_integration(self, temp_upload_folder):
+        with TestClient(app) as client:
+            # Read the image file from the same directory
+            with open("tests/label.png", "rb") as img_file:
+                image_content = img_file.read()
+
+            files = [("files", ("label.png", image_content, "image/png"))]
+
+            response = client.post("/analyze", files=files)
+
+            # Check if the request was successful
+            self.assertEqual(response.status_code, 200)
+
+            response_data = response.json()
+            FertilizerInspection.model_validate(response_data)

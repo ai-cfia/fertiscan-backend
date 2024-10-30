@@ -1,3 +1,4 @@
+import base64
 import os
 import unittest
 import uuid
@@ -129,48 +130,54 @@ class TestConnectionManager(unittest.TestCase):
 class TestConnectionManagerIntegration(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Set up the environment variable to indicate testing mode
         os.environ["TESTING"] = "True"
 
     def setUp(self):
-        # Generate unique IDs and values for each test run
-        self.subtype_id = uuid.uuid4()
-        self.type_en = uuid.uuid4().hex
-        self.type_fr = uuid.uuid4().hex
-
-    def tearDown(self):
-        app.connection_manager.rollback()
+        # Set up basic authentication credentials
+        username = uuid.uuid4().hex
+        password = "password1"
+        credentials = f"{username}:{password}"
+        self.encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode(
+            "utf-8"
+        )
+        self.headers = {
+            "Authorization": f"Basic {self.encoded_credentials}",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Methods": "*",
+        }
 
     def test_rollbacks(self):
-        # Test inserting a new subtype
         with TestClient(app) as client:
-            response = client.post(
-                "/subtypes",
-                params={
-                    "id": self.subtype_id,
-                    "type_en": self.type_en,
-                    "type_fr": self.type_fr,
+            # Step 1: Attempt to sign up with a unique username
+            signup_response = client.post(
+                "/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.encoded_credentials}",
                 },
             )
-            # Check if the POST request was successful
-            self.assertEqual(response.status_code, 200)
+            self.assertEqual(signup_response.status_code, 201, signup_response.json())
 
-            # Validate the response content
-            results = response.json().get("message")
-            self.assertIsNotNone(results)
+            # Step 2: Attempt to log in after signup
+            login_response = client.post(
+                "/login",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.encoded_credentials}",
+                },
+            )
+            self.assertEqual(login_response.status_code, 200, login_response.json())
 
-            # Check if the inserted subtype matches the expected values
-            response = client.get(f"/subtypes/{self.subtype_id}")
-            self.assertEqual(response.status_code, 200)
-            # Validate the response content
-            results = response.json().get("message")
-            self.assertIsNotNone(results)
-            self.assertEqual(results[0], str(self.subtype_id))
-            self.assertEqual(results[1], self.type_fr)
-            self.assertEqual(results[2], self.type_en)
-
-        # Test if the subtype was rolled back (i.e., not found)
+        # Step 3: Verify that the user was rolled back (should return 404)
         with TestClient(app) as client:
-            response = client.get(f"/{self.subtype_id}")
-            # Expect a 404 status code, indicating that the subtype was not found
-            self.assertEqual(response.status_code, 404)
+            rollback_response = client.post(
+                "/login",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.encoded_credentials}",
+                },
+            )
+            self.assertEqual(
+                rollback_response.status_code, 404, rollback_response.json()
+            )

@@ -27,6 +27,8 @@ def extract_data(files: dict[str, BinaryIO], ocr, gpt) -> FertilizerInspection:
 
     # TODO: should probably validate file type
 
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
     label_storage = LabelStorage()
 
     for filename in files:
