@@ -47,9 +47,7 @@ async def health_check():
     tags=["Users"],
     status_code=201,
     response_model=User,
-    responses={
-        HTTPStatus.CONFLICT: {"description": "User exists"},
-    },
+    responses={HTTPStatus.CONFLICT: {"description": "User exists"}},
 )
 async def signup(
     cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
@@ -66,9 +64,7 @@ async def signup(
     tags=["Users"],
     status_code=200,
     response_model=User,
-    responses={
-        HTTPStatus.NOT_FOUND: {"description": "User not found"},
-    },
+    responses={HTTPStatus.NOT_FOUND: {"description": "User not found"}},
 )
 async def login(
     cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
