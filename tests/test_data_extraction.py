@@ -17,12 +17,18 @@ class TestExtractData(unittest.TestCase):
             extract_data(files, ocr, gpt)
 
     @patch("app.controllers.data_extraction.UPLOAD_FOLDER", new="/mocked/path")
+    @patch("os.makedirs")
     @patch("os.path.join")
     @patch("builtins.open", new_callable=mock_open)
     @patch("app.controllers.data_extraction.LabelStorage")
     @patch("app.controllers.data_extraction.analyze")
     def test_multiple_files_handling(
-        self, mock_analyze, mock_label_storage_class, mock_open_func, mock_path_join
+        self,
+        mock_analyze,
+        mock_label_storage_class,
+        mock_open_func,
+        mock_path_join,
+        mock_makedirs,
     ):
         # Arrange
         mock_storage_instance = mock_label_storage_class.return_value
@@ -65,3 +71,6 @@ class TestExtractData(unittest.TestCase):
 
         mock_analyze.assert_called_once_with(mock_storage_instance, ocr, gpt)
         self.assertEqual(result, "analyze_result")
+
+        # Check that os.makedirs was called
+        mock_makedirs.assert_called_once_with("/mocked/path", exist_ok=True)

@@ -44,8 +44,7 @@ async def analyze_document(
             )
         file_dict[custom_secure_filename(f.filename)] = f.file
 
-    print("files", files)
-    return extract_data(files, ocr, gpt)
+    return extract_data(file_dict, ocr, gpt)
 
 
 @app.post(

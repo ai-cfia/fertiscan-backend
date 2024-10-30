@@ -1,5 +1,6 @@
 import base64
 import os
+import tempfile
 import unittest
 import uuid
 from unittest.mock import patch
@@ -211,3 +212,20 @@ class TestAPI(unittest.TestCase):
             response = client.post("/analyze", files=files)
             print("response.status_code", response.status_code)
             self.assertEqual(response.status_code, 422)
+
+    @patch("app.constants.UPLOAD_FOLDER", new_callable=tempfile.TemporaryDirectory)
+    def test_analyze_integration(self, temp_upload_folder):
+        with TestClient(app) as client:
+            # Read the image file from the same directory
+            with open("tests/label.png", "rb") as img_file:
+                image_content = img_file.read()
+
+            files = [("files", ("label.png", image_content, "image/png"))]
+
+            response = client.post("/analyze", files=files)
+
+            # Check if the request was successful
+            self.assertEqual(response.status_code, 200)
+
+            response_data = response.json()
+            FertilizerInspection.model_validate(response_data)
