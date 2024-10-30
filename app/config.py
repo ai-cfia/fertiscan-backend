@@ -30,6 +30,7 @@ async def lifespan(app: FastAPI):
         api_endpoint=c.OPENAI_API_ENDPOINT,
         api_key=c.OPENAI_API_KEY,
         deployment_id=c.OPENAI_API_DEPLOYMENT,
+        phoenix_endpoint=c.OTEL_EXPORTER_OTLP_ENDPOINT,
     )
     app.gpt = gpt
 
