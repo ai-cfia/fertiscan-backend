@@ -6,7 +6,7 @@ from fastapi.logger import logger
 from app.connection_manager import ConnectionManager
 from app.constants import FERTISCAN_STORAGE_URL
 from app.exceptions import (
-    MissingUsernameError,
+    MissingUserAttributeError,
     UserConflictError,
     UserNotFoundError,
     log_error,
@@ -23,14 +23,14 @@ async def sign_up(cm: ConnectionManager, user: User) -> User:
         user (User): User instance containing user details.
 
     Raises:
-        MissingUsernameError: If the username is not provided.
+        MissingUserAttributeError: If the username is not provided.
         UserConflictError: If a user with the same username already exists.
 
     Returns:
         User: User object with assigned ID from the database.
     """
     if not user.username:
-        raise MissingUsernameError("Username is required for sign-up.")
+        raise MissingUserAttributeError("Username is required for sign-up.")
 
     try:
         with cm, cm.get_cursor() as cursor:
@@ -52,14 +52,14 @@ async def sign_in(cm: ConnectionManager, user: User) -> User:
         user (User): User instance containing user details.
 
     Raises:
-        MissingUsernameError: If the username is not provided.
+        MissingUserAttributeError: If the username is not provided.
         UserNotFoundError: If the user is not found in the database.
 
     Returns:
         User: User object with the retrieved ID from the database.
     """
     if not user.username:
-        raise MissingUsernameError("Username is required for sign-in.")
+        raise MissingUserAttributeError("Username is required for sign-in.")
 
     try:
         with cm, cm.get_cursor() as cursor:

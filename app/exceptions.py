@@ -15,7 +15,7 @@ class UserConflictError(UserError):
     pass
 
 
-class MissingUsernameError(UserError):
+class MissingUserAttributeError(UserError):
     pass
 
 
