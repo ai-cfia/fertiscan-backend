@@ -128,7 +128,7 @@ class TestAPI(unittest.TestCase):
                     "Authorization": f"Basic {self.credentials(new_username, self.password)}",
                 },
             )
-            self.assertEqual(response.status_code, 404, response.json())
+            self.assertEqual(response.status_code, 401, response.json())
 
     @patch("app.main.extract_data")
     def test_analyze_document(self, mock_extract_data):
@@ -210,7 +210,6 @@ class TestAPI(unittest.TestCase):
 
         with TestClient(app) as client:
             response = client.post("/analyze", files=files)
-            print("response.status_code", response.status_code)
             self.assertEqual(response.status_code, 422)
 
     @patch("app.constants.UPLOAD_FOLDER", new_callable=tempfile.TemporaryDirectory)

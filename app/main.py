@@ -55,13 +55,7 @@ async def analyze_document(
     return extract_data(file_dict, ocr, gpt)
 
 
-@app.post(
-    "/signup",
-    tags=["Users"],
-    status_code=201,
-    response_model=User,
-    responses={HTTPStatus.CONFLICT: {"description": "User exists"}},
-)
+@app.post("/signup", tags=["Users"], status_code=201, response_model=User)
 async def signup(
     cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
     user: User = Depends(authenticate_user),
@@ -72,13 +66,7 @@ async def signup(
         raise HTTPException(status_code=HTTPStatus.CONFLICT, detail="User exists!")
 
 
-@app.post(
-    "/login",
-    tags=["Users"],
-    status_code=200,
-    response_model=User,
-    responses={HTTPStatus.NOT_FOUND: {"description": "User not found"}},
-)
+@app.post("/login", tags=["Users"], status_code=200, response_model=User)
 async def login(
     cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
     user: User = Depends(authenticate_user),
@@ -86,7 +74,9 @@ async def login(
     try:
         return await sign_in(cm, user)
     except UserNotFoundError:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User not found!")
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED, detail="Invalid username or password"
+        )
 
 
 @app.get("/inspections", tags=["Inspections"], response_model=list[InspectionData])
