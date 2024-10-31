@@ -8,9 +8,17 @@ from pipeline import GPT, OCR, FertilizerInspection
 from app.config import lifespan
 from app.connection_manager import ConnectionManager
 from app.controllers.data_extraction import extract_data
+from app.controllers.inspections import read_all
 from app.controllers.users import sign_in, sign_up
-from app.dependencies import authenticate_user, get_connection_manager, get_gpt, get_ocr
+from app.dependencies import (
+    authenticate_user,
+    fetch_user,
+    get_connection_manager,
+    get_gpt,
+    get_ocr,
+)
 from app.exceptions import UserConflictError, UserNotFoundError, log_error
+from app.models.inspection import InspectionData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
 from app.sanitization import custom_secure_filename
@@ -79,3 +87,11 @@ async def login(
         return await sign_in(cm, user)
     except UserNotFoundError:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User not found!")
+
+
+@app.get("/inspections", tags=["Inspections"], response_model=list[InspectionData])
+async def get_inspections(
+    cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
+    user: User = Depends(fetch_user),
+):
+    return await read_all(cm, user)
