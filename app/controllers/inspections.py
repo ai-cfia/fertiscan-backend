@@ -1,10 +1,14 @@
 import asyncio
+from uuid import UUID
 
-from fertiscan import get_user_analysis_by_verified
+from fertiscan import get_full_inspection_json, get_user_analysis_by_verified
+from fertiscan.db.queries.inspection import (
+    InspectionNotFoundError as DBInspectionNotFoundError,
+)
 
 from app.connection_manager import ConnectionManager
-from app.exceptions import MissingUserAttributeError
-from app.models.inspection import InspectionData
+from app.exceptions import InspectionNotFoundError, MissingUserAttributeError, log_error
+from app.models.inspection import Inspection, InspectionData
 from app.models.users import User
 
 
@@ -50,3 +54,24 @@ async def read_all(cm: ConnectionManager, user: User):
         ]
 
         return inspections
+
+
+async def read(cm: ConnectionManager, user: User, id: UUID | str):
+    """ """
+
+    if not user.id:
+        raise MissingUserAttributeError("User id is required for fetching inspections.")
+
+    if not id:
+        raise ValueError("Inspection ID is required for fetching inspection details.")
+
+    if not isinstance(id, UUID):
+        id = UUID(id)
+
+    with cm, cm.get_cursor() as cursor:
+        try:
+            inspection = await get_full_inspection_json(cursor, id, user.id)
+        except DBInspectionNotFoundError as e:
+            log_error(e)
+            raise InspectionNotFoundError(f"{e}") from e
+        return Inspection.model_validate_json(inspection)
