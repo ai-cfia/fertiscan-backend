@@ -289,3 +289,50 @@ class TestAPI(unittest.TestCase):
 
             # Verify the response status code is 400 Bad Request
             self.assertEqual(response.status_code, 400)
+
+    def test_get_inspection_not_found(self):
+        with TestClient(app) as client:
+            client.post(
+                "/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+                },
+            )
+
+            response = client.get(
+                f"/inspections/{uuid.uuid4()}",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+                },
+            )
+
+            self.assertEqual(response.status_code, 404)
+
+    def test_get_inspection_unauthorized(self):
+        with TestClient(app) as client:
+            response = client.get("/inspections/1")
+            self.assertEqual(response.status_code, 401)
+
+    def test_get_inspection_bad_auth(self):
+        with TestClient(app) as client:
+            response = client.get(
+                "/inspections/1",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(uuid.uuid4().hex, 'badpass')}",
+                },
+            )
+            self.assertEqual(response.status_code, 401)
+
+    # TODO: Implement once we have post inspections is implemented
+    # def test_get_inspection_success(self):
+    #     with TestClient(app) as client:
+    #         client.post(
+    #             "/signup",
+    #             headers={
+    #                 **self.headers,
+    #                 "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+    #             },
+    #         )

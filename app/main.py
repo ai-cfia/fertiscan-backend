@@ -24,7 +24,7 @@ from app.exceptions import (
     UserNotFoundError,
     log_error,
 )
-from app.models.inspection import Inspection, InspectionData
+from app.models.inspections import Inspection, InspectionData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
 from app.sanitization import custom_secure_filename

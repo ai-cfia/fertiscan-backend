@@ -8,7 +8,7 @@ from fertiscan.db.queries.inspection import (
 
 from app.connection_manager import ConnectionManager
 from app.exceptions import InspectionNotFoundError, MissingUserAttributeError, log_error
-from app.models.inspection import Inspection, InspectionData
+from app.models.inspections import Inspection, InspectionData
 from app.models.users import User
 
 
@@ -57,7 +57,22 @@ async def read_all(cm: ConnectionManager, user: User):
 
 
 async def read(cm: ConnectionManager, user: User, id: UUID | str):
-    """ """
+    """
+    Retrieves a specific inspection associated with a user by inspection ID.
+
+    Args:
+        cm (ConnectionManager): Database connection manager.
+        user (User): User instance containing user details, including the user ID.
+        id (UUID | str): Unique identifier of the inspection, either as a UUID object or a string that can be converted to UUID.
+
+    Returns:
+        Inspection: An `Inspection` object representing the inspection details.
+
+    Raises:
+        MissingUserAttributeError: If the user ID is missing.
+        ValueError: If the inspection ID is not provided.
+        InspectionNotFoundError: If the inspection with the given ID is not found in the database.
+    """
 
     if not user.id:
         raise MissingUserAttributeError("User id is required for fetching inspections.")
