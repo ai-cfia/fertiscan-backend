@@ -228,3 +228,64 @@ class TestAPI(unittest.TestCase):
 
             response_data = response.json()
             FertilizerInspection.model_validate(response_data)
+
+    def test_get_inspections_success(self):
+        with TestClient(app) as client:
+            client.post(
+                "/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+                },
+            )
+
+            response = client.get(
+                "/inspections",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+                },
+            )
+
+            self.assertEqual(response.status_code, 200)
+            self.assertListEqual(response.json(), [])
+
+    def test_get_inspections_unauthorized(self):
+        with TestClient(app) as client:
+            # Attempt to access the /inspections endpoint without authentication headers
+            response = client.get("/inspections")
+
+            # Verify the response status code is 401 Unauthorized
+            self.assertEqual(response.status_code, 401)
+
+    def test_get_inspections_with_invalid_auth(self):
+        with TestClient(app) as client:
+            # Generate an invalid username using a random UUID hex
+            invalid_username = uuid.uuid4().hex
+            invalid_password = "wrongpassword"
+
+            # Attempt to access the /inspections endpoint with invalid credentials
+            response = client.get(
+                "/inspections",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(invalid_username, invalid_password)}",
+                },
+            )
+
+            # Verify the response status code is 401 Unauthorized
+            self.assertEqual(response.status_code, 401)
+
+    def test_get_inspections_missing_auth_credentials(self):
+        with TestClient(app) as client:
+            # Attempt to access the /inspections endpoint with an empty username
+            response = client.get(
+                "/inspections",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials('', self.password)}",
+                },
+            )
+
+            # Verify the response status code is 400 Bad Request
+            self.assertEqual(response.status_code, 400)
