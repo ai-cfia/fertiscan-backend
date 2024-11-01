@@ -6,7 +6,11 @@ from datastore.db.queries.user import UserNotFoundError as DBUserNotFoundError
 
 from app.connection_manager import ConnectionManager
 from app.controllers.users import sign_in, sign_up
-from app.exceptions import MissingUsernameError, UserConflictError, UserNotFoundError
+from app.exceptions import (
+    MissingUserAttributeError,
+    UserConflictError,
+    UserNotFoundError,
+)
 from app.models.users import User
 
 
@@ -41,7 +45,7 @@ class TestSignUpSuccess(unittest.IsolatedAsyncioTestCase):
         mock_user = User(username="")  # Empty username
 
         # Act & Assert
-        with self.assertRaises(MissingUsernameError):
+        with self.assertRaises(MissingUserAttributeError):
             await sign_up(mock_cm, mock_user)
 
     async def test_sign_up_user_already_exists(self):
@@ -85,7 +89,7 @@ class TestSignUpSuccess(unittest.IsolatedAsyncioTestCase):
         mock_user = User(username="")  # Empty username
 
         # Act & Assert
-        with self.assertRaises(MissingUsernameError):
+        with self.assertRaises(MissingUserAttributeError):
             await sign_in(mock_cm, mock_user)
 
     async def test_sign_in_user_not_found(self):

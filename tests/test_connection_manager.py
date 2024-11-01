@@ -169,7 +169,7 @@ class TestConnectionManagerIntegration(unittest.TestCase):
             )
             self.assertEqual(login_response.status_code, 200, login_response.json())
 
-        # Step 3: Verify that the user was rolled back (should return 404)
+        # Step 3: Verify that the user was rolled back (should return 401)
         with TestClient(app) as client:
             rollback_response = client.post(
                 "/login",
@@ -179,5 +179,5 @@ class TestConnectionManagerIntegration(unittest.TestCase):
                 },
             )
             self.assertEqual(
-                rollback_response.status_code, 404, rollback_response.json()
+                rollback_response.status_code, 401, rollback_response.json()
             )
