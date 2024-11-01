@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from fastapi import Depends, HTTPException, Request
+from fastapi import Depends, File, HTTPException, Request, UploadFile
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pipeline import GPT, OCR
 
@@ -58,3 +58,16 @@ async def fetch_user(
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED, detail="Invalid username or password"
         )
+
+
+def validate_files(files: list[UploadFile] = File(..., min_length=1)):
+    """
+    Validates uploaded files.
+    """
+    for f in files:
+        if f.size == 0:
+            raise HTTPException(
+                status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+                detail=f"File {f.filename} is empty",
+            )
+    return files

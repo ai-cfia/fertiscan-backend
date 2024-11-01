@@ -1,14 +1,21 @@
 import asyncio
 from uuid import UUID
 
-from fertiscan import get_full_inspection_json, get_user_analysis_by_verified
+from azure.storage.blob import ContainerClient
+from fertiscan import (
+    get_full_inspection_json,
+    get_user_analysis_by_verified,
+    register_analysis,
+)
 from fertiscan.db.queries.inspection import (
     InspectionNotFoundError as DBInspectionNotFoundError,
 )
 
 from app.connection_manager import ConnectionManager
+from app.constants import FERTISCAN_STORAGE_URL
 from app.exceptions import InspectionNotFoundError, MissingUserAttributeError, log_error
 from app.models.inspections import Inspection, InspectionData
+from app.models.label_data import LabelData
 from app.models.users import User
 
 
@@ -24,6 +31,9 @@ async def read_all(cm: ConnectionManager, user: User):
         list[InspectionData]: A list of `InspectionData` objects representing
         all inspections related to the user, with fields such as `upload_date`,
         `updated_at`, `product_name`, and more.
+
+    Raises:
+        MissingUserAttributeError: If the user ID is missing.
     """
 
     if not user.id:
@@ -90,3 +100,39 @@ async def read(cm: ConnectionManager, user: User, id: UUID | str):
             log_error(e)
             raise InspectionNotFoundError(f"{e}") from e
         return Inspection.model_validate_json(inspection)
+
+
+async def create(
+    cm: ConnectionManager,
+    user: User,
+    label_data: LabelData,
+    label_images: list[bytes],
+):
+    """
+    Creates a new inspection record associated with a user.
+
+    Args:
+        cm (ConnectionManager): Database connection manager.
+        user (User): User instance containing user details, including the user ID.
+        label_data (LabelData): Data model containing information required for the inspection label.
+        label_images (list[bytes]): A list of images in byte format to be associated with the inspection label.
+
+    Returns:
+        Inspection: An `Inspection` object representing the newly created inspection details.
+
+    Raises:
+        MissingUserAttributeError: If the user ID is missing.
+    """
+
+    if not user.id:
+        raise MissingUserAttributeError("User id is required for creating inspections.")
+
+    with cm, cm.get_cursor() as cursor:
+        container_client = ContainerClient.from_connection_string(
+            FERTISCAN_STORAGE_URL, container_name=f"user-{user.id}"
+        )
+        inspection = await register_analysis(
+            cursor, container_client, user.id, label_images, label_data.model_dump()
+        )
+
+        return Inspection.model_validate(inspection)

@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from pipeline import FertilizerInspection
 
 from app.main import app
+from app.models.label_data import LabelData
 
 
 class TestAPI(unittest.TestCase):
@@ -156,7 +157,7 @@ class TestAPI(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
 
             response_data = response.json()
-            validated_inspection = FertilizerInspection.model_validate(response_data)
+            validated_inspection = LabelData.model_validate(response_data)
 
             # Compare fields
             self.assertEqual(
@@ -227,7 +228,7 @@ class TestAPI(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
 
             response_data = response.json()
-            FertilizerInspection.model_validate(response_data)
+            LabelData.model_validate(response_data)
 
     def test_get_inspections_success(self):
         with TestClient(app) as client:

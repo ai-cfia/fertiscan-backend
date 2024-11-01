@@ -2,7 +2,10 @@ import unittest
 from typing import BinaryIO
 from unittest.mock import MagicMock, mock_open, patch
 
+from pipeline import FertilizerInspection
+
 from app.controllers.data_extraction import extract_data
+from app.models.label_data import LabelData
 
 
 class TestExtractData(unittest.TestCase):
@@ -43,7 +46,7 @@ class TestExtractData(unittest.TestCase):
         mock_storage_instance.add_image = MagicMock()
 
         # Set a return value for analyze
-        mock_analyze.return_value = "analyze_result"
+        mock_analyze.return_value = FertilizerInspection.model_validate({})
 
         # Set different paths for each file
         mock_path_join.side_effect = [
@@ -70,7 +73,7 @@ class TestExtractData(unittest.TestCase):
         self.assertEqual(mock_storage_instance.add_image.call_count, 2)
 
         mock_analyze.assert_called_once_with(mock_storage_instance, ocr, gpt)
-        self.assertEqual(result, "analyze_result")
+        self.assertTrue(isinstance(result, LabelData))
 
         # Check that os.makedirs was called
         mock_makedirs.assert_called_once_with("/mocked/path", exist_ok=True)

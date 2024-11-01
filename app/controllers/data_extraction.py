@@ -1,12 +1,13 @@
 import os
 from typing import BinaryIO
 
-from pipeline import FertilizerInspection, LabelStorage, analyze
+from pipeline import LabelStorage, analyze
 
 from app.constants import UPLOAD_FOLDER
+from app.models.label_data import LabelData
 
 
-def extract_data(files: dict[str, BinaryIO], ocr, gpt) -> FertilizerInspection:
+def extract_data(files: dict[str, BinaryIO], ocr, gpt):
     """
     Extracts data from provided image files using OCR and GPT.
 
@@ -37,4 +38,6 @@ def extract_data(files: dict[str, BinaryIO], ocr, gpt) -> FertilizerInspection:
             f.write(files[filename].read())
         label_storage.add_image(file_path)
 
-    return analyze(label_storage, ocr, gpt)
+    data = analyze(label_storage, ocr, gpt)
+
+    return LabelData.model_validate(data.model_dump())

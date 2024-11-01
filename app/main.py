@@ -1,15 +1,15 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, status
+from fastapi import Depends, FastAPI, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
-from pipeline import GPT, OCR, FertilizerInspection
+from pipeline import GPT, OCR
 from pydantic import UUID4
 
 from app.config import lifespan
 from app.connection_manager import ConnectionManager
 from app.controllers.data_extraction import extract_data
-from app.controllers.inspections import read, read_all
+from app.controllers.inspections import create, read, read_all
 from app.controllers.users import sign_in, sign_up
 from app.dependencies import (
     authenticate_user,
@@ -17,6 +17,7 @@ from app.dependencies import (
     get_connection_manager,
     get_gpt,
     get_ocr,
+    validate_files,
 )
 from app.exceptions import (
     InspectionNotFoundError,
@@ -25,6 +26,7 @@ from app.exceptions import (
     log_error,
 )
 from app.models.inspections import Inspection, InspectionData
+from app.models.label_data import LabelData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
 from app.sanitization import custom_secure_filename
@@ -43,21 +45,13 @@ async def health_check():
     return HealthStatus()
 
 
-@app.post("/analyze", response_model=FertilizerInspection, tags=["Pipeline"])
+@app.post("/analyze", response_model=LabelData, tags=["Pipeline"])
 async def analyze_document(
     ocr: OCR = Depends(get_ocr),
     gpt: GPT = Depends(get_gpt),
-    files: list[UploadFile] = File(..., min_length=1),
+    files: list[UploadFile] = Depends(validate_files),
 ):
-    file_dict = {}
-    for f in files:
-        if f.size == 0:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"File {f.filename} is empty",
-            )
-        file_dict[custom_secure_filename(f.filename)] = f.file
-
+    file_dict = {custom_secure_filename(f.filename): f.file for f in files}
     return extract_data(file_dict, ocr, gpt)
 
 
@@ -105,3 +99,15 @@ async def get_inspection(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
         )
+
+
+@app.post("/inspections", tags=["Inspections"], response_model=Inspection)
+async def create_inspection(
+    cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
+    user: Annotated[User, Depends(fetch_user)],
+    label_data: Annotated[LabelData, Form(...)],
+    files: Annotated[list[UploadFile], Depends(validate_files)],
+):
+    # Note: later on, we might handle label images as their own domain
+    label_images = [await f.read() for f in files]
+    return await create(cm, user, label_data, label_images)
