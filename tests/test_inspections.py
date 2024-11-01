@@ -9,9 +9,10 @@ from fertiscan.db.queries.inspection import (
 )
 
 from app.connection_manager import ConnectionManager
-from app.controllers.inspections import read, read_all
+from app.controllers.inspections import create, read, read_all
 from app.exceptions import InspectionNotFoundError, MissingUserAttributeError
 from app.models.inspections import Inspection
+from app.models.label_data import LabelData
 from app.models.users import User
 
 
@@ -195,3 +196,84 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaises(InspectionNotFoundError):
             await read(cm, user, inspection_id)
+
+
+class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
+    async def test_missing_user_id_raises_error(self):
+        cm = AsyncMock(spec=ConnectionManager)
+        label_data = LabelData()
+        label_images = [b"image_data"]
+        user = User(id=None)
+
+        with self.assertRaises(MissingUserAttributeError):
+            await create(cm, user, label_data, label_images)
+
+    @patch("app.controllers.inspections.FERTISCAN_STORAGE_URL", "fake_conn_str")
+    @patch("app.controllers.inspections.register_analysis")
+    @patch("app.controllers.inspections.ContainerClient")
+    async def test_create_inspection_success(
+        self, mock_container_client, mock_register_analysis
+    ):
+        cm = AsyncMock(spec=ConnectionManager)
+        cursor_mock = MagicMock()
+        cm.get_cursor.return_value.__enter__.return_value = cursor_mock
+        user = User(id=uuid.uuid4())
+        label_data = LabelData()
+        label_images = [b"image_data"]
+        inspection_id = uuid.uuid4()
+
+        # Mock return value for register_analysis to simulate successful creation
+        mock_inspection_data = {
+            "inspection_id": inspection_id,
+            "inspection_comment": "string",
+            "verified": False,
+            "company": {},
+            "manufacturer": {},
+            "product": {
+                "name": "Sample Product",
+                "label_id": "string",
+                "registration_number": "string",
+                "lot_number": "string",
+                "metrics": {
+                    "weight": [],
+                    "volume": {"edited": False},
+                    "density": {"edited": False},
+                },
+                "npk": "string",
+                "warranty": "string",
+                "n": 0,
+                "p": 0,
+                "k": 0,
+            },
+            "cautions": {"en": [], "fr": []},
+            "instructions": {"en": [], "fr": []},
+            "guaranteed_analysis": {
+                "title": {"en": "string", "fr": "string"},
+                "is_minimal": False,
+                "en": [],
+                "fr": [],
+            },
+        }
+        mock_register_analysis.return_value = mock_inspection_data
+
+        # Instantiate the mock container client
+        container_client_instance = (
+            mock_container_client.from_connection_string.return_value
+        )
+
+        # Call create function
+        inspection = await create(cm, user, label_data, label_images)
+
+        # Assertions
+        mock_container_client.from_connection_string.assert_called_once_with(
+            "fake_conn_str", container_name=f"user-{user.id}"
+        )
+        mock_register_analysis.assert_called_once_with(
+            cursor_mock,
+            container_client_instance,
+            user.id,
+            label_images,
+            label_data.model_dump(),
+        )
+        self.assertIsInstance(inspection, Inspection)
+        self.assertEqual(inspection.inspection_id, inspection_id)

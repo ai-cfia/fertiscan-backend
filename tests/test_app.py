@@ -1,8 +1,10 @@
 import base64
+import json
 import os
 import tempfile
 import unittest
 import uuid
+from io import BytesIO
 from unittest.mock import patch
 
 import requests
@@ -10,6 +12,7 @@ from fastapi.testclient import TestClient
 from pipeline import FertilizerInspection
 
 from app.main import app
+from app.models.inspections import Inspection
 from app.models.label_data import LabelData
 
 
@@ -327,13 +330,188 @@ class TestAPI(unittest.TestCase):
             )
             self.assertEqual(response.status_code, 401)
 
-    # TODO: Implement once we have post inspections is implemented
-    # def test_get_inspection_success(self):
-    #     with TestClient(app) as client:
-    #         client.post(
-    #             "/signup",
-    #             headers={
-    #                 **self.headers,
-    #                 "Authorization": f"Basic {self.credentials(self.username, self.password)}",
-    #             },
-    #         )
+    def test_get_inspection_success(self):
+        with TestClient(app) as client:
+            client.post(
+                "/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+                },
+            )
+
+            # create a new inspection
+            label_data = {
+                "company_name": "string",
+                "company_address": "string",
+                "company_website": "string",
+                "company_phone_number": "string",
+                "manufacturer_name": "string",
+                "manufacturer_address": "string",
+                "manufacturer_website": "string",
+                "manufacturer_phone_number": "string",
+                "fertiliser_name": "string",
+                "registration_number": "string",
+                "lot_number": "string",
+                "weight": [],
+                "density": {"value": 0, "unit": "string"},
+                "volume": {"value": 0, "unit": "string"},
+                "npk": "string",
+                "guaranteed_analysis_en": {
+                    "title": "string",
+                    "nutrients": [],
+                    "is_minimal": True,
+                },
+                "guaranteed_analysis_fr": {
+                    "title": "string",
+                    "nutrients": [],
+                    "is_minimal": True,
+                },
+                "cautions_en": ["string"],
+                "cautions_fr": ["string"],
+                "instructions_en": [],
+                "instructions_fr": [],
+                "ingredients_en": [],
+                "ingredients_fr": [],
+            }
+
+            files = [
+                ("files", ("image1.png", BytesIO(b"fake_image_data_1"), "image/png")),
+                ("files", ("image2.png", BytesIO(b"fake_image_data_2"), "image/png")),
+            ]
+
+            response = client.post(
+                "/inspections",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+                },
+                data={"label_data": json.dumps(label_data)},
+                files=files,
+            )
+
+            self.assertEqual(response.status_code, 200)
+            inspection = Inspection.model_validate(response.json())
+            # remove the inspection_comment field for comparison
+            inspection.inspection_comment = None
+
+            response = client.get(
+                f"/inspections/{inspection.inspection_id}",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            fetched_inspection = Inspection.model_validate(response.json())
+            self.assertEqual(inspection, fetched_inspection)
+
+    def test_create_inspection_success(self):
+        with TestClient(app) as client:
+            client.post(
+                "/signup",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+                },
+            )
+
+            # create a new inspection
+            label_data = {
+                "company_name": "string",
+                "company_address": "string",
+                "company_website": "string",
+                "company_phone_number": "string",
+                "manufacturer_name": "string",
+                "manufacturer_address": "string",
+                "manufacturer_website": "string",
+                "manufacturer_phone_number": "string",
+                "fertiliser_name": "string",
+                "registration_number": "string",
+                "lot_number": "string",
+                "weight": [],
+                "density": {"value": 0, "unit": "string"},
+                "volume": {"value": 0, "unit": "string"},
+                "npk": "string",
+                "guaranteed_analysis_en": {
+                    "title": "string",
+                    "nutrients": [],
+                    "is_minimal": True,
+                },
+                "guaranteed_analysis_fr": {
+                    "title": "string",
+                    "nutrients": [],
+                    "is_minimal": True,
+                },
+                "cautions_en": ["string"],
+                "cautions_fr": ["string"],
+                "instructions_en": [],
+                "instructions_fr": [],
+                "ingredients_en": [],
+                "ingredients_fr": [],
+            }
+
+            files = [
+                ("files", ("image1.png", BytesIO(b"fake_image_data_1"), "image/png")),
+                ("files", ("image2.png", BytesIO(b"fake_image_data_2"), "image/png")),
+            ]
+
+            response = client.post(
+                "/inspections",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(self.username, self.password)}",
+                },
+                data={"label_data": json.dumps(label_data)},
+                files=files,
+            )
+
+            self.assertEqual(response.status_code, 200)
+            Inspection.model_validate(response.json())
+
+    def test_create_inspection_unauthorized(self):
+        with TestClient(app) as client:
+            response = client.post(
+                "/inspections",
+                data={"label_data": json.dumps({"company_name": "string"})},
+                files=[
+                    ("files", ("image1.png", BytesIO(b"fake_image_data"), "image/png"))
+                ],
+            )
+
+            self.assertEqual(response.status_code, 401)
+
+    def test_create_inspection_with_invalid_auth(self):
+        with TestClient(app) as client:
+            invalid_username = uuid.uuid4().hex
+            invalid_password = "wrongpassword"
+
+            response = client.post(
+                "/inspections",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials(invalid_username, invalid_password)}",
+                },
+                data={"label_data": json.dumps({"company_name": "string"})},
+                files=[
+                    ("files", ("image1.png", BytesIO(b"fake_image_data"), "image/png"))
+                ],
+            )
+
+            self.assertEqual(response.status_code, 401)
+
+    def test_create_inspection_missing_auth_credentials(self):
+        with TestClient(app) as client:
+            response = client.post(
+                "/inspections",
+                headers={
+                    **self.headers,
+                    "Authorization": f"Basic {self.credentials('', self.password)}",
+                },
+                data={"label_data": json.dumps({"company_name": "string"})},
+                files=[
+                    ("files", ("image1.png", BytesIO(b"fake_image_data"), "image/png"))
+                ],
+            )
+
+            self.assertEqual(response.status_code, 400)
