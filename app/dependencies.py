@@ -1,15 +1,22 @@
+from functools import lru_cache
 from http import HTTPStatus
 
 from fastapi import Depends, File, HTTPException, Request, UploadFile
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pipeline import GPT, OCR
 
+from app.config import Settings
 from app.connection_manager import ConnectionManager
 from app.controllers.users import sign_in
 from app.exceptions import UserNotFoundError
 from app.models.users import User
 
 auth = HTTPBasic()
+
+
+@lru_cache
+def get_settings():
+    return Settings()
 
 
 def get_connection_manager(request: Request) -> ConnectionManager:

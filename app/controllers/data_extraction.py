@@ -3,37 +3,37 @@ from typing import BinaryIO
 
 from pipeline import LabelStorage, analyze
 
-from app.constants import UPLOAD_FOLDER
 from app.models.label_data import LabelData
 
 
-def extract_data(files: dict[str, BinaryIO], ocr, gpt):
+def extract_data(files: dict[str, BinaryIO], ocr, gpt, folder_name: str):
     """
     Extracts data from provided image files using OCR and GPT.
 
     Args:
-        files (dict[str, BinaryIO]): A dictionary where keys are filenames
-            and values are file-like binary objects.
-        ocr: An OCR processing object or function for extraction.
-        gpt: A GPT-based model or function for extraction.
+        files (dict[str, BinaryIO]): A dictionary with filenames as keys
+            and file-like binary objects as values.
+        ocr: OCR processing tool or function used for text extraction.
+        gpt: GPT-based model or function used for data analysis.
+        folder_name (str): Folder path to save the temporary image files.
 
     Raises:
-        ValueError: If no files are provided.
+        ValueError: If no files are provided for analysis.
 
     Returns:
-        Extracted data results from the `analyze` function.
+        LabelData: A `LabelData` object populated with extracted and validated data.
     """
     if not files:
         raise ValueError("No files to analyze")
 
-    # TODO: should probably validate file type
+    # TODO: Validate file types if necessary
 
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    os.makedirs(folder_name, exist_ok=True)
 
     label_storage = LabelStorage()
 
     for filename in files:
-        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file_path = os.path.join(folder_name, filename)
         with open(file_path, "wb") as f:
             f.write(files[filename].read())
         label_storage.add_image(file_path)

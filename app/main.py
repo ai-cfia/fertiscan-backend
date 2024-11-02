@@ -2,11 +2,12 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, UploadFile
+from fastapi.concurrency import asynccontextmanager
 from fastapi.responses import JSONResponse
 from pipeline import GPT, OCR
 from pydantic import UUID4
 
-from app.config import lifespan
+from app.config import Settings, configure
 from app.connection_manager import ConnectionManager
 from app.controllers.data_extraction import extract_data
 from app.controllers.inspections import create, read, read_all
@@ -17,6 +18,7 @@ from app.dependencies import (
     get_connection_manager,
     get_gpt,
     get_ocr,
+    get_settings,
     validate_files,
 )
 from app.exceptions import (
@@ -30,6 +32,15 @@ from app.models.label_data import LabelData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
 from app.sanitization import custom_secure_filename
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app = configure(app, get_settings())
+    app.connection_manager.pool.open()
+    yield
+    app.connection_manager.pool.close()
+
 
 app = FastAPI(lifespan=lifespan)
 
@@ -47,21 +58,23 @@ async def health_check():
 
 @app.post("/analyze", response_model=LabelData, tags=["Pipeline"])
 async def analyze_document(
-    ocr: OCR = Depends(get_ocr),
-    gpt: GPT = Depends(get_gpt),
-    files: list[UploadFile] = Depends(validate_files),
+    ocr: Annotated[OCR, Depends(get_ocr)],
+    gpt: Annotated[GPT, Depends(get_gpt)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
     file_dict = {custom_secure_filename(f.filename): f.file for f in files}
-    return extract_data(file_dict, ocr, gpt)
+    return extract_data(file_dict, ocr, gpt, settings.upload_folder)
 
 
 @app.post("/signup", tags=["Users"], status_code=201, response_model=User)
 async def signup(
     cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
-    user: User = Depends(authenticate_user),
+    user: Annotated[User, Depends(authenticate_user)],
+    settings: Annotated[Settings, Depends(get_settings)],
 ):
     try:
-        return await sign_up(cm, user)
+        return await sign_up(cm, user, settings.fertiscan_storage_url)
     except UserConflictError:
         raise HTTPException(status_code=HTTPStatus.CONFLICT, detail="User exists!")
 
@@ -105,9 +118,11 @@ async def get_inspection(
 async def create_inspection(
     cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
     user: Annotated[User, Depends(fetch_user)],
+    settings: Annotated[Settings, Depends(get_settings)],
     label_data: Annotated[LabelData, Form(...)],
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
     # Note: later on, we might handle label images as their own domain
     label_images = [await f.read() for f in files]
-    return await create(cm, user, label_data, label_images)
+    conn_string = settings.fertiscan_storage_url
+    return await create(cm, user, label_data, label_images, conn_string)

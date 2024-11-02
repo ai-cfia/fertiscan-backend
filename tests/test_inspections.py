@@ -206,9 +206,8 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
         user = User(id=None)
 
         with self.assertRaises(MissingUserAttributeError):
-            await create(cm, user, label_data, label_images)
+            await create(cm, user, label_data, label_images, "fake_conn_str")
 
-    @patch("app.controllers.inspections.FERTISCAN_STORAGE_URL", "fake_conn_str")
     @patch("app.controllers.inspections.register_analysis")
     @patch("app.controllers.inspections.ContainerClient")
     async def test_create_inspection_success(
@@ -221,8 +220,7 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
         label_data = LabelData()
         label_images = [b"image_data"]
         inspection_id = uuid.uuid4()
-
-        # Mock return value for register_analysis to simulate successful creation
+        fake_conn_str = "fake_conn_str"
         mock_inspection_data = {
             "inspection_id": inspection_id,
             "inspection_comment": "string",
@@ -262,11 +260,11 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
         )
 
         # Call create function
-        inspection = await create(cm, user, label_data, label_images)
+        inspection = await create(cm, user, label_data, label_images, fake_conn_str)
 
         # Assertions
         mock_container_client.from_connection_string.assert_called_once_with(
-            "fake_conn_str", container_name=f"user-{user.id}"
+            fake_conn_str, container_name=f"user-{user.id}"
         )
         mock_register_analysis.assert_called_once_with(
             cursor_mock,

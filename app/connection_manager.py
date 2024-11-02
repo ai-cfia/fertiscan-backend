@@ -1,5 +1,3 @@
-import os
-
 from psycopg_pool import ConnectionPool
 
 
@@ -20,7 +18,7 @@ class ConnectionManager:
         connection (Connection): The active database connection, if any.
     """
 
-    def __init__(self, pool: ConnectionPool):
+    def __init__(self, pool: ConnectionPool, testing: bool = False):
         """
         Initializes the ConnectionManager with a connection pool.
 
@@ -31,7 +29,7 @@ class ConnectionManager:
         if not isinstance(pool, ConnectionPool):
             raise ValueError("A connection pool is required.")
 
-        self.testing = os.getenv("TESTING", "") == "True"
+        self.testing = testing
         self.pool = pool
         self.connection = None
 

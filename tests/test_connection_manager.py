@@ -4,12 +4,14 @@ import unittest
 import uuid
 from unittest.mock import MagicMock, patch
 
+from azure.storage.blob import ContainerClient
 from fastapi.testclient import TestClient
 from psycopg import Connection
 from psycopg_pool import ConnectionPool
 
 from app.connection_manager import ConnectionManager
 from app.main import app
+from app.models.users import User
 
 
 class TestConnectionManager(unittest.TestCase):
@@ -157,7 +159,8 @@ class TestConnectionManagerIntegration(unittest.TestCase):
                     "Authorization": f"Basic {self.encoded_credentials}",
                 },
             )
-            self.assertEqual(signup_response.status_code, 201, signup_response.json())
+            self.assertEqual(signup_response.status_code, 201)
+            user = User.model_validate(signup_response.json())
 
             # Step 2: Attempt to log in after signup
             login_response = client.post(
@@ -181,3 +184,9 @@ class TestConnectionManagerIntegration(unittest.TestCase):
             self.assertEqual(
                 rollback_response.status_code, 401, rollback_response.json()
             )
+
+        container_client = ContainerClient.from_connection_string(
+            os.getenv("FERTISCAN_STORAGE_URL"), container_name=f"user-{user.id}"
+        )
+        if container_client.exists():
+            container_client.delete_container()
