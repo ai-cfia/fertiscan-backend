@@ -1,35 +1,43 @@
 import asyncio
 from uuid import UUID
 
-from fertiscan import get_full_inspection_json, get_user_analysis_by_verified
+from azure.storage.blob import ContainerClient
+from fertiscan import (
+    get_full_inspection_json,
+    get_user_analysis_by_verified,
+    register_analysis,
+)
 from fertiscan.db.queries.inspection import (
     InspectionNotFoundError as DBInspectionNotFoundError,
 )
+from psycopg_pool import ConnectionPool
 
-from app.connection_manager import ConnectionManager
 from app.exceptions import InspectionNotFoundError, MissingUserAttributeError, log_error
 from app.models.inspections import Inspection, InspectionData
+from app.models.label_data import LabelData
 from app.models.users import User
 
 
-async def read_all(cm: ConnectionManager, user: User):
+async def read_all_inspections(cp: ConnectionPool, user: User):
     """
     Retrieves all inspections associated with a user, both verified and unverified.
 
     Args:
-        cm (ConnectionManager): Database connection manager.
+        cp (ConnectionPool): The connection pool to manage database connections.
         user (User): User instance containing user details, including the user ID.
 
     Returns:
         list[InspectionData]: A list of `InspectionData` objects representing
-        all inspections related to the user, with fields such as `upload_date`,
+        all inspections related to the user, including details like `upload_date`,
         `updated_at`, `product_name`, and more.
+
+    Raises:
+        MissingUserAttributeError: Raised if the user ID is missing.
     """
-
     if not user.id:
-        raise MissingUserAttributeError("User id is required for fetching inspections.")
+        raise MissingUserAttributeError("User ID is required for fetching inspections.")
 
-    with cm, cm.get_cursor() as cursor:
+    with cp.connection() as conn, conn.cursor() as cursor:
         inspections = await asyncio.gather(
             get_user_analysis_by_verified(cursor, user.id, True),
             get_user_analysis_by_verified(cursor, user.id, False),
@@ -56,26 +64,25 @@ async def read_all(cm: ConnectionManager, user: User):
         return inspections
 
 
-async def read(cm: ConnectionManager, user: User, id: UUID | str):
+async def read_inspection(cp: ConnectionPool, user: User, id: UUID | str):
     """
     Retrieves a specific inspection associated with a user by inspection ID.
 
     Args:
-        cm (ConnectionManager): Database connection manager.
+        cp (ConnectionPool): The connection pool to manage database connections.
         user (User): User instance containing user details, including the user ID.
-        id (UUID | str): Unique identifier of the inspection, either as a UUID object or a string that can be converted to UUID.
+        id (UUID | str): Unique identifier of the inspection, as a UUID or a string convertible to UUID.
 
     Returns:
-        Inspection: An `Inspection` object representing the inspection details.
+        Inspection: An `Inspection` object with the inspection details.
 
     Raises:
-        MissingUserAttributeError: If the user ID is missing.
-        ValueError: If the inspection ID is not provided.
-        InspectionNotFoundError: If the inspection with the given ID is not found in the database.
+        MissingUserAttributeError: Raised if the user ID is missing.
+        ValueError: Raised if the inspection ID is not provided.
+        InspectionNotFoundError: Raised if the inspection with the given ID is not found.
     """
-
     if not user.id:
-        raise MissingUserAttributeError("User id is required for fetching inspections.")
+        raise MissingUserAttributeError("User ID is required for fetching inspections.")
 
     if not id:
         raise ValueError("Inspection ID is required for fetching inspection details.")
@@ -83,10 +90,47 @@ async def read(cm: ConnectionManager, user: User, id: UUID | str):
     if not isinstance(id, UUID):
         id = UUID(id)
 
-    with cm, cm.get_cursor() as cursor:
+    with cp.connection() as conn, conn.cursor() as cursor:
         try:
             inspection = await get_full_inspection_json(cursor, id, user.id)
         except DBInspectionNotFoundError as e:
             log_error(e)
             raise InspectionNotFoundError(f"{e}") from e
         return Inspection.model_validate_json(inspection)
+
+
+async def create_inspection(
+    cp: ConnectionPool,
+    user: User,
+    label_data: LabelData,
+    label_images: list[bytes],
+    connection_string: str,
+):
+    """
+    Creates a new inspection record associated with a user.
+
+    Args:
+        cp (ConnectionPool): The connection pool to manage database connections.
+        user (User): User instance containing user details, including the user ID.
+        label_data (LabelData): Data model containing label information required for the inspection.
+        label_images (list[bytes]): List of images (in byte format) to be associated with the inspection.
+        connection_string (str): Connection string for blob storage.
+
+    Returns:
+        Inspection: An `Inspection` object with the newly created inspection details.
+
+    Raises:
+        MissingUserAttributeError: Raised if the user ID is missing.
+    """
+    if not user.id:
+        raise MissingUserAttributeError("User ID is required for creating inspections.")
+
+    with cp.connection() as conn, conn.cursor() as cursor:
+        container_client = ContainerClient.from_connection_string(
+            connection_string, container_name=f"user-{user.id}"
+        )
+        inspection = await register_analysis(
+            cursor, container_client, user.id, label_images, label_data.model_dump()
+        )
+
+        return Inspection.model_validate(inspection)

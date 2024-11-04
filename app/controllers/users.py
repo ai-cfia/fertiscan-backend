@@ -2,9 +2,8 @@ from datastore import UserAlreadyExistsError as DBUserAlreadyExistsError
 from datastore import get_user, new_user
 from datastore.db.queries.user import UserNotFoundError as DBUserNotFoundError
 from fastapi.logger import logger
+from psycopg_pool import ConnectionPool
 
-from app.connection_manager import ConnectionManager
-from app.constants import FERTISCAN_STORAGE_URL
 from app.exceptions import (
     MissingUserAttributeError,
     UserConflictError,
@@ -14,28 +13,29 @@ from app.exceptions import (
 from app.models.users import User
 
 
-async def sign_up(cm: ConnectionManager, user: User) -> User:
+async def sign_up(cp: ConnectionPool, user: User, connection_string: str) -> User:
     """
     Registers a new user in the system.
 
     Args:
-        cm (ConnectionManager): Database connection manager.
-        user (User): User instance containing user details.
+        cp (ConnectionPool): The connection pool to manage database connections.
+        user (User): The User instance containing the user's details.
+        connection_string (str): The database connection string for setup.
 
     Raises:
-        MissingUserAttributeError: If the username is not provided.
-        UserConflictError: If a user with the same username already exists.
+        MissingUserAttributeError: Raised if the username is not provided.
+        UserConflictError: Raised if a user with the same username already exists.
 
     Returns:
-        User: User object with assigned ID from the database.
+        User: The newly created User object with the assigned database ID.
     """
     if not user.username:
         raise MissingUserAttributeError("Username is required for sign-up.")
 
     try:
-        with cm, cm.get_cursor() as cursor:
+        with cp.connection() as conn, conn.cursor() as cursor:
             logger.debug(f"Creating user: {user.username}")
-            user_db = await new_user(cursor, user.username, FERTISCAN_STORAGE_URL)
+            user_db = await new_user(cursor, user.username, connection_string)
     except DBUserAlreadyExistsError as e:
         log_error(e)
         raise UserConflictError(f"User '{user.username}' already exists.") from e
@@ -43,26 +43,26 @@ async def sign_up(cm: ConnectionManager, user: User) -> User:
     return user.model_copy(update={"id": user_db.id})
 
 
-async def sign_in(cm: ConnectionManager, user: User) -> User:
+async def sign_in(cp: ConnectionPool, user: User) -> User:
     """
     Authenticates an existing user in the system.
 
     Args:
-        cm (ConnectionManager): Database connection manager.
-        user (User): User instance containing user details.
+        cp (ConnectionPool): The connection pool to manage database connections.
+        user (User): The User instance containing the user's details.
 
     Raises:
-        MissingUserAttributeError: If the username is not provided.
-        UserNotFoundError: If the user is not found in the database.
+        MissingUserAttributeError: Raised if the username is not provided.
+        UserNotFoundError: Raised if the user is not found in the database.
 
     Returns:
-        User: User object with the retrieved ID from the database.
+        User: The authenticated User object with the retrieved database ID.
     """
     if not user.username:
         raise MissingUserAttributeError("Username is required for sign-in.")
 
     try:
-        with cm, cm.get_cursor() as cursor:
+        with cp.connection() as conn, conn.cursor() as cursor:
             logger.debug(f"Fetching user ID for username: {user.username}")
             user_db = await get_user(cursor, user.username)
     except DBUserNotFoundError as e:
