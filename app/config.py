@@ -5,8 +5,6 @@ from psycopg_pool import ConnectionPool
 from pydantic import Field, PostgresDsn
 from pydantic_settings import BaseSettings
 
-from app.connection_manager import ConnectionManager
-
 load_dotenv()
 
 
@@ -34,8 +32,7 @@ def configure(app: FastAPI, settings: Settings):
         conninfo=settings.fertiscan_db_url.unicode_string(),
         kwargs={"options": f"-c search_path={settings.fertiscan_schema},public"},
     )
-    connection_manager = ConnectionManager(pool, settings.testing.lower() == "true")
-    app.connection_manager = connection_manager
+    app.pool = pool
 
     # Initialize OCR
     ocr = OCR(api_endpoint=settings.api_endpoint, api_key=settings.api_key)

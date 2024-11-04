@@ -5,17 +5,17 @@ from fastapi import Depends, FastAPI, Form, HTTPException, Request, UploadFile
 from fastapi.concurrency import asynccontextmanager
 from fastapi.responses import JSONResponse
 from pipeline import GPT, OCR
+from psycopg_pool import ConnectionPool
 from pydantic import UUID4
 
 from app.config import Settings, configure
-from app.connection_manager import ConnectionManager
 from app.controllers.data_extraction import extract_data
 from app.controllers.inspections import create, read, read_all
 from app.controllers.users import sign_up
 from app.dependencies import (
     authenticate_user,
     fetch_user,
-    get_connection_manager,
+    get_connection_pool,
     get_gpt,
     get_ocr,
     get_settings,
@@ -32,9 +32,9 @@ from app.sanitization import custom_secure_filename
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app = configure(app, get_settings())
-    app.connection_manager.pool.open()
+    app.pool.open()
     yield
-    app.connection_manager.pool.close()
+    app.pool.close()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -64,12 +64,12 @@ async def analyze_document(
 
 @app.post("/signup", tags=["Users"], status_code=201, response_model=User)
 async def signup(
-    cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
+    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(authenticate_user)],
     settings: Annotated[Settings, Depends(get_settings)],
 ):
     try:
-        return await sign_up(cm, user, settings.fertiscan_storage_url)
+        return await sign_up(cp, user, settings.fertiscan_storage_url)
     except UserConflictError:
         raise HTTPException(status_code=HTTPStatus.CONFLICT, detail="User exists!")
 
@@ -81,20 +81,20 @@ async def login(user: User = Depends(fetch_user)):
 
 @app.get("/inspections", tags=["Inspections"], response_model=list[InspectionData])
 async def get_inspections(
-    cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
+    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: User = Depends(fetch_user),
 ):
-    return await read_all(cm, user)
+    return await read_all(cp, user)
 
 
 @app.get("/inspections/{id}", tags=["Inspections"], response_model=Inspection)
 async def get_inspection(
-    cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
+    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
     id: UUID4,
 ):
     try:
-        return await read(cm, user, id)
+        return await read(cp, user, id)
     except InspectionNotFoundError:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
@@ -103,7 +103,7 @@ async def get_inspection(
 
 @app.post("/inspections", tags=["Inspections"], response_model=Inspection)
 async def create_inspection(
-    cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
+    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
     settings: Annotated[Settings, Depends(get_settings)],
     label_data: Annotated[LabelData, Form(...)],
@@ -112,4 +112,4 @@ async def create_inspection(
     # Note: later on, we might handle label images as their own domain
     label_images = [await f.read() for f in files]
     conn_string = settings.fertiscan_storage_url
-    return await create(cm, user, label_data, label_images, conn_string)
+    return await create(cp, user, label_data, label_images, conn_string)

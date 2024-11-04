@@ -10,20 +10,20 @@ from fertiscan import (
 from fertiscan.db.queries.inspection import (
     InspectionNotFoundError as DBInspectionNotFoundError,
 )
+from psycopg_pool import ConnectionPool
 
-from app.connection_manager import ConnectionManager
 from app.exceptions import InspectionNotFoundError, MissingUserAttributeError, log_error
 from app.models.inspections import Inspection, InspectionData
 from app.models.label_data import LabelData
 from app.models.users import User
 
 
-async def read_all(cm: ConnectionManager, user: User):
+async def read_all(cp: ConnectionPool, user: User):
     """
     Retrieves all inspections associated with a user, both verified and unverified.
 
     Args:
-        cm (ConnectionManager): An instance managing the database connection.
+        cp (ConnectionPool): The connection pool to manage database connections.
         user (User): User instance containing user details, including the user ID.
 
     Returns:
@@ -37,7 +37,7 @@ async def read_all(cm: ConnectionManager, user: User):
     if not user.id:
         raise MissingUserAttributeError("User ID is required for fetching inspections.")
 
-    with cm, cm.get_cursor() as cursor:
+    with cp.connection() as conn, conn.cursor() as cursor:
         inspections = await asyncio.gather(
             get_user_analysis_by_verified(cursor, user.id, True),
             get_user_analysis_by_verified(cursor, user.id, False),
@@ -64,12 +64,12 @@ async def read_all(cm: ConnectionManager, user: User):
         return inspections
 
 
-async def read(cm: ConnectionManager, user: User, id: UUID | str):
+async def read(cp: ConnectionPool, user: User, id: UUID | str):
     """
     Retrieves a specific inspection associated with a user by inspection ID.
 
     Args:
-        cm (ConnectionManager): An instance managing the database connection.
+        cp (ConnectionPool): The connection pool to manage database connections.
         user (User): User instance containing user details, including the user ID.
         id (UUID | str): Unique identifier of the inspection, as a UUID or a string convertible to UUID.
 
@@ -90,7 +90,7 @@ async def read(cm: ConnectionManager, user: User, id: UUID | str):
     if not isinstance(id, UUID):
         id = UUID(id)
 
-    with cm, cm.get_cursor() as cursor:
+    with cp.connection() as conn, conn.cursor() as cursor:
         try:
             inspection = await get_full_inspection_json(cursor, id, user.id)
         except DBInspectionNotFoundError as e:
@@ -100,7 +100,7 @@ async def read(cm: ConnectionManager, user: User, id: UUID | str):
 
 
 async def create(
-    cm: ConnectionManager,
+    cp: ConnectionPool,
     user: User,
     label_data: LabelData,
     label_images: list[bytes],
@@ -110,7 +110,7 @@ async def create(
     Creates a new inspection record associated with a user.
 
     Args:
-        cm (ConnectionManager): An instance managing the database connection.
+        cp (ConnectionPool): The connection pool to manage database connections.
         user (User): User instance containing user details, including the user ID.
         label_data (LabelData): Data model containing label information required for the inspection.
         label_images (list[bytes]): List of images (in byte format) to be associated with the inspection.
@@ -125,7 +125,7 @@ async def create(
     if not user.id:
         raise MissingUserAttributeError("User ID is required for creating inspections.")
 
-    with cm, cm.get_cursor() as cursor:
+    with cp.connection() as conn, conn.cursor() as cursor:
         container_client = ContainerClient.from_connection_string(
             connection_string, container_name=f"user-{user.id}"
         )

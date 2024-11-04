@@ -12,7 +12,7 @@ from pipeline import FertilizerInspection
 from app.dependencies import (
     authenticate_user,
     fetch_user,
-    get_connection_manager,
+    get_connection_pool,
     get_gpt,
     get_ocr,
     get_settings,
@@ -127,7 +127,7 @@ class TestAPIUsers(unittest.TestCase):
         self.test_user = User(username="test_user", id=uuid.uuid4())
 
         app.dependency_overrides.clear()
-        app.dependency_overrides[get_connection_manager] = override_dep
+        app.dependency_overrides[get_connection_pool] = override_dep
         app.dependency_overrides[authenticate_user] = override_dep
         app.dependency_overrides[get_settings] = override_dep
         app.dependency_overrides[fetch_user] = lambda: self.test_user
@@ -156,7 +156,7 @@ class TestAPIUsers(unittest.TestCase):
         response = self.client.post(
             "/signup",
             headers={
-                "Authorization": f"Basic {self.credentials(empty_username, "password")}",
+                "Authorization": f'Basic {self.credentials(empty_username, "password")}',
             },
         )
         self.assertEqual(response.status_code, 400)
@@ -168,7 +168,7 @@ class TestAPIUsers(unittest.TestCase):
         response = self.client.post(
             "/signup",
             headers={
-                "Authorization": f"Basic {self.credentials("test_user", "password")}",
+                "Authorization": f'Basic {self.credentials("test_user", "password")}',
             },
         )
         self.assertEqual(response.status_code, 201)
@@ -222,13 +222,10 @@ class TestAPIInspections(unittest.TestCase):
     def setUp(self) -> None:
         self.client = TestClient(app)
 
-        def override_dep():
-            return Mock()
-
         self.test_user = User(username="test_user", id=uuid.uuid4())
 
         app.dependency_overrides.clear()
-        app.dependency_overrides[get_connection_manager] = override_dep
+        app.dependency_overrides[get_connection_pool] = lambda: Mock()
         app.dependency_overrides[fetch_user] = lambda: self.test_user
 
         self.mock_inspection_data = [

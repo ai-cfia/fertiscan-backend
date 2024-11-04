@@ -2,8 +2,8 @@ from datastore import UserAlreadyExistsError as DBUserAlreadyExistsError
 from datastore import get_user, new_user
 from datastore.db.queries.user import UserNotFoundError as DBUserNotFoundError
 from fastapi.logger import logger
+from psycopg_pool import ConnectionPool
 
-from app.connection_manager import ConnectionManager
 from app.exceptions import (
     MissingUserAttributeError,
     UserConflictError,
@@ -13,14 +13,14 @@ from app.exceptions import (
 from app.models.users import User
 
 
-async def sign_up(cm: ConnectionManager, user: User, connection_string: str) -> User:
+async def sign_up(cp: ConnectionPool, user: User, connection_string: str) -> User:
     """
     Registers a new user in the system.
 
     Args:
-        cm (ConnectionManager): An instance managing the database connection.
+        cp (ConnectionPool): The connection pool to manage database connections.
         user (User): The User instance containing the user's details.
-        connection_string (str): Connection string for database setup.
+        connection_string (str): The database connection string for setup.
 
     Raises:
         MissingUserAttributeError: Raised if the username is not provided.
@@ -33,7 +33,7 @@ async def sign_up(cm: ConnectionManager, user: User, connection_string: str) -> 
         raise MissingUserAttributeError("Username is required for sign-up.")
 
     try:
-        with cm, cm.get_cursor() as cursor:
+        with cp.connection() as conn, conn.cursor() as cursor:
             logger.debug(f"Creating user: {user.username}")
             user_db = await new_user(cursor, user.username, connection_string)
     except DBUserAlreadyExistsError as e:
@@ -43,12 +43,12 @@ async def sign_up(cm: ConnectionManager, user: User, connection_string: str) -> 
     return user.model_copy(update={"id": user_db.id})
 
 
-async def sign_in(cm: ConnectionManager, user: User) -> User:
+async def sign_in(cp: ConnectionPool, user: User) -> User:
     """
     Authenticates an existing user in the system.
 
     Args:
-        cm (ConnectionManager): An instance managing the database connection.
+        cp (ConnectionPool): The connection pool to manage database connections.
         user (User): The User instance containing the user's details.
 
     Raises:
@@ -62,7 +62,7 @@ async def sign_in(cm: ConnectionManager, user: User) -> User:
         raise MissingUserAttributeError("Username is required for sign-in.")
 
     try:
-        with cm, cm.get_cursor() as cursor:
+        with cp.connection() as conn, conn.cursor() as cursor:
             logger.debug(f"Fetching user ID for username: {user.username}")
             user_db = await get_user(cursor, user.username)
     except DBUserNotFoundError as e:
