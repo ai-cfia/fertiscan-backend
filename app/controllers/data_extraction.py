@@ -1,12 +1,12 @@
 import os
 from typing import BinaryIO
 
-from pipeline import LabelStorage, analyze
+from pipeline import GPT, OCR, LabelStorage, analyze
 
 from app.models.label_data import LabelData
 
 
-def extract_data(files: dict[str, BinaryIO], ocr, gpt, folder_name: str):
+def extract_data(files: dict[str, BinaryIO], ocr: OCR, gpt: GPT, folder_name: str):
     """
     Extracts data from provided image files using OCR and GPT.
 

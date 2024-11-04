@@ -11,7 +11,7 @@ from app.config import Settings, configure
 from app.connection_manager import ConnectionManager
 from app.controllers.data_extraction import extract_data
 from app.controllers.inspections import create, read, read_all
-from app.controllers.users import sign_in, sign_up
+from app.controllers.users import sign_up
 from app.dependencies import (
     authenticate_user,
     fetch_user,
@@ -21,12 +21,7 @@ from app.dependencies import (
     get_settings,
     validate_files,
 )
-from app.exceptions import (
-    InspectionNotFoundError,
-    UserConflictError,
-    UserNotFoundError,
-    log_error,
-)
+from app.exceptions import InspectionNotFoundError, UserConflictError, log_error
 from app.models.inspections import Inspection, InspectionData
 from app.models.label_data import LabelData
 from app.models.monitoring import HealthStatus
@@ -80,16 +75,8 @@ async def signup(
 
 
 @app.post("/login", tags=["Users"], status_code=200, response_model=User)
-async def login(
-    cm: Annotated[ConnectionManager, Depends(get_connection_manager)],
-    user: User = Depends(authenticate_user),
-):
-    try:
-        return await sign_in(cm, user)
-    except UserNotFoundError:
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED, detail="Invalid username or password"
-        )
+async def login(user: User = Depends(fetch_user)):
+    return user
 
 
 @app.get("/inspections", tags=["Inspections"], response_model=list[InspectionData])

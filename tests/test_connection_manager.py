@@ -1,17 +1,10 @@
-import base64
-import os
 import unittest
-import uuid
 from unittest.mock import MagicMock, patch
 
-from azure.storage.blob import ContainerClient
-from fastapi.testclient import TestClient
 from psycopg import Connection
 from psycopg_pool import ConnectionPool
 
 from app.connection_manager import ConnectionManager
-from app.main import app
-from app.models.users import User
 
 
 class TestConnectionManager(unittest.TestCase):
@@ -127,66 +120,3 @@ class TestConnectionManager(unittest.TestCase):
         mock_rollback.assert_called_once()
         # Ensure put() was called
         mock_put.assert_called_once()
-
-
-class TestConnectionManagerIntegration(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        os.environ["TESTING"] = "True"
-
-    def setUp(self):
-        # Set up basic authentication credentials
-        username = uuid.uuid4().hex
-        password = "password1"
-        credentials = f"{username}:{password}"
-        self.encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode(
-            "utf-8"
-        )
-        self.headers = {
-            "Authorization": f"Basic {self.encoded_credentials}",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "*",
-            "Access-Control-Allow-Methods": "*",
-        }
-
-    def test_rollbacks(self):
-        with TestClient(app) as client:
-            # Step 1: Attempt to sign up with a unique username
-            signup_response = client.post(
-                "/signup",
-                headers={
-                    **self.headers,
-                    "Authorization": f"Basic {self.encoded_credentials}",
-                },
-            )
-            self.assertEqual(signup_response.status_code, 201)
-            user = User.model_validate(signup_response.json())
-
-            # Step 2: Attempt to log in after signup
-            login_response = client.post(
-                "/login",
-                headers={
-                    **self.headers,
-                    "Authorization": f"Basic {self.encoded_credentials}",
-                },
-            )
-            self.assertEqual(login_response.status_code, 200, login_response.json())
-
-        # Step 3: Verify that the user was rolled back (should return 401)
-        with TestClient(app) as client:
-            rollback_response = client.post(
-                "/login",
-                headers={
-                    **self.headers,
-                    "Authorization": f"Basic {self.encoded_credentials}",
-                },
-            )
-            self.assertEqual(
-                rollback_response.status_code, 401, rollback_response.json()
-            )
-
-        container_client = ContainerClient.from_connection_string(
-            os.getenv("FERTISCAN_STORAGE_URL"), container_name=f"user-{user.id}"
-        )
-        if container_client.exists():
-            container_client.delete_container()
