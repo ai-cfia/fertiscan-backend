@@ -329,7 +329,7 @@ class TestAPIInspections(unittest.TestCase):
             ("files", ("image2.png", BytesIO(b"fake_image_data_2"), "image/png")),
         ]
 
-    @patch("app.main.read_all")
+    @patch("app.main.read_all_inspections")
     def test_get_inspections(self, mock_read_all_inspections):
         mock_read_all_inspections.return_value = self.mock_inspection_data
         response = self.client.get("/inspections")
@@ -341,14 +341,14 @@ class TestAPIInspections(unittest.TestCase):
         response = self.client.get("/inspections")
         self.assertEqual(response.status_code, 401)
 
-    @patch("app.main.read")
+    @patch("app.main.read_inspection")
     def test_get_inspection(self, mock_read_inspection):
         mock_read_inspection.return_value = self.mock_inspection
         response = self.client.get(f"/inspections/{uuid.uuid4()}")
         self.assertEqual(response.status_code, 200)
         Inspection.model_validate(response.json())
 
-    @patch("app.main.read")
+    @patch("app.main.read_inspection")
     def test_get_inspection_not_found(self, mock_read_inspection):
         mock_read_inspection.side_effect = InspectionNotFoundError()
         response = self.client.get(f"/inspections/{uuid.uuid4()}")
@@ -359,7 +359,7 @@ class TestAPIInspections(unittest.TestCase):
         response = self.client.get(f"/inspections/{uuid.uuid4()}")
         self.assertEqual(response.status_code, 401)
 
-    @patch("app.main.create")
+    @patch("app.main.create_inspection")
     def test_create_inspection(self, mock_create_inspection):
         mock_create_inspection.return_value = self.mock_inspection
         response = self.client.post(
@@ -370,7 +370,7 @@ class TestAPIInspections(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         Inspection.model_validate(response.json())
 
-    @patch("app.main.create")
+    @patch("app.main.create_inspection")
     def test_create_inspection_empty_files(self, mock_create_inspection):
         response = self.client.post("/inspections")
         self.assertEqual(response.status_code, 422)

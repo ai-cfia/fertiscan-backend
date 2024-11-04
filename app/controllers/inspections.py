@@ -18,7 +18,7 @@ from app.models.label_data import LabelData
 from app.models.users import User
 
 
-async def read_all(cp: ConnectionPool, user: User):
+async def read_all_inspections(cp: ConnectionPool, user: User):
     """
     Retrieves all inspections associated with a user, both verified and unverified.
 
@@ -64,7 +64,7 @@ async def read_all(cp: ConnectionPool, user: User):
         return inspections
 
 
-async def read(cp: ConnectionPool, user: User, id: UUID | str):
+async def read_inspection(cp: ConnectionPool, user: User, id: UUID | str):
     """
     Retrieves a specific inspection associated with a user by inspection ID.
 
@@ -99,7 +99,7 @@ async def read(cp: ConnectionPool, user: User, id: UUID | str):
         return Inspection.model_validate_json(inspection)
 
 
-async def create(
+async def create_inspection(
     cp: ConnectionPool,
     user: User,
     label_data: LabelData,

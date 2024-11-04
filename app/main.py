@@ -10,7 +10,11 @@ from pydantic import UUID4
 
 from app.config import Settings, configure
 from app.controllers.data_extraction import extract_data
-from app.controllers.inspections import create, read, read_all
+from app.controllers.inspections import (
+    create_inspection,
+    read_all_inspections,
+    read_inspection,
+)
 from app.controllers.users import sign_up
 from app.dependencies import (
     authenticate_user,
@@ -84,7 +88,7 @@ async def get_inspections(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: User = Depends(fetch_user),
 ):
-    return await read_all(cp, user)
+    return await read_all_inspections(cp, user)
 
 
 @app.get("/inspections/{id}", tags=["Inspections"], response_model=Inspection)
@@ -94,7 +98,7 @@ async def get_inspection(
     id: UUID4,
 ):
     try:
-        return await read(cp, user, id)
+        return await read_inspection(cp, user, id)
     except InspectionNotFoundError:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
@@ -102,7 +106,7 @@ async def get_inspection(
 
 
 @app.post("/inspections", tags=["Inspections"], response_model=Inspection)
-async def create_inspection(
+async def post_inspection(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
     settings: Annotated[Settings, Depends(get_settings)],
@@ -112,4 +116,4 @@ async def create_inspection(
     # Note: later on, we might handle label images as their own domain
     label_images = [await f.read() for f in files]
     conn_string = settings.fertiscan_storage_url
-    return await create(cp, user, label_data, label_images, conn_string)
+    return await create_inspection(cp, user, label_data, label_images, conn_string)
