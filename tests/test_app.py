@@ -264,8 +264,8 @@ class TestAPIInspections(unittest.TestCase):
             "manufacturer": {},
             "product": {
                 "name": "string",
-                "label_id": "string",
-                "registration_number": "string",
+                "label_id": uuid.uuid4(),
+                "registration_number": "2224256A",
                 "lot_number": "string",
                 "metrics": {
                     "weight": [],
@@ -312,7 +312,7 @@ class TestAPIInspections(unittest.TestCase):
             },
             "company_name": "string",
             "manufacturer_website": "string",
-            "registration_number": "string",
+            "registration_number": "2224256A",
             "fertiliser_name": "string",
             "company_address": "string",
             "lot_number": "string",

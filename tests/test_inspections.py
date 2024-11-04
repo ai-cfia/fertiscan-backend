@@ -141,8 +141,8 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
             "manufacturer": {},
             "product": {
                 "name": "string",
-                "label_id": "string",
-                "registration_number": "string",
+                "label_id": str(uuid.uuid4()),
+                "registration_number": "2224256A",
                 "lot_number": "string",
                 "metrics": {
                     "weight": [],
@@ -228,8 +228,8 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
             "manufacturer": {},
             "product": {
                 "name": "Sample Product",
-                "label_id": "string",
-                "registration_number": "string",
+                "label_id": str(uuid.uuid4()),
+                "registration_number": "2224256A",
                 "lot_number": "string",
                 "metrics": {
                     "weight": [],

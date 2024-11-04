@@ -14,6 +14,7 @@ from app.controllers.inspections import (
     create_inspection,
     read_all_inspections,
     read_inspection,
+    update_inspection,
 )
 from app.controllers.users import sign_up
 from app.dependencies import (
@@ -26,7 +27,7 @@ from app.dependencies import (
     validate_files,
 )
 from app.exceptions import InspectionNotFoundError, UserConflictError, log_error
-from app.models.inspections import Inspection, InspectionData
+from app.models.inspections import Inspection, InspectionData, InspectionUpdate
 from app.models.label_data import LabelData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
@@ -117,3 +118,18 @@ async def post_inspection(
     label_images = [await f.read() for f in files]
     conn_string = settings.fertiscan_storage_url
     return await create_inspection(cp, user, label_data, label_images, conn_string)
+
+
+@app.put("/inspections/{id}", tags=["Inspections"], response_model=Inspection)
+async def put_inspection(
+    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
+    user: Annotated[User, Depends(fetch_user)],
+    id: UUID4,
+    inspection: InspectionUpdate,
+):
+    try:
+        return await update_inspection(cp, user, id, inspection)
+    except InspectionNotFoundError:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
+        )
