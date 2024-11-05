@@ -2,6 +2,7 @@ import asyncio
 from uuid import UUID
 
 from azure.storage.blob import ContainerClient
+from fertiscan import delete_inspection as db_delete_inspection
 from fertiscan import (
     get_full_inspection_json,
     get_user_analysis_by_verified,
@@ -134,3 +135,41 @@ async def create_inspection(
         )
 
         return Inspection.model_validate(inspection)
+
+
+async def delete_inspection(
+    cp: ConnectionPool,
+    user: User,
+    id: UUID,
+    connection_string: str,
+):
+    """
+    Deletes an inspection record and its associated picture set from the database.
+
+    Args:
+        cp (ConnectionPool): The connection pool for database management.
+        user (User): The user requesting the deletion.
+        inspection_id (UUID): The UUID of the inspection to delete.
+        connection_string (str): Connection string for Azure Blob Storage.
+
+    Returns:
+        Inspection: The deleted inspection data.
+
+    Raises:
+        MissingUserAttributeError: If the user ID is missing.
+        ValueError: If inspection_id or connection_string are invalid.
+        InspectionNotFoundError: If the inspection does not exist or deletion fails.
+    """
+    if not user.id:
+        raise MissingUserAttributeError("User ID is required to delete an inspection.")
+    if not id:
+        raise ValueError("Inspection ID is required for deletion.")
+    if not connection_string:
+        raise ValueError("Connection string is required for blob storage access.")
+
+    container_client = ContainerClient.from_connection_string(
+        connection_string, container_name=f"user-{user.id}"
+    )
+
+    with cp.connection() as conn, conn.cursor() as cursor:
+        return await db_delete_inspection(cursor, id, user.id, container_client)

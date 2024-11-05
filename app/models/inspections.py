@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from fertiscan.db.metadata.inspection import DBInspection
 from fertiscan.db.metadata.inspection import Inspection as DatastoreInspection
 from pydantic import UUID4, BaseModel
 
@@ -19,3 +20,7 @@ class InspectionData(BaseModel):
 
 class Inspection(DatastoreInspection):
     inspection_id: UUID4
+
+
+class InspectionDeleteResponse(DBInspection):
+    pass

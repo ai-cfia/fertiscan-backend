@@ -1,17 +1,18 @@
 from http import HTTPStatus
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, UploadFile
 from fastapi.concurrency import asynccontextmanager
 from fastapi.responses import JSONResponse
 from pipeline import GPT, OCR
 from psycopg_pool import ConnectionPool
-from pydantic import UUID4
 
 from app.config import Settings, configure
 from app.controllers.data_extraction import extract_data
 from app.controllers.inspections import (
     create_inspection,
+    delete_inspection,
     read_all_inspections,
     read_inspection,
 )
@@ -26,7 +27,7 @@ from app.dependencies import (
     validate_files,
 )
 from app.exceptions import InspectionNotFoundError, UserConflictError, log_error
-from app.models.inspections import Inspection, InspectionData
+from app.models.inspections import Inspection, InspectionData, InspectionDeleteResponse
 from app.models.label_data import LabelData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
@@ -95,7 +96,7 @@ async def get_inspections(
 async def get_inspection(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
-    id: UUID4,
+    id: UUID,
 ):
     try:
         return await read_inspection(cp, user, id)
@@ -117,3 +118,21 @@ async def post_inspection(
     label_images = [await f.read() for f in files]
     conn_string = settings.fertiscan_storage_url
     return await create_inspection(cp, user, label_data, label_images, conn_string)
+
+
+@app.delete(
+    "/inspections/{id}", tags=["Inspections"], response_model=InspectionDeleteResponse
+)
+async def delete_inspection_(
+    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
+    user: Annotated[User, Depends(fetch_user)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    id: UUID,
+):
+    try:
+        conn_string = settings.fertiscan_storage_url
+        return await delete_inspection(cp, user, id, conn_string)
+    except InspectionNotFoundError:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
+        )
