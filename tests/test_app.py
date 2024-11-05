@@ -383,3 +383,91 @@ class TestAPIInspections(unittest.TestCase):
             files=self.files,
         )
         self.assertEqual(response.status_code, 401)
+
+
+class TestAPIUpdateInspection(unittest.TestCase):
+    def setUp(self) -> None:
+        self.client = TestClient(app)
+
+        self.test_user = User(username="test_user", id=uuid.uuid4())
+
+        app.dependency_overrides.clear()
+        app.dependency_overrides[get_connection_pool] = lambda: Mock()
+        app.dependency_overrides[fetch_user] = lambda: self.test_user
+
+        self.update_data = {
+            "inspection_comment": "string",
+            "verified": False,
+            "company": {},
+            "manufacturer": {},
+            "product": {
+                "name": "string",
+                "label_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "registration_number": "2536456V",
+                "lot_number": "string",
+                "metrics": {
+                    "weight": [],
+                    "volume": {"edited": False},
+                    "density": {"edited": False},
+                },
+                "npk": "string",
+                "warranty": "string",
+                "n": 0,
+                "p": 0,
+                "k": 0,
+            },
+            "cautions": {"en": [], "fr": []},
+            "instructions": {"en": [], "fr": []},
+            "guaranteed_analysis": {
+                "title": {"en": "string", "fr": "string"},
+                "is_minimal": False,
+                "en": [],
+                "fr": [],
+            },
+        }
+
+        return_data = self.update_data.copy()
+        return_data["inspection_id"] = uuid.uuid4()
+        self.return_inspection = Inspection.model_validate(return_data)
+
+    @patch("app.main.update_inspection")
+    def test_update_inspection(self, mock_update_inspection):
+        mock_update_inspection.return_value = self.return_inspection
+        inspection_id = uuid.uuid4()
+
+        response = self.client.put(
+            f"/inspections/{inspection_id}", json=self.update_data
+        )
+        self.assertEqual(response.status_code, 200)
+
+        inspection_response = Inspection.model_validate(response.json())
+        self.assertEqual(inspection_response.inspection_comment, "string")
+        self.assertEqual(inspection_response.verified, False)
+        self.assertEqual(inspection_response.product.registration_number, "2536456V")
+
+    @patch("app.main.update_inspection")
+    def test_update_inspection_not_found(self, mock_update_inspection):
+        mock_update_inspection.side_effect = InspectionNotFoundError()
+        inspection_id = uuid.uuid4()
+
+        response = self.client.put(
+            f"/inspections/{inspection_id}", json=self.update_data
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_update_inspection_unauthenticated(self):
+        del app.dependency_overrides[fetch_user]
+        inspection_id = uuid.uuid4()
+
+        response = self.client.put(
+            f"/inspections/{inspection_id}", json=self.update_data
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_update_inspection_invalid_data(self):
+        inspection_id = uuid.uuid4()
+
+        response = self.client.put(
+            f"/inspections/{inspection_id}", json={"verified": True}
+        )
+        self.assertEqual(response.status_code, 422)
