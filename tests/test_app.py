@@ -19,7 +19,7 @@ from app.dependencies import (
 )
 from app.exceptions import InspectionNotFoundError, UserConflictError, UserNotFoundError
 from app.main import app
-from app.models.inspections import Inspection, InspectionData
+from app.models.inspections import DeletedInspection, Inspection, InspectionData
 from app.models.label_data import LabelData
 from app.models.users import User
 
@@ -382,4 +382,23 @@ class TestAPIInspections(unittest.TestCase):
             data={"label_data": self.label_data_json},
             files=self.files,
         )
+        self.assertEqual(response.status_code, 401)
+
+    @patch("app.main.delete_inspection")
+    def test_delete_inspection(self, mock_delete_inspection):
+        mock_deleted_inspection = DeletedInspection(id=uuid.uuid4())
+        mock_delete_inspection.return_value = mock_deleted_inspection
+        response = self.client.delete(f"/inspections/{mock_deleted_inspection.id}")
+        self.assertEqual(response.status_code, 200)
+        DeletedInspection.model_validate(response.json())
+
+    @patch("app.main.delete_inspection")
+    def test_delete_inspection_not_found(self, mock_delete_inspection):
+        mock_delete_inspection.side_effect = InspectionNotFoundError()
+        response = self.client.delete(f"/inspections/{uuid.uuid4()}")
+        self.assertEqual(response.status_code, 404)
+
+    def test_delete_inspection_unauthenticated(self):
+        del app.dependency_overrides[fetch_user]
+        response = self.client.delete(f"/inspections/{uuid.uuid4()}")
         self.assertEqual(response.status_code, 401)

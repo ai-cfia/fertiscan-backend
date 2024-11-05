@@ -27,7 +27,7 @@ from app.dependencies import (
     validate_files,
 )
 from app.exceptions import InspectionNotFoundError, UserConflictError, log_error
-from app.models.inspections import Inspection, InspectionData, InspectionDeleteResponse
+from app.models.inspections import DeletedInspection, Inspection, InspectionData
 from app.models.label_data import LabelData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
@@ -120,9 +120,7 @@ async def post_inspection(
     return await create_inspection(cp, user, label_data, label_images, conn_string)
 
 
-@app.delete(
-    "/inspections/{id}", tags=["Inspections"], response_model=InspectionDeleteResponse
-)
+@app.delete("/inspections/{id}", tags=["Inspections"], response_model=DeletedInspection)
 async def delete_inspection_(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],

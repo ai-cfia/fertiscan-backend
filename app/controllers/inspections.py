@@ -14,7 +14,7 @@ from fertiscan.db.queries.inspection import (
 from psycopg_pool import ConnectionPool
 
 from app.exceptions import InspectionNotFoundError, MissingUserAttributeError, log_error
-from app.models.inspections import Inspection, InspectionData
+from app.models.inspections import DeletedInspection, Inspection, InspectionData
 from app.models.label_data import LabelData
 from app.models.users import User
 
@@ -72,7 +72,7 @@ async def read_inspection(cp: ConnectionPool, user: User, id: UUID | str):
     Args:
         cp (ConnectionPool): The connection pool to manage database connections.
         user (User): User instance containing user details, including the user ID.
-        id (UUID | str): Unique identifier of the inspection, as a UUID or a string convertible to UUID.
+        id (UUID | str): The UUID of the inspection to read.
 
     Returns:
         Inspection: An `Inspection` object with the inspection details.
@@ -140,7 +140,7 @@ async def create_inspection(
 async def delete_inspection(
     cp: ConnectionPool,
     user: User,
-    id: UUID,
+    id: UUID | str,
     connection_string: str,
 ):
     """
@@ -149,16 +149,15 @@ async def delete_inspection(
     Args:
         cp (ConnectionPool): The connection pool for database management.
         user (User): The user requesting the deletion.
-        inspection_id (UUID): The UUID of the inspection to delete.
+        id (UUID | str): The UUID of the inspection to delete.
         connection_string (str): Connection string for Azure Blob Storage.
 
     Returns:
-        Inspection: The deleted inspection data.
+        DeletedInspection: The deleted inspection data.
 
     Raises:
         MissingUserAttributeError: If the user ID is missing.
-        ValueError: If inspection_id or connection_string are invalid.
-        InspectionNotFoundError: If the inspection does not exist or deletion fails.
+        ValueError: If id or connection_string are invalid.
     """
     if not user.id:
         raise MissingUserAttributeError("User ID is required to delete an inspection.")
@@ -166,10 +165,13 @@ async def delete_inspection(
         raise ValueError("Inspection ID is required for deletion.")
     if not connection_string:
         raise ValueError("Connection string is required for blob storage access.")
+    if not isinstance(id, UUID):
+        id = UUID(id)
 
     container_client = ContainerClient.from_connection_string(
         connection_string, container_name=f"user-{user.id}"
     )
 
     with cp.connection() as conn, conn.cursor() as cursor:
-        return await db_delete_inspection(cursor, id, user.id, container_client)
+        deleted = await db_delete_inspection(cursor, id, user.id, container_client)
+        return DeletedInspection.model_validate(deleted.model_dump())

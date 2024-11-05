@@ -22,5 +22,5 @@ class Inspection(DatastoreInspection):
     inspection_id: UUID4
 
 
-class InspectionDeleteResponse(DBInspection):
-    pass
+class DeletedInspection(DBInspection):
+    deleted: bool = True
