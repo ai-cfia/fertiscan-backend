@@ -1,14 +1,13 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Form, HTTPException, Request, UploadFile
-from fastapi.concurrency import asynccontextmanager
-from fastapi.responses import JSONResponse
+from fastapi import Depends, Form, HTTPException, Request, UploadFile
+from fastapi.responses import JSONResponse, RedirectResponse
 from pipeline import GPT, OCR
 from psycopg_pool import ConnectionPool
 from pydantic import UUID4
 
-from app.config import Settings, configure
+from app.config import Settings, create_app
 from app.controllers.data_extraction import extract_data
 from app.controllers.inspections import (
     create_inspection,
@@ -32,22 +31,18 @@ from app.models.monitoring import HealthStatus
 from app.models.users import User
 from app.sanitization import custom_secure_filename
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    app = configure(app, get_settings())
-    app.pool.open()
-    yield
-    app.pool.close()
-
-
-app = FastAPI(lifespan=lifespan)
+app = create_app(get_settings())
 
 
 @app.exception_handler(Exception)
 async def global_exception_handler(_: Request, e: Exception):
     log_error(e)
     return JSONResponse(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content=str(e))
+
+
+@app.get("/", tags=["Home"])
+async def home():
+    return RedirectResponse(url=app.docs_url)
 
 
 @app.get("/health", tags=["Monitoring"], response_model=HealthStatus)
