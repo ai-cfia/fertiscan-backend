@@ -13,9 +13,10 @@ from app.controllers.inspections import (
     delete_inspection,
     read_all_inspections,
     read_inspection,
+    update_inspection,
 )
 from app.exceptions import InspectionNotFoundError, MissingUserAttributeError
-from app.models.inspections import DeletedInspection, Inspection
+from app.models.inspections import DeletedInspection, Inspection, InspectionUpdate
 from app.models.label_data import LabelData
 from app.models.users import User
 
@@ -142,8 +143,8 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
             "manufacturer": {},
             "product": {
                 "name": "string",
-                "label_id": "string",
-                "registration_number": "string",
+                "label_id": str(uuid.uuid4()),
+                "registration_number": "2224256A",
                 "lot_number": "string",
                 "metrics": {
                     "weight": [],
@@ -229,8 +230,8 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
             "manufacturer": {},
             "product": {
                 "name": "Sample Product",
-                "label_id": "string",
-                "registration_number": "string",
+                "label_id": str(uuid.uuid4()),
+                "registration_number": "2224256A",
                 "lot_number": "string",
                 "metrics": {
                     "weight": [],
@@ -274,6 +275,130 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
         )
         self.assertIsInstance(inspection, Inspection)
         self.assertEqual(inspection.inspection_id, inspection_id)
+
+    async def test_missing_label_data_raises_error(self):
+        cp = MagicMock()
+        label_images = [b"image_data"]
+        user = User(id=uuid.uuid4())
+
+        with self.assertRaises(ValueError):
+            await create_inspection(cp, user, None, label_images, "fake_conn_str")
+
+    async def test_missing_connection_string_raises_error(self):
+        cp = MagicMock()
+        label_data = LabelData()
+        label_images = [b"image_data"]
+        user = User(id=uuid.uuid4())
+
+        with self.assertRaises(ValueError):
+            await create_inspection(cp, user, label_data, label_images, None)
+
+
+class TestUpdateFunction(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.cp = MagicMock()
+        self.user = User(id=uuid.uuid4())
+        self.inspection_id = uuid.uuid4()
+
+        # Valid update data in dictionary form
+        self.update_data = {
+            "inspection_comment": "string",
+            "verified": False,
+            "company": {},
+            "manufacturer": {},
+            "product": {
+                "name": "string",
+                "label_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "registration_number": "3066014L",
+                "lot_number": "string",
+                "metrics": {
+                    "weight": [],
+                    "volume": {"edited": False},
+                    "density": {"edited": False},
+                },
+                "npk": "string",
+                "warranty": "string",
+                "n": 0,
+                "p": 0,
+                "k": 0,
+            },
+            "cautions": {"en": [], "fr": []},
+            "instructions": {"en": [], "fr": []},
+            "guaranteed_analysis": {
+                "title": {"en": "string", "fr": "string"},
+                "is_minimal": False,
+                "en": [],
+                "fr": [],
+            },
+        }
+
+        # Convert dict to InspectionUpdate model for tests that require validation
+        self.inspection_update = InspectionUpdate.model_validate(self.update_data)
+
+    async def test_missing_user_id_raises_error(self):
+        self.user.id = None
+        with self.assertRaises(MissingUserAttributeError):
+            await update_inspection(
+                self.cp, self.user, self.inspection_id, self.inspection_update
+            )
+
+    async def test_missing_inspection_id_raises_error(self):
+        with self.assertRaises(ValueError):
+            await update_inspection(self.cp, self.user, None, self.inspection_update)
+
+    async def test_missing_inspection_update_data_raises_error(self):
+        with self.assertRaises(ValueError):
+            await update_inspection(self.cp, self.user, self.inspection_id, None)
+
+    async def test_invalid_inspection_id_format(self):
+        invalid_id = "not-a-uuid"
+        with self.assertRaises(ValueError):
+            await update_inspection(
+                self.cp, self.user, invalid_id, self.inspection_update
+            )
+
+    @patch("app.controllers.inspections.db_update_inspection")
+    async def test_valid_inspection_update(self, mock_db_update_inspection):
+        conn_mock = MagicMock()
+        cursor_mock = MagicMock()
+        conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
+        self.cp.connection.return_value.__enter__.return_value = conn_mock
+
+        # Mock the response to simulate a successful inspection update
+        updated_inspection = {
+            **self.update_data,
+            "inspection_id": str(self.inspection_id),
+        }
+        updated_inspection = Inspection.model_validate(updated_inspection)
+        mock_db_update_inspection.return_value = updated_inspection
+
+        inspection = await update_inspection(
+            self.cp, self.user, self.inspection_id, self.inspection_update
+        )
+
+        mock_db_update_inspection.assert_called_once_with(
+            cursor_mock,
+            self.inspection_id,
+            self.user.id,
+            self.inspection_update.model_dump(mode="json"),
+        )
+        self.assertEqual(inspection.inspection_comment, "string")
+        self.assertFalse(inspection.verified)
+        self.assertEqual(inspection.product.registration_number, "3066014L")
+
+    @patch("app.controllers.inspections.db_update_inspection")
+    async def test_inspection_not_found_raises_error(self, mock_db_update_inspection):
+        conn_mock = MagicMock()
+        cursor_mock = MagicMock()
+        conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
+        self.cp.connection.return_value.__enter__.return_value = conn_mock
+
+        mock_db_update_inspection.side_effect = DBInspectionNotFoundError()
+
+        with self.assertRaises(InspectionNotFoundError):
+            await update_inspection(
+                self.cp, self.user, self.inspection_id, self.inspection_update
+            )
 
 
 class TestDeleteFunction(unittest.IsolatedAsyncioTestCase):

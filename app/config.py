@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from pipeline import GPT, OCR
@@ -11,7 +13,7 @@ load_dotenv()
 class Settings(BaseSettings):
     api_endpoint: str = Field(alias="azure_api_endpoint")
     api_key: str = Field(alias="azure_api_key")
-    base_path: str = ""
+    base_path: str = Field("", alias="api_base_path")
     fertiscan_db_url: PostgresDsn
     fertiscan_schema: str
     fertiscan_storage_url: str
@@ -20,13 +22,22 @@ class Settings(BaseSettings):
     openai_api_endpoint: str = Field(alias="azure_openai_endpoint")
     openai_api_key: str = Field(alias="azure_openai_key")
     otel_exporter_otlp_endpoint: str | None = None
-    swagger_base_path: str = ""
     swagger_path: str = "/docs"
     upload_folder: str = "uploads"
     testing: str = "false"
 
 
-def configure(app: FastAPI, settings: Settings):
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.pool.open()
+    yield
+    app.pool.close()
+
+
+def create_app(settings: Settings):
+    app = FastAPI(
+        lifespan=lifespan, docs_url=settings.swagger_path, root_path=settings.base_path
+    )
     pool = ConnectionPool(
         open=False,
         conninfo=settings.fertiscan_db_url.unicode_string(),
