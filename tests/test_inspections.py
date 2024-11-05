@@ -10,12 +10,13 @@ from fertiscan.db.queries.inspection import (
 
 from app.controllers.inspections import (
     create_inspection,
+    delete_inspection,
     read_all_inspections,
     read_inspection,
     update_inspection,
 )
 from app.exceptions import InspectionNotFoundError, MissingUserAttributeError
-from app.models.inspections import Inspection, InspectionUpdate
+from app.models.inspections import DeletedInspection, Inspection, InspectionUpdate
 from app.models.label_data import LabelData
 from app.models.users import User
 
@@ -398,3 +399,80 @@ class TestUpdateFunction(unittest.IsolatedAsyncioTestCase):
             await update_inspection(
                 self.cp, self.user, self.inspection_id, self.inspection_update
             )
+
+
+class TestDeleteFunction(unittest.IsolatedAsyncioTestCase):
+    async def test_missing_user_id_raises_error(self):
+        cp = MagicMock()
+        user = User(id=None)
+        inspection_id = uuid.uuid4()
+        connection_string = "fake_conn_str"
+
+        with self.assertRaises(MissingUserAttributeError):
+            await delete_inspection(cp, user, inspection_id, connection_string)
+
+    async def test_missing_inspection_id_raises_error(self):
+        cp = MagicMock()
+        user = User(id=uuid.uuid4())
+        connection_string = "fake_conn_str"
+
+        with self.assertRaises(ValueError):
+            await delete_inspection(cp, user, None, connection_string)
+
+    async def test_missing_connection_string_raises_error(self):
+        cp = MagicMock()
+        user = User(id=uuid.uuid4())
+        inspection_id = uuid.uuid4()
+
+        with self.assertRaises(ValueError):
+            await delete_inspection(cp, user, inspection_id, None)
+
+    async def test_invalid_inspection_id_format(self):
+        cp = MagicMock()
+        user = User(id=uuid.uuid4())
+        invalid_id = "not-a-uuid"
+        connection_string = "fake_conn_str"
+
+        with self.assertRaises(ValueError):
+            await delete_inspection(cp, user, invalid_id, connection_string)
+
+    @patch("app.controllers.inspections.db_delete_inspection")
+    @patch("app.controllers.inspections.ContainerClient")
+    async def test_delete_inspection_success(
+        self, mock_container_client, mock_db_delete_inspection
+    ):
+        cp = MagicMock()
+        conn_mock = MagicMock()
+        cursor_mock = MagicMock()
+        conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
+        cp.connection.return_value.__enter__.return_value = conn_mock
+
+        user = User(id=uuid.uuid4())
+        inspection_id = uuid.uuid4()
+        connection_string = "fake_conn_str"
+
+        mock_deleted_inspection_data = {
+            "id": inspection_id,
+            "deleted": True,
+        }
+        mock_db_delete_inspection.return_value = DeletedInspection(
+            **mock_deleted_inspection_data
+        )
+
+        container_client_instance = (
+            mock_container_client.from_connection_string.return_value
+        )
+
+        deleted_inspection = await delete_inspection(
+            cp, user, inspection_id, connection_string
+        )
+
+        mock_container_client.from_connection_string.assert_called_once_with(
+            connection_string, container_name=f"user-{user.id}"
+        )
+        mock_db_delete_inspection.assert_called_once_with(
+            cursor_mock, inspection_id, user.id, container_client_instance
+        )
+        self.assertIsInstance(deleted_inspection, DeletedInspection)
+        self.assertEqual(deleted_inspection.id, inspection_id)
+        self.assertTrue(deleted_inspection.deleted)

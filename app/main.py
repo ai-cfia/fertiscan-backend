@@ -1,16 +1,17 @@
 from http import HTTPStatus
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, RedirectResponse
 from pipeline import GPT, OCR
 from psycopg_pool import ConnectionPool
-from pydantic import UUID4
 
 from app.config import Settings, create_app
 from app.controllers.data_extraction import extract_data
 from app.controllers.inspections import (
     create_inspection,
+    delete_inspection,
     read_all_inspections,
     read_inspection,
     update_inspection,
@@ -26,7 +27,12 @@ from app.dependencies import (
     validate_files,
 )
 from app.exceptions import InspectionNotFoundError, UserConflictError, log_error
-from app.models.inspections import Inspection, InspectionData, InspectionUpdate
+from app.models.inspections import (
+    DeletedInspection,
+    Inspection,
+    InspectionData,
+    InspectionUpdate,
+)
 from app.models.label_data import LabelData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
@@ -91,7 +97,7 @@ async def get_inspections(
 async def get_inspection(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
-    id: UUID4,
+    id: UUID,
 ):
     try:
         return await read_inspection(cp, user, id)
@@ -119,11 +125,27 @@ async def post_inspection(
 async def put_inspection(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
-    id: UUID4,
+    id: UUID,
     inspection: InspectionUpdate,
 ):
     try:
         return await update_inspection(cp, user, id, inspection)
+    except InspectionNotFoundError:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
+        )
+
+
+@app.delete("/inspections/{id}", tags=["Inspections"], response_model=DeletedInspection)
+async def delete_inspection_(
+    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
+    user: Annotated[User, Depends(fetch_user)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    id: UUID,
+):
+    try:
+        conn_string = settings.fertiscan_storage_url
+        return await delete_inspection(cp, user, id, conn_string)
     except InspectionNotFoundError:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
