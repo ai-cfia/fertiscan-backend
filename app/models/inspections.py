@@ -5,7 +5,7 @@ from pydantic import UUID4, BaseModel
 
 
 class InspectionData(BaseModel):
-    id: UUID4
+    inspection_id: UUID4
     upload_date: datetime
     updated_at: datetime | None = None
     sample_id: UUID4 | None = None

@@ -46,7 +46,7 @@ async def read_all_inspections(cp: ConnectionPool, user: User):
         # Flatten and transform results into InspectionData objects
         inspections = [
             InspectionData(
-                id=entry[0],
+                inspection_id=entry[0],
                 upload_date=entry[1],
                 updated_at=entry[2],
                 sample_id=entry[3],
