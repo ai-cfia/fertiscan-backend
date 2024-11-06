@@ -1,4 +1,4 @@
-python-dotenv
+python-dotenv==1.0.1
 git+https://github.com/ai-cfia/fertiscan-pipeline.git@v0.0.6
 git+https://github.com/ai-cfia/ailab-datastore.git@v1.0.1-fertiscan-datastore
 psycopg[pool]
@@ -9,5 +9,5 @@ opentelemetry-instrumentation==0.48b0
 opentelemetry-instrumentation-fastapi==0.48b0
 opentelemetry-instrumentation-logging==0.48b0
 openinference-instrumentation-dspy==0.1.13
-fastapi[standard]
-pydantic-settings
+fastapi[standard]==0.115.4
+pydantic-settings==2.6.1

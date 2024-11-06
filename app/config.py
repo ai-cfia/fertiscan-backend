@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pipeline import GPT, OCR
 from psycopg_pool import ConnectionPool
 from pydantic import Field, PostgresDsn
@@ -17,14 +18,13 @@ class Settings(BaseSettings):
     fertiscan_db_url: PostgresDsn
     fertiscan_schema: str
     fertiscan_storage_url: str
-    frontend_url: str = "*"
     openai_api_deployment: str = Field(alias="azure_openai_deployment")
     openai_api_endpoint: str = Field(alias="azure_openai_endpoint")
     openai_api_key: str = Field(alias="azure_openai_key")
     otel_exporter_otlp_endpoint: str | None = None
     swagger_path: str = "/docs"
     upload_folder: str = "uploads"
-    testing: str = "false"
+    allowed_origins: list[str] = Field(alias="frontend_url")
 
 
 @asynccontextmanager
@@ -38,6 +38,15 @@ def create_app(settings: Settings):
     app = FastAPI(
         lifespan=lifespan, docs_url=settings.swagger_path, root_path=settings.base_path
     )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     pool = ConnectionPool(
         open=False,
         conninfo=settings.fertiscan_db_url.unicode_string(),
@@ -45,11 +54,9 @@ def create_app(settings: Settings):
     )
     app.pool = pool
 
-    # Initialize OCR
     ocr = OCR(api_endpoint=settings.api_endpoint, api_key=settings.api_key)
     app.ocr = ocr
 
-    # Initialize GPT
     gpt = GPT(
         api_endpoint=settings.openai_api_endpoint,
         api_key=settings.openai_api_key,
@@ -57,4 +64,5 @@ def create_app(settings: Settings):
         phoenix_endpoint=settings.otel_exporter_otlp_endpoint,
     )
     app.gpt = gpt
+
     return app
