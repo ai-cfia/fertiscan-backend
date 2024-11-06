@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     otel_exporter_otlp_endpoint: str | None = None
     swagger_path: str = "/docs"
     upload_folder: str = "uploads"
-    allowed_origins: list[str] = Field(["*"], alias="frontend_url")
+    allowed_origins: list[str] = Field(alias="frontend_url")
 
 
 @asynccontextmanager
