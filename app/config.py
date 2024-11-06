@@ -1,5 +1,4 @@
 from contextlib import asynccontextmanager
-from typing import Set
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -19,7 +18,6 @@ class Settings(BaseSettings):
     fertiscan_db_url: PostgresDsn
     fertiscan_schema: str
     fertiscan_storage_url: str
-    # frontend_url: list[str] = []
     openai_api_deployment: str = Field(alias="azure_openai_deployment")
     openai_api_endpoint: str = Field(alias="azure_openai_endpoint")
     openai_api_key: str = Field(alias="azure_openai_key")
