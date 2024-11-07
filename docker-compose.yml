@@ -36,15 +36,27 @@ services:
     restart: always
     env_file:
       - .env
+    environment:
+    - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
+    - OTEL_EXPORTER_OTLP_INSECURE=true
+    - OTEL_TRACES_EXPORTER=otlp
+    - OTEL_METRICS_EXPORTER=otlp
+    - OTEL_LOGS_EXPORTER=otlp
+    - OTEL_PYTHON_LOG_CORRELATION=true
+    - OTEL_TRACES_SAMPLER=always_on
+    - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
+    - OTEL_PYTHON_LOGGING_LOG_LEVEL=DEBUG
+    - OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST=".*"
+    - OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_RESPONSE=".*"
+    - OTEL_PYTHON_FASTAPI_EXCLUDED_URLS="health"
+    - OTEL_SERVICE_NAME="fertiscan-backend"
+    - OTEL_RESOURCE_ATTRIBUTES="service.name=fertiscan-backend"
+    - OTEL_LOG_LEVEL=DEBUG
+    - ALLOWED_ORIGINS=["http://localhost:3000"]
     depends_on:
       - postgres
     ports:
       - "5001:5000" # if you want to run the backend on a different port, change the first port number
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
     networks:
       - fertiscan-network
 
@@ -92,6 +104,68 @@ services:
     depends_on:
       - postgres
 
+  prometheus:
+    image: ghcr.io/ai-cfia/prometheus:0.0.2
+    container_name: prometheus
+    environment:
+      - ENABLE_BACKEND_METRICS=false
+    ports:
+      - "9090:9090"
+    networks:
+      - fertiscan-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_FEATURE_TOGGLES_ENABLE=flameGraph traceqlSearch traceQLStreaming correlations metricsSummary traceqlEditor traceToMetrics datatrails
+      - GF_INSTALL_PLUGINS=grafana-lokiexplore-app,grafana-exploretraces-app
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    networks:
+      - fertiscan-network
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+
+  loki:
+    image: ghcr.io/ai-cfia/loki:0.0.1
+    container_name: loki
+    ports:
+      - "3100:3100"
+    user: root
+    volumes:
+      - "loki-data:/data/loki"
+    networks:
+      - fertiscan-network
+
+
+  tempo:
+    image: ghcr.io/ai-cfia/tempo:0.0.1
+    container_name: tempo
+    ports:
+      - "3200:3200"
+      - "4327:4317"
+      - "4328:4318"
+    networks:
+      - fertiscan-network
+
+  alloy:
+    image: ghcr.io/ai-cfia/alloy:0.0.1
+    container_name: alloy
+    ports:
+      - "12347:12345"
+      - "4317:4317"
+      - "4318:4318"
+    networks:
+      - fertiscan-network
+
 networks:
   fertiscan-network:
     driver: bridge
@@ -99,3 +173,5 @@ networks:
 volumes:
   postgres-data:
   pgadmin:
+  grafana_data:
+  loki-data:

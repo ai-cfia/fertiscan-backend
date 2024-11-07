@@ -8,20 +8,20 @@
 
 The `/analyze` route serves to:
 
-- **Upload and Process Documents**: Allows clients to upload
- images of documents for analysis.
+- **Upload and Process Documents**: Allows clients to upload images of documents
+ for analysis.
 - **Extract and Structure Data**: Utilizes Azure Document Intelligence to
  extract text and layout information from the uploaded documents.
 - **Generate Forms**: Uses OpenAI's GPT-4 to generate a structured JSON
- inspection containing all the necessary information extracted from the document.
+ inspection containing all the necessary information extracted from the
+ document.
 - **Provide Responses**: Returns the generated inspection to the client,
- facilitating the inspection and validation processes
- by providing all relevant data in a structured format.
+ facilitating the inspection and validation processes by providing all relevant
+ data in a structured format.
 
-In essence, the `/analyze` route automates the
- extraction and structuring of data from documents, significantly
- simplifying the workflow for
- users who need to process and analyze document content.
+In essence, the `/analyze` route automates the extraction and structuring of
+ data from documents, significantly simplifying the workflow for users who need
+ to process and analyze document content.
 
 ## Deployment
 
@@ -39,8 +39,8 @@ In essence, the `/analyze` route automates the
 
 ### Database
 
-- **Description**: The database where the
- information on fertiliser and labels is stored.
+- **Description**: The database where the information on fertiliser and labels
+ is stored.
 - **Repository**: <https://github.com/ai-cfia/ailab-datastore/>
 
 ## API Endpoints
@@ -80,3 +80,8 @@ Retrieve a list of inspections matching the search query.
 ![search](../out/get_inspections_dss/FertiScan%20Sequence%20Diagram.png)
 
 v1.0.0
+
+## Instrumentation
+
+For monitoring and logging, refer to the [following
+documentation.](./otel/README.md)

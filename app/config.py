@@ -8,8 +8,19 @@ from psycopg_pool import ConnectionPool
 from pydantic import Field, PostgresDsn
 from pydantic_settings import BaseSettings
 
-load_dotenv()
+from opentelemetry import trace
+from opentelemetry._logs import set_logger_provider
+from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
+from fastapi.logger import logger
+
+load_dotenv()
 
 class Settings(BaseSettings):
     api_endpoint: str = Field(alias="azure_api_endpoint")
@@ -21,23 +32,47 @@ class Settings(BaseSettings):
     openai_api_deployment: str = Field(alias="azure_openai_deployment")
     openai_api_endpoint: str = Field(alias="azure_openai_endpoint")
     openai_api_key: str = Field(alias="azure_openai_key")
-    otel_exporter_otlp_endpoint: str | None = None
+    phoenix_endpoint: str | None = None
     swagger_path: str = "/docs"
     upload_folder: str = "uploads"
-    allowed_origins: list[str] = Field(alias="frontend_url")
-
+    allowed_origins: list[str]
+    otel_exporter_otlp_endpoint: str = Field(alias="otel_exporter_otlp_endpoint")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    settings = app.state.settings
     app.pool.open()
+    resource = Resource.create(
+        {
+            "service.name": "fertiscan-backend",
+        }
+    )
+
+    # Tracing setup
+    tracer_provider = TracerProvider(resource=resource)
+    trace.set_tracer_provider(tracer_provider)
+    tracer_provider.add_span_processor(
+        BatchSpanProcessor(OTLPSpanExporter(endpoint=settings.otel_exporter_otlp_endpoint, insecure=True))
+    )
+    # Logging setup
+    logger_provider = LoggerProvider(resource=resource)
+    set_logger_provider(logger_provider)
+    logger_provider.add_log_record_processor(
+        BatchLogRecordProcessor(OTLPLogExporter(endpoint=settings.otel_exporter_otlp_endpoint, insecure=True))
+    )
+    handler = LoggingHandler(logger_provider=logger_provider)
+    logger.addHandler(handler)
     yield
     app.pool.close()
+    logger_provider.shutdown()
+    tracer_provider.shutdown()
 
 
 def create_app(settings: Settings):
     app = FastAPI(
         lifespan=lifespan, docs_url=settings.swagger_path, root_path=settings.base_path
     )
+    app.state.settings = settings
 
     app.add_middleware(
         CORSMiddleware,
@@ -61,7 +96,7 @@ def create_app(settings: Settings):
         api_endpoint=settings.openai_api_endpoint,
         api_key=settings.openai_api_key,
         deployment_id=settings.openai_api_deployment,
-        phoenix_endpoint=settings.otel_exporter_otlp_endpoint,
+        phoenix_endpoint=settings.phoenix_endpoint,
     )
     app.gpt = gpt
 
