@@ -100,7 +100,8 @@ the repository
 To start the application and associated services, use the following command:
 
 ```bash
-docker-compose up -d
+# Make sure you run `--build` once. then yoy can omit it.
+docker-compose up --build -d
 ```
 
 ### Accessing Monitoring Tools
