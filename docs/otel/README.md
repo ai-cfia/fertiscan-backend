@@ -15,8 +15,8 @@ receiver, forwarding logs to Loki and traces to Tempo.
 
 ### FastAPI Application Code
 
-The code below demonstrates how we set up in `app/config.py` tracing and logging in the
-`fertiscan-backend` service using OpenTelemetry. This configuration uses
+The code below demonstrates how we set up in `app/config.py` tracing and logging
+in the `fertiscan-backend` service using OpenTelemetry. This configuration uses
 FastAPI's `lifespan` parameter, a context manager that allows controlled setup
 and shutdown of resources (in this case, OpenTelemetry's logging and tracing
 providers).
