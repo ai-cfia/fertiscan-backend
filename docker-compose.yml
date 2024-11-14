@@ -18,7 +18,7 @@ services:
       - fertiscan-network
 
   frontend:
-    image: ghcr.io/ai-cfia/fertiscan-frontend:main
+    image: ghcr.io/ai-cfia/fertiscan-frontend:304-adapt-alpha-v100-to-fastapi-backend-and-minor-fixes
     container_name: frontend
     restart: always
     ports:
@@ -53,6 +53,7 @@ services:
     - OTEL_RESOURCE_ATTRIBUTES="service.name=fertiscan-backend"
     - OTEL_LOG_LEVEL=DEBUG
     - ALLOWED_ORIGINS=["http://localhost:3000"]
+    - PHOENIX_ENDPOINT=http://phoenix:6006/v1/traces
     depends_on:
       - postgres
     ports:
@@ -166,6 +167,36 @@ services:
     networks:
       - fertiscan-network
 
+  phoenix:
+    container_name: phoenix
+    image: arizephoenix/phoenix:latest
+    restart: always
+    depends_on:
+      - phoenix-postgres
+    ports:
+      - 6006:6006
+      - 4343:4317
+    environment:
+      - PHOENIX_SQL_DATABASE_URL=postgresql://postgres:postgres@phoenix-postgres:5432/postgres
+    networks:
+      - fertiscan-network
+
+  phoenix-postgres:
+    container_name: phoenix-postgres
+    image: postgres:16
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - 5433:5432
+    networks:
+      - fertiscan-network
+    volumes:
+      - phoenix-postgres-data:/var/lib/postgresql/data
+
+
 networks:
   fertiscan-network:
     driver: bridge
@@ -175,3 +206,4 @@ volumes:
   pgadmin:
   grafana_data:
   loki-data:
+  phoenix-postgres-data:

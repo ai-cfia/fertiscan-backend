@@ -5,9 +5,11 @@ The application is instrumented with
 traces and logs. This setup uses **programmatic instrumentation**, providing
 control over how OpenTelemetry is initialized and avoiding potential issues with
 zero-code instrumentation. This allows us to send traces and logs from FastAPI
-endpoints to an OpenTelemetry collector, where
-[Alloy](https://grafana.com/docs/alloy/latest/) acts as the centralized
-receiver, forwarding logs to Loki and traces to Tempo.
+endpoints to an OpenTelemetry collector. The traces and logs can be routed to
+[Alloy](https://grafana.com/docs/alloy/latest/) (centralized receiver for logs
+and traces sent to Loki and Tempo) or
+[Phoenix](https://github.com/Arize-ai/phoenix) ( AI observability platform)
+based on the configuration.
 
 ---
 
@@ -82,25 +84,37 @@ In this code:
 4. **Logging Handler**: The `LoggingHandler` attaches to FastAPI’s `logger`
    module, ensuring all logs are processed by OpenTelemetry's provider.
 
+### Phoenix Trace Routing
+
+To enable **Phoenix** as the trace receiver, set the `PHOENIX_ENDPOINT`
+environment variable to `http://phoenix:6006/v1/traces`. When this variable is
+set, traces are routed to Phoenix; otherwise, the traces will default to
+**Alloy-Tempo** instance.
+
+- **Phoenix enabled (default in `docker-compose.yml`)**: Traces are sent to
+  Phoenix.
+- **Phoenix disabled (remove or comment `PHOENIX_ENDPOINT`)**: Traces route to
+  Alloy’s Tempo instance.
+
 ### Docker Compose Configuration
 
 The `docker-compose.yml` emulates our production environment, with the
 OpenTelemetry collector and related components configured to handle and display
-telemetry data.
+telemetry data. Phoenix’s configuration is included to provide additional AI
+observability, dataset versioning, and evaluation functionalities.
 
-You will notice that some services are configured with custom image from our
+You will notice that some services are configured with custom images from our
 Docker registry. This is because we have built custom images for these services
-with their respective configuration as mean to prevent any misconfiguration and
-cluttering the current repository. Their respective Dockerfiles can be found in
-the repository
-[Devops](https://github.com/ai-cfia/devops/tree/main/dockerfiles).
+to streamline configuration and prevent misconfiguration. Their respective
+Dockerfiles can be found in the
+[Devops](https://github.com/ai-cfia/devops/tree/main/dockerfiles) repository.
 
 ## Running the Application
 
 To start the application and associated services, use the following command:
 
 ```bash
-# Make sure you run `--build` once. then yoy can omit it.
+# Make sure you run `--build` once, then you can omit it.
 docker-compose up --build -d
 ```
 
@@ -111,6 +125,8 @@ debugging:
 
 - **Grafana (for visualization)**: Visit `http://localhost:3001` and configure
   Grafana to use Tempo and Loki as data sources.
+- **Phoenix (for AI observability)**: Visit `http://localhost:6006` to view
+  trace data, datasets, and experiment tracking.
 - **Prometheus (for metrics)**: Accessible at `http://localhost:9090`.
 - **pgAdmin (for database management)**: Accessible at `http://localhost:5050`.
 
@@ -125,4 +141,4 @@ debugging:
 
 This setup ensures that logs, traces, and metrics are correctly collected and
 visualized, providing a comprehensive view of application performance and
-behavior across services.
+behavior across services, with optional AI observability through Phoenix.
