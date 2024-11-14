@@ -58,7 +58,7 @@ generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
     --build-arg ARG_FERTISCAN_STORAGE_URL=your_fertiscan_storage_url \
     --build-arg ARG_FERTISCAN_DB_URL=your_fertiscan_db_url \
     --build-arg ARG_FERTISCAN_SCHEMA=your_fertiscan_schema \
-    --build-arg ARG_FRONTEND_URL=http://url.to_frontend/ \
+    --build-arg ARG_ALLOWED_ORIGINS=["http://url.to_frontend/"] \
     --build-arg OTEL_EXPORTER_OTLP_ENDPOINT=your_phoenix_endpoint \
     --build-arg ARG_PROMPT_PATH=path/to/file \
     --build-arg ARG_UPLOAD_PATH=path/to/file \
@@ -124,7 +124,7 @@ FERTISCAN_DB_URL=your_fertiscan_db_url
 FERTISCAN_SCHEMA=your_fertiscan_schema
 
 UPLOAD_PATH=path/to/file
-FRONTEND_URL=http://url.to_frontend/
+ALLOWED_ORIGINS=["http://url.to_frontend/"]
 ```
 
 ## API Endpoints

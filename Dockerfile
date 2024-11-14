@@ -5,6 +5,7 @@ WORKDIR /app
 COPY . .
 
 RUN pip install --no-cache-dir -r requirements.txt
+RUN opentelemetry-bootstrap --action=install
 
 ARG ARG_AZURE_API_ENDPOINT
 ARG ARG_AZURE_API_KEY
@@ -14,7 +15,7 @@ ARG ARG_AZURE_OPENAI_KEY
 ARG ARG_FERTISCAN_STORAGE_URL
 ARG ARG_FERTISCAN_DB_URL
 ARG ARG_FERTISCAN_SCHEMA
-ARG ARG_FRONTEND_URL
+ARG ARG_ALLOWED_ORIGINS
 ARG ARG_PROMPT_PATH
 ARG ARG_UPLOAD_PATH
 
@@ -26,7 +27,7 @@ ENV AZURE_OPENAI_KEY=${ARG_AZURE_OPENAI_KEY:-your_azure_openai_key}
 ENV FERTISCAN_STORAGE_URL=${ARG_FERTISCAN_STORAGE_URL:-your_fertiscan_storage_url}
 ENV FERTISCAN_DB_URL=${ARG_FERTISCAN_DB_URL:-your_fertiscan_db_url}
 ENV FERTISCAN_SCHEMA=${ARG_FERTISCAN_SCHEMA:-your_fertiscan_schema}
-ENV FRONTEND_URL=${ARG_FRONTEND_URL:-http://url.to_frontend/}
+ENV ALLOWED_ORIGINS=${ARG_ALLOWED_ORIGINS:-["http://url.to_frontend/"]}
 ENV PROMPT_PATH=${ARG_PROMPT_PATH:-path/to/file}
 ENV UPLOAD_PATH=${ARG_UPLOAD_PATH:-path/to/file}
 
@@ -36,8 +37,6 @@ RUN chown -R 1000:1000 /app
 RUN mkdir -p /cachedir_joblib && chown -R 1000:1000 /cachedir_joblib
 RUN mkdir -p /.dspy_cache && chown -R 1000:1000 /.dspy_cache
 
-RUN opentelemetry-bootstrap --action=install
-
 USER 1000
 
-CMD ["opentelemetry-instrument", "fastapi", "run", "app/main.py", "--port", "5000"]
+CMD ["opentelemetry-instrument", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5000"]

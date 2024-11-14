@@ -87,7 +87,7 @@ Follow the guidelines in
     --build-arg ARG_AZURE_OPENAI_API_KEY=your_azure_openai_key \
     --build-arg ARG_PROMPT_PATH=path/to/prompt_file \
     --build-arg ARG_UPLOAD_PATH=path/to/upload_file \
-    --build-arg ARG_FRONTEND_URL=http://url.to_frontend/ \
+    --build-arg ALLOWED_ORIGINS=["http://url.to_frontend/"] \
     .
     ```
 
@@ -110,7 +110,7 @@ AZURE_OPENAI_DEPLOYMENT=your_azure_openai_deployment
 
 PROMPT_PATH=path/to/file
 UPLOAD_PATH=path/to/file
-FRONTEND_URL=http://url.to_frontend/
+ALLOWED_ORIGINS=["http://url.to_frontend/"]
 ```
 
 ## Style Guides
