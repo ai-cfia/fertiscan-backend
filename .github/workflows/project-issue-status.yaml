@@ -1,0 +1,19 @@
+name: Project issue status workflow
+
+on:
+  issues:
+    types:
+      - opened
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
+      - ready_for_review
+      - converted_to_draft
+
+jobs:
+  issue-status:
+    uses: ai-cfia/github-workflows/.github/workflows/workflow-issue-status.yml@main
+    secrets: inherit
