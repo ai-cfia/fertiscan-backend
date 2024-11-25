@@ -18,8 +18,8 @@ from app.controllers.inspections import (
 )
 from app.controllers.users import sign_up
 from app.dependencies import (
-    authenticate_user,
-    fetch_user,
+    authenticate_user_oauth2,
+    fetch_user_oauth2,
     get_connection_pool,
     get_gpt,
     get_ocr,
@@ -36,6 +36,7 @@ from app.models.inspections import (
 from app.models.label_data import LabelData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
+from app.models.jwt import Token
 from app.sanitization import custom_secure_filename
 
 app = create_app(get_settings())
@@ -71,7 +72,7 @@ async def analyze_document(
 @app.post("/signup", tags=["Users"], status_code=201, response_model=User)
 async def signup(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
-    user: Annotated[User, Depends(authenticate_user)],
+    user: Annotated[User, Depends(authenticate_user_oauth2)],
     settings: Annotated[Settings, Depends(get_settings)],
 ):
     try:
@@ -80,15 +81,21 @@ async def signup(
         raise HTTPException(status_code=HTTPStatus.CONFLICT, detail="User exists!")
 
 
-@app.post("/login", tags=["Users"], status_code=200, response_model=User)
-async def login(user: User = Depends(fetch_user)):
-    return user
-
+# @app.post("/login", tags=["Users"], status_code=200, response_model=User)
+# async def login(user: User = Depends(fetch_user)):
+#     return  user
+    
+@app.post("/token", tags=["Users"], status_code=200, response_model=Token)
+async def login(token: Token = Depends(fetch_user_oauth2)):
+# async def login(token):
+    print(token)
+    return  token
+    
 
 @app.get("/inspections", tags=["Inspections"], response_model=list[InspectionData])
 async def get_inspections(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
-    user: User = Depends(fetch_user),
+    user: User = Depends(fetch_user_oauth2),
 ):
     return await read_all_inspections(cp, user)
 
@@ -96,7 +103,7 @@ async def get_inspections(
 @app.get("/inspections/{id}", tags=["Inspections"], response_model=Inspection)
 async def get_inspection(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
-    user: Annotated[User, Depends(fetch_user)],
+    user: Annotated[User, Depends(fetch_user_oauth2)],
     id: UUID,
 ):
     try:
@@ -110,7 +117,7 @@ async def get_inspection(
 @app.post("/inspections", tags=["Inspections"], response_model=Inspection)
 async def post_inspection(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
-    user: Annotated[User, Depends(fetch_user)],
+    user: Annotated[User, Depends(fetch_user_oauth2)],
     settings: Annotated[Settings, Depends(get_settings)],
     label_data: Annotated[LabelData, Form(...)],
     files: Annotated[list[UploadFile], Depends(validate_files)],
@@ -124,7 +131,7 @@ async def post_inspection(
 @app.put("/inspections/{id}", tags=["Inspections"], response_model=Inspection)
 async def put_inspection(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
-    user: Annotated[User, Depends(fetch_user)],
+    user: Annotated[User, Depends(fetch_user_oauth2)],
     id: UUID,
     inspection: InspectionUpdate,
 ):
@@ -139,7 +146,7 @@ async def put_inspection(
 @app.delete("/inspections/{id}", tags=["Inspections"], response_model=DeletedInspection)
 async def delete_inspection_(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
-    user: Annotated[User, Depends(fetch_user)],
+    user: Annotated[User, Depends(fetch_user_oauth2)],
     settings: Annotated[Settings, Depends(get_settings)],
     id: UUID,
 ):
