@@ -1,23 +1,24 @@
 from typing import Annotated
 from functools import lru_cache
 from http import HTTPStatus
-
 from fastapi import Depends, File, HTTPException, Request, UploadFile
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pipeline import GPT, OCR
 from psycopg_pool import ConnectionPool
-
 from app.config import Settings
-
 from app.controllers.users import sign_in
 from app.exceptions import UserNotFoundError
 from app.models.users import User
 from app.models.jwt import Token
 
+import jwt
+
 auth = HTTPBasic()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+
+SECRET_KEY = "your_secret_key"
+ALGORITHM = "HS256"
 
 @lru_cache
 def get_settings():
@@ -45,52 +46,58 @@ def get_gpt(request: Request) -> GPT:
     return request.app.gpt
 
 
-def authenticate_user(credentials: HTTPBasicCredentials = Depends(auth)):
+def get_user(form_data: OAuth2PasswordRequestForm = Depends()):
     """
-    Authenticates a user.
+    Fetches the user's credentials.
     """
-    if not credentials.username:
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail="Missing email address!"
-        )
-
-    return User(username=credentials.username)
-
-def authenticate_user_oauth2(form_data: OAuth2PasswordRequestForm = Depends(oauth2_scheme)):
-    """
-    Authenticates a user.
-    """
-    if not form_data.username:
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail="Missing email address!"
-        )
-
     return User(username=form_data.username)
 
-async def fetch_user(
-    auth_user: User = Depends(authenticate_user),
+def get_username(token: str = Depends(oauth2_scheme)) -> User:
+    """
+    Fetches the current user.
+    """
+    credentials_exception = HTTPException(
+        status_code=HTTPStatus.UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        return User(username=username)
+    except Exception:
+        raise credentials_exception
+
+async def auth_user(
+    user: User = Depends(get_user),
     cp: ConnectionPool = Depends(get_connection_pool),
-) -> User:
+) -> Token:
     """
     Fetches the authenticated user's info from db.
     """
     try:
-        return await sign_in(cp, auth_user)
+        user = await sign_in(cp, user)
+        return Token(
+            user=user,
+            token_type="bearer",
+            access_token=jwt.encode({"sub": user.username}, SECRET_KEY, algorithm=ALGORITHM),
+        )
     except UserNotFoundError:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED, detail="Invalid username or password"
         )
 
-async def fetch_user_oauth2(
-    auth_user: User = Depends(authenticate_user_oauth2),
+async def fetch_user(
+    username: Annotated[User, Depends(get_username)],
     cp: ConnectionPool = Depends(get_connection_pool),
 ) -> User:
     """
-    Fetches the authenticated user's info from db.
+    Fetches the current authenticated user.
     """
     try:
-        user = await sign_in(cp, auth_user)
-        return Token(access_token=user.username, token_type="bearer", user=user)
+        return await sign_in(cp, username)
     except UserNotFoundError:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED, detail="Invalid username or password"
