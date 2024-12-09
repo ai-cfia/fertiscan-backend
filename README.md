@@ -49,32 +49,20 @@ generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
 1. Build the Docker image:
 
     ```sh
-    docker build -t fertiscan-backend \
-    --build-arg ARG_AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint \
-    --build-arg ARG_AZURE_API_KEY=your_azure_form_recognizer_key \
-    --build-arg ARG_AZURE_OPENAI_DEPLOYMENT=your_azure_openai_deployment \
-    --build-arg ARG_AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint \
-    --build-arg ARG_AZURE_OPENAI_KEY=your_azure_openai_key \
-    --build-arg ARG_FERTISCAN_STORAGE_URL=your_fertiscan_storage_url \
-    --build-arg ARG_FERTISCAN_DB_URL=your_fertiscan_db_url \
-    --build-arg ARG_FERTISCAN_SCHEMA=your_fertiscan_schema \
-    --build-arg ARG_ALLOWED_ORIGINS=["http://url.to_frontend/"] \
-    --build-arg OTEL_EXPORTER_OTLP_ENDPOINT=your_phoenix_endpoint \
-    --build-arg ARG_PROMPT_PATH=path/to/file \
-    --build-arg ARG_UPLOAD_PATH=path/to/file \
-    .
+    docker build -t fertiscan-backend .
     ```
 
 2. Run the Docker container:
 
     ```sh
-    docker run -p 5000:5000 fertiscan-backend
+    docker run -p 5000:5000 --env-file secrets.env fertiscan-backend
     ```
 
 #### Docker Compose
 
-1. Create a `.env` file from [.env.template](./.env.template). Include the
-   following environment variables:
+1. Create a `secrets.env` file from
+   [secrets.env.template](./secrets.env.template). Include the following
+   environment variables:
 
     ```ini
     FERTISCAN_DB_URL=postgresql://postgres:postgres@postgres:5432/fertiscan
@@ -111,7 +99,7 @@ following details:
 
 ### Environment Variables
 
-Create a `.env` file from [.env.template](./.env.template).
+Create a `secrets.env` file from [secrets.env.template](./secrets.env.template).
 
 ```ini
 AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint

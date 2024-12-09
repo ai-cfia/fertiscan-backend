@@ -2,12 +2,8 @@ from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.logger import logger
 from fastapi.middleware.cors import CORSMiddleware
-from pipeline import GPT, OCR
-from psycopg_pool import ConnectionPool
-from pydantic import Field, PostgresDsn
-from pydantic_settings import BaseSettings
-
 from opentelemetry import trace
 from opentelemetry._logs import set_logger_provider
 from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
@@ -17,10 +13,14 @@ from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from pipeline import GPT, OCR
+from psycopg_pool import ConnectionPool
+from pydantic import Field, PostgresDsn
+from pydantic_settings import BaseSettings
 
-from fastapi.logger import logger
+load_dotenv("secrets.env")
+load_dotenv("config.env")
 
-load_dotenv()
 
 class Settings(BaseSettings):
     api_endpoint: str = Field(alias="azure_api_endpoint")
@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     allowed_origins: list[str]
     otel_exporter_otlp_endpoint: str = Field(alias="otel_exporter_otlp_endpoint")
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = app.state.settings
@@ -52,13 +53,21 @@ async def lifespan(app: FastAPI):
     tracer_provider = TracerProvider(resource=resource)
     trace.set_tracer_provider(tracer_provider)
     tracer_provider.add_span_processor(
-        BatchSpanProcessor(OTLPSpanExporter(endpoint=settings.otel_exporter_otlp_endpoint, insecure=True))
+        BatchSpanProcessor(
+            OTLPSpanExporter(
+                endpoint=settings.otel_exporter_otlp_endpoint, insecure=True
+            )
+        )
     )
     # Logging setup
     logger_provider = LoggerProvider(resource=resource)
     set_logger_provider(logger_provider)
     logger_provider.add_log_record_processor(
-        BatchLogRecordProcessor(OTLPLogExporter(endpoint=settings.otel_exporter_otlp_endpoint, insecure=True))
+        BatchLogRecordProcessor(
+            OTLPLogExporter(
+                endpoint=settings.otel_exporter_otlp_endpoint, insecure=True
+            )
+        )
     )
     handler = LoggingHandler(logger_provider=logger_provider)
     logger.addHandler(handler)
