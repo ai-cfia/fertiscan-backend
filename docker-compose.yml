@@ -35,7 +35,7 @@ services:
     container_name: backend
     restart: always
     env_file:
-      - .env
+      - secrets.env
     environment:
     - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
     - OTEL_EXPORTER_OTLP_INSECURE=true
@@ -76,7 +76,7 @@ services:
       - INSTANCE_ID=${BB_INSTANCE_ID}
       - DATABASE_ID=${BB_DATABASE_ID}
     env_file:
-      - .env
+      - secrets.env
     ports:
       - "5432:5432"
     healthcheck:
