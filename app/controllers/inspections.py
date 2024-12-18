@@ -8,6 +8,9 @@ from fertiscan import (
     get_user_analysis_by_verified,
     register_analysis,
 )
+from datastore.db.queries.picture import (
+    get_picture_set_pictures
+)
 from fertiscan import update_inspection as db_update_inspection
 from fertiscan.db.queries.inspection import (
     InspectionNotFoundError as DBInspectionNotFoundError,
@@ -70,6 +73,24 @@ async def read_all_inspections(cp: ConnectionPool, user: User):
 
         return inspections
 
+async def get_pictures(cp: ConnectionPool, user: User, id: UUID | str):
+    """
+    Retrieves the pictures associated with a user by inspection ID.
+    """
+    if not user.id:
+        raise MissingUserAttributeError("User ID is required for fetching inspections.")
+    if not id:
+        raise ValueError("Inspection ID is required for fetching inspection details.")
+    if not isinstance(id, UUID):
+        id = UUID(id)
+
+    with cp.connection() as conn, conn.cursor() as cursor:
+        try:
+            inspection = await get_full_inspection_json(cursor, id, user.id)
+            return await get_picture_set_pictures(cursor, inspection.picture_set_id) # TODO: This function will be deprecated
+        except DBInspectionNotFoundError as e:
+            log_error(e)
+            raise InspectionNotFoundError(f"{e}") from e
 
 async def read_inspection(cp: ConnectionPool, user: User, id: UUID | str):
     """

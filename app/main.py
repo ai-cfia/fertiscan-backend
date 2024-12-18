@@ -15,6 +15,7 @@ from app.controllers.inspections import (
     read_all_inspections,
     read_inspection,
     update_inspection,
+    get_pictures,
 )
 from app.controllers.users import sign_up
 from app.dependencies import (
@@ -105,6 +106,20 @@ async def get_inspection(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
         )
+
+@app.get("/inspections/{id}/pictures", tags=["Inspections"])
+async def get_pictures(
+    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
+    user: Annotated[User, Depends(fetch_user)],
+    id: UUID,
+):
+    try:
+        return await get_pictures(cp, user, id)
+    except InspectionNotFoundError:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
+        )
+
 
 
 @app.post("/inspections", tags=["Inspections"], response_model=Inspection)
