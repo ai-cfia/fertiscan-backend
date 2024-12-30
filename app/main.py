@@ -108,7 +108,7 @@ async def get_inspection(
         )
 
 @app.get("/inspections/{id}/pictures", tags=["Inspections"])
-async def get_pictures(
+async def get_inspection_pictures(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
     id: UUID,

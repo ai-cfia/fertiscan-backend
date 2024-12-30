@@ -9,6 +9,7 @@ from fertiscan.db.queries.inspection import (
 )
 
 from app.controllers.inspections import (
+    get_pictures,
     create_inspection,
     delete_inspection,
     read_all_inspections,
@@ -175,6 +176,60 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
             cursor_mock, inspection_id, user.id
         )
         self.assertIsInstance(inspection, Inspection)
+
+    @patch("app.controllers.inspections.get_pictures")
+    async def test_valid_inspection_id_calls_get_pictures(
+        self, mock_get_full_inspection_json
+    ):
+        cp = MagicMock()
+        conn_mock = MagicMock()
+        cursor_mock = MagicMock()
+        conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
+        cp.connection.return_value.__enter__.return_value = conn_mock
+
+        user = User(id=uuid.uuid4())
+        inspection_id = uuid.uuid4()
+
+        sample_inspection = {
+            "inspection_id": str(inspection_id),
+            "inspection_comment": "string",
+            "verified": False,
+            "company": {},
+            "manufacturer": {},
+            "product": {
+                "name": "string",
+                "label_id": str(uuid.uuid4()),
+                "registration_number": "2224256A",
+                "lot_number": "string",
+                "metrics": {
+                    "weight": [],
+                    "volume": {"edited": False},
+                    "density": {"edited": False},
+                },
+                "npk": "string",
+                "warranty": "string",
+                "n": 0,
+                "p": 0,
+                "k": 0,
+            },
+            "cautions": {"en": [], "fr": []},
+            "instructions": {"en": [], "fr": []},
+            "guaranteed_analysis": {
+                "title": {"en": "string", "fr": "string"},
+                "is_minimal": False,
+                "en": [],
+                "fr": [],
+            },
+        }
+
+        mock_get_full_inspection_json.return_value = json.dumps(sample_inspection)
+
+        pictures = await get_pictures(cp, user, inspection_id)
+
+        mock_get_full_inspection_json.assert_called_once_with(
+            cursor_mock, inspection_id, user.id
+        )
+        self.assertIsInstance(pictures, [])
 
     @patch("app.controllers.inspections.get_full_inspection_json")
     async def test_inspection_not_found_raises_error(

@@ -8,6 +8,7 @@ from fertiscan import (
     get_user_analysis_by_verified,
     register_analysis,
 )
+from fertiscan.db.queries.inspection import get_inspection_dict as get_inspection
 from datastore.db.queries.picture import (
     get_picture_set_pictures
 )
@@ -86,8 +87,8 @@ async def get_pictures(cp: ConnectionPool, user: User, id: UUID | str):
 
     with cp.connection() as conn, conn.cursor() as cursor:
         try:
-            inspection = await get_full_inspection_json(cursor, id, user.id)
-            return await get_picture_set_pictures(cursor, inspection.picture_set_id) # TODO: This function will be deprecated
+            inspection = get_inspection(cursor, id)
+            return get_picture_set_pictures(cursor, inspection['picture_set_id']) # TODO: This function will be deprecated
         except DBInspectionNotFoundError as e:
             log_error(e)
             raise InspectionNotFoundError(f"{e}") from e
