@@ -178,9 +178,7 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(inspection, Inspection)
 
     @patch("app.controllers.inspections.get_pictures")
-    async def test_valid_inspection_id_calls_get_pictures(
-        self, mock_get_full_inspection_json
-    ):
+    async def test_valid_inspection_id_calls_get_pictures(self, mock_get_pictures):
         cp = MagicMock()
         conn_mock = MagicMock()
         cursor_mock = MagicMock()
@@ -190,46 +188,12 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
         user = User(id=uuid.uuid4())
         inspection_id = uuid.uuid4()
 
-        sample_inspection = {
-            "inspection_id": str(inspection_id),
-            "inspection_comment": "string",
-            "verified": False,
-            "company": {},
-            "manufacturer": {},
-            "product": {
-                "name": "string",
-                "label_id": str(uuid.uuid4()),
-                "registration_number": "2224256A",
-                "lot_number": "string",
-                "metrics": {
-                    "weight": [],
-                    "volume": {"edited": False},
-                    "density": {"edited": False},
-                },
-                "npk": "string",
-                "warranty": "string",
-                "n": 0,
-                "p": 0,
-                "k": 0,
-            },
-            "cautions": {"en": [], "fr": []},
-            "instructions": {"en": [], "fr": []},
-            "guaranteed_analysis": {
-                "title": {"en": "string", "fr": "string"},
-                "is_minimal": False,
-                "en": [],
-                "fr": [],
-            },
-        }
+        mock_get_pictures.return_value = []
+        pictures = await get_pictures(cp, inspection_id)
 
-        mock_get_full_inspection_json.return_value = json.dumps(sample_inspection)
-
-        pictures = await get_pictures(cp, user, inspection_id)
-
-        mock_get_full_inspection_json.assert_called_once_with(
-            cursor_mock, inspection_id, user.id
-        )
-        self.assertIsInstance(pictures, [])
+        mock_get_pictures.assert_called_with(cursor_mock, inspection_id)
+        self.assertIsInstance(pictures, list)
+        # self.assertGreaterEqual(mock_get_pictures.call_count, 1)
 
     @patch("app.controllers.inspections.get_full_inspection_json")
     async def test_inspection_not_found_raises_error(

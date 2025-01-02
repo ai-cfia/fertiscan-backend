@@ -74,12 +74,10 @@ async def read_all_inspections(cp: ConnectionPool, user: User):
 
         return inspections
 
-async def get_pictures(cp: ConnectionPool, user: User, id: UUID | str):
+async def get_pictures(cp: ConnectionPool, id: UUID | str):
     """
     Retrieves the pictures associated with a user by inspection ID.
     """
-    if not user.id:
-        raise MissingUserAttributeError("User ID is required for fetching inspections.")
     if not id:
         raise ValueError("Inspection ID is required for fetching inspection details.")
     if not isinstance(id, UUID):

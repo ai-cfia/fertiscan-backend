@@ -107,14 +107,14 @@ async def get_inspection(
             status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
         )
 
-@app.get("/inspections/{id}/pictures", tags=["Inspections"])
+@app.get("/inspections/{id}/pictures", tags=["Inspections"]) # TODO: Could be a separate endpoint
 async def get_inspection_pictures(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
     id: UUID,
 ):
     try:
-        return await get_pictures(cp, user, id)
+        return await get_pictures(cp, id)
     except InspectionNotFoundError:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
