@@ -55,13 +55,13 @@ generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
 2. Run the Docker container:
 
     ```sh
-    docker run -p 5000:5000 --env-file secrets.env fertiscan-backend
+    docker run -p 5000:5000 --env-file .env.secrets fertiscan-backend
     ```
 
 #### Docker Compose
 
-1. Create a `secrets.env` file from
-   [secrets.env.template](./secrets.env.template). Include the following
+1. Create a `.env.secrets` file from
+   [.env.secrets.template](./.env.secrets.template). Include the following
    environment variables:
 
     ```ini
@@ -99,7 +99,7 @@ following details:
 
 ### Environment Variables
 
-Create a `secrets.env` file from [secrets.env.template](./secrets.env.template).
+Create a `.env.secrets` file from [.env.secrets.template](./.env.secrets.template).
 
 ```ini
 AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint

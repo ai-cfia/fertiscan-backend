@@ -18,10 +18,11 @@ from app.dependencies import (
     get_settings,
 )
 from app.exceptions import InspectionNotFoundError, UserConflictError, UserNotFoundError
-from app.main import app
+
 from app.models.inspections import DeletedInspection, Inspection, InspectionData
 from app.models.label_data import LabelData
 from app.models.users import User
+from tests import app
 
 
 class TestAPIMonitoring(unittest.TestCase):
@@ -45,7 +46,7 @@ class TestAPIPipeline(unittest.TestCase):
         app.dependency_overrides[get_ocr] = override_service_dep
         app.dependency_overrides[get_gpt] = override_service_dep
 
-    @patch("app.main.extract_data")
+    @patch("app.routes.extract_data")
     def test_analyze_document(self, mock_extract_data):
         mock_inspection_data = {
             "company_name": "Test Company",
@@ -79,7 +80,7 @@ class TestAPIPipeline(unittest.TestCase):
             mock_inspection.registration_number,
         )
 
-    @patch("app.main.extract_data")
+    @patch("app.routes.extract_data")
     def test_analyze_empty_file(self, mock_extract_data):
         """Test analyze_document with an empty file that triggers ResponseValidationError"""
         mock_extract_data.return_value = None
@@ -87,7 +88,7 @@ class TestAPIPipeline(unittest.TestCase):
         response = self.client.post("/analyze", files=files)
         self.assertEqual(response.status_code, 422)
 
-    @patch("app.main.extract_data")
+    @patch("app.routes.extract_data")
     def test_analyze_file_list_with_empty_files(self, mock_extract_data):
         """Test analyze_document with a file list containing empty files"""
         mock_inspection_data = {
@@ -104,7 +105,7 @@ class TestAPIPipeline(unittest.TestCase):
         response = self.client.post("/analyze", files=files)
         self.assertEqual(response.status_code, 422)
 
-    @patch("app.main.extract_data")
+    @patch("app.routes.extract_data")
     def test_analyze_empty_file_list(self, mock_extract_data):
         """Test analyze_document with an empty file list"""
         mock_extract_data.return_value = None
@@ -132,20 +133,20 @@ class TestAPIUsers(unittest.TestCase):
         app.dependency_overrides[get_settings] = override_dep
         app.dependency_overrides[fetch_user] = lambda: self.test_user
 
-    @patch("app.main.sign_up")
+    @patch("app.routes.sign_up")
     def test_signup(self, mock_sign_up):
         mock_sign_up.return_value = self.test_user
         response = self.client.post("/signup", json={"username": "test_user"})
         self.assertEqual(response.status_code, 201)
         User.model_validate(response.json())
 
-    @patch("app.main.sign_up")
+    @patch("app.routes.sign_up")
     def test_signup_existing_user(self, mock_sign_up):
         mock_sign_up.side_effect = UserConflictError()
         response = self.client.post("/signup", json={"username": "test_user"})
         self.assertEqual(response.status_code, 409)
 
-    @patch("app.main.sign_up")
+    @patch("app.routes.sign_up")
     def test_signup_bad_authentication(self, _):
         del app.dependency_overrides[authenticate_user]
         # Test with no authentication
@@ -161,7 +162,7 @@ class TestAPIUsers(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    @patch("app.main.sign_up")
+    @patch("app.routes.sign_up")
     def test_signup_authentication_success(self, mock_sign_up):
         del app.dependency_overrides[authenticate_user]
         mock_sign_up.return_value = self.test_user
@@ -329,7 +330,7 @@ class TestAPIInspections(unittest.TestCase):
             ("files", ("image2.png", BytesIO(b"fake_image_data_2"), "image/png")),
         ]
 
-    @patch("app.main.read_all_inspections")
+    @patch("app.routes.read_all_inspections")
     def test_get_inspections(self, mock_read_all_inspections):
         mock_read_all_inspections.return_value = self.mock_inspection_data
         response = self.client.get("/inspections")
@@ -341,14 +342,14 @@ class TestAPIInspections(unittest.TestCase):
         response = self.client.get("/inspections")
         self.assertEqual(response.status_code, 401)
 
-    @patch("app.main.read_inspection")
+    @patch("app.routes.read_inspection")
     def test_get_inspection(self, mock_read_inspection):
         mock_read_inspection.return_value = self.mock_inspection
         response = self.client.get(f"/inspections/{uuid.uuid4()}")
         self.assertEqual(response.status_code, 200)
         Inspection.model_validate(response.json())
 
-    @patch("app.main.read_inspection")
+    @patch("app.routes.read_inspection")
     def test_get_inspection_not_found(self, mock_read_inspection):
         mock_read_inspection.side_effect = InspectionNotFoundError()
         response = self.client.get(f"/inspections/{uuid.uuid4()}")
@@ -359,7 +360,7 @@ class TestAPIInspections(unittest.TestCase):
         response = self.client.get(f"/inspections/{uuid.uuid4()}")
         self.assertEqual(response.status_code, 401)
 
-    @patch("app.main.create_inspection")
+    @patch("app.routes.create_inspection")
     def test_create_inspection(self, mock_create_inspection):
         mock_create_inspection.return_value = self.mock_inspection
         response = self.client.post(
@@ -370,7 +371,7 @@ class TestAPIInspections(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         Inspection.model_validate(response.json())
 
-    @patch("app.main.create_inspection")
+    @patch("app.routes.create_inspection")
     def test_create_inspection_empty_files(self, mock_create_inspection):
         response = self.client.post("/inspections")
         self.assertEqual(response.status_code, 422)
@@ -384,7 +385,7 @@ class TestAPIInspections(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 401)
 
-    @patch("app.main.delete_inspection")
+    @patch("app.routes.delete_inspection")
     def test_delete_inspection(self, mock_delete_inspection):
         mock_deleted_inspection = DeletedInspection(id=uuid.uuid4())
         mock_delete_inspection.return_value = mock_deleted_inspection
@@ -392,7 +393,7 @@ class TestAPIInspections(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         DeletedInspection.model_validate(response.json())
 
-    @patch("app.main.delete_inspection")
+    @patch("app.routes.delete_inspection")
     def test_delete_inspection_not_found(self, mock_delete_inspection):
         mock_delete_inspection.side_effect = InspectionNotFoundError()
         response = self.client.delete(f"/inspections/{uuid.uuid4()}")
@@ -403,7 +404,7 @@ class TestAPIInspections(unittest.TestCase):
         response = self.client.delete(f"/inspections/{uuid.uuid4()}")
         self.assertEqual(response.status_code, 401)
 
-    @patch("app.main.update_inspection")
+    @patch("app.routes.update_inspection")
     def test_update_inspection(self, mock_update_inspection):
         return_data = self.sample_inspection_dict.copy()
         return_data["inspection_id"] = uuid.uuid4()
@@ -421,7 +422,7 @@ class TestAPIInspections(unittest.TestCase):
         self.assertEqual(inspection_response.verified, False)
         self.assertEqual(inspection_response.product.registration_number, "2224256A")
 
-    @patch("app.main.update_inspection")
+    @patch("app.routes.update_inspection")
     def test_update_inspection_not_found(self, mock_update_inspection):
         mock_update_inspection.side_effect = InspectionNotFoundError()
         inspection_id = uuid.uuid4()
@@ -447,91 +448,3 @@ class TestAPIInspections(unittest.TestCase):
             f"/inspections/{inspection_id}", json={"verified": True}
         )
         self.assertEqual(response.status_code, 422)
-
-
-# class TestAPIUpdateInspection(unittest.TestCase):
-#     def setUp(self) -> None:
-#         self.client = TestClient(app)
-
-#         self.test_user = User(username="test_user", id=uuid.uuid4())
-
-#         app.dependency_overrides.clear()
-#         app.dependency_overrides[get_connection_pool] = lambda: Mock()
-#         app.dependency_overrides[fetch_user] = lambda: self.test_user
-
-#         self.update_data = {
-#             "inspection_comment": "string",
-#             "verified": False,
-#             "company": {},
-#             "manufacturer": {},
-#             "product": {
-#                 "name": "string",
-#                 "label_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-#                 "registration_number": "2536456V",
-#                 "lot_number": "string",
-#                 "metrics": {
-#                     "weight": [],
-#                     "volume": {"edited": False},
-#                     "density": {"edited": False},
-#                 },
-#                 "npk": "string",
-#                 "warranty": "string",
-#                 "n": 0,
-#                 "p": 0,
-#                 "k": 0,
-#             },
-#             "cautions": {"en": [], "fr": []},
-#             "instructions": {"en": [], "fr": []},
-#             "guaranteed_analysis": {
-#                 "title": {"en": "string", "fr": "string"},
-#                 "is_minimal": False,
-#                 "en": [],
-#                 "fr": [],
-#             },
-#         }
-
-#         return_data = self.update_data.copy()
-#         return_data["inspection_id"] = uuid.uuid4()
-#         self.return_inspection = Inspection.model_validate(return_data)
-
-#     @patch("app.main.update_inspection")
-#     def test_update_inspection(self, mock_update_inspection):
-#         mock_update_inspection.return_value = self.return_inspection
-#         inspection_id = uuid.uuid4()
-
-#         response = self.client.put(
-#             f"/inspections/{inspection_id}", json=self.update_data
-#         )
-#         self.assertEqual(response.status_code, 200)
-
-#         inspection_response = Inspection.model_validate(response.json())
-#         self.assertEqual(inspection_response.inspection_comment, "string")
-#         self.assertEqual(inspection_response.verified, False)
-#         self.assertEqual(inspection_response.product.registration_number, "2536456V")
-
-#     @patch("app.main.update_inspection")
-#     def test_update_inspection_not_found(self, mock_update_inspection):
-#         mock_update_inspection.side_effect = InspectionNotFoundError()
-#         inspection_id = uuid.uuid4()
-
-#         response = self.client.put(
-#             f"/inspections/{inspection_id}", json=self.update_data
-#         )
-#         self.assertEqual(response.status_code, 404)
-
-#     def test_update_inspection_unauthenticated(self):
-#         del app.dependency_overrides[fetch_user]
-#         inspection_id = uuid.uuid4()
-
-#         response = self.client.put(
-#             f"/inspections/{inspection_id}", json=self.update_data
-#         )
-#         self.assertEqual(response.status_code, 401)
-
-#     def test_update_inspection_invalid_data(self):
-#         inspection_id = uuid.uuid4()
-
-#         response = self.client.put(
-#             f"/inspections/{inspection_id}", json={"verified": True}
-#         )
-#         self.assertEqual(response.status_code, 422)
