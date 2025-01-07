@@ -16,8 +16,9 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from pipeline import GPT, OCR
+from psycopg.conninfo import make_conninfo
 from psycopg_pool import ConnectionPool
-from pydantic import Field, PostgresDsn, computed_field
+from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings
 
 from app.exceptions import log_error
@@ -30,7 +31,11 @@ class Settings(BaseSettings):
     api_endpoint: str = Field(alias="azure_api_endpoint")
     api_key: str = Field(alias="azure_api_key")
     base_path: str = Field("", alias="api_base_path")
-    fertiscan_db_url: PostgresDsn
+    db_user: str
+    db_password: str
+    db_host: str
+    db_port: int
+    db_name: str
     fertiscan_schema: str
     azure_storage_account_name: str
     azure_storage_account_key: str
@@ -53,6 +58,17 @@ class Settings(BaseSettings):
             f"AccountName={self.azure_storage_account_name};"
             f"AccountKey={self.azure_storage_account_key};"
             f"EndpointSuffix={self.azure_storage_endpoint_suffix}"
+        )
+
+    @computed_field
+    @property
+    def db_conn_info(self) -> str:
+        return make_conninfo(
+            user=self.db_user,
+            password=self.db_password,
+            host=self.db_host,
+            port=self.db_port,
+            dbname=self.db_name,
         )
 
 
@@ -110,7 +126,7 @@ def create_app(settings: Settings, router: APIRouter, lifespan=None):
 
     pool = ConnectionPool(
         open=False,
-        conninfo=settings.fertiscan_db_url.unicode_string(),
+        conninfo=settings.db_conn_info,
         kwargs={"options": f"-c search_path={settings.fertiscan_schema},public"},
     )
     app.pool = pool

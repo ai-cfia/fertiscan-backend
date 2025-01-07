@@ -65,7 +65,11 @@ generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
    environment variables:
 
     ```ini
-    FERTISCAN_DB_URL=postgresql://postgres:postgres@postgres:5432/fertiscan
+    DB_USER=postgres
+    DB_PASSWORD=postgres
+    DB_HOST=postgres
+    DB_PORT=5432
+    DB_NAME=fertiscan
     BB_URL=bytebase_url
     BB_SERVICE_ACCOUNT=your-bytebase-sa@service.bytebase.com
     BB_SERVICE_KEY=your-bytebase-sa-key
@@ -108,7 +112,11 @@ AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint
 AZURE_OPENAI_API_KEY=your_azure_openai_key
 AZURE_OPENAI_DEPLOYMENT=your_azure_openai_deployment
 
-FERTISCAN_DB_URL=your_fertiscan_db_url
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_HOST=your_db_host
+DB_PORT=your_db_port
+DB_NAME=your_db_name
 FERTISCAN_SCHEMA=your_fertiscan_schema
 
 UPLOAD_PATH=path/to/file
