@@ -6,7 +6,7 @@ hide empty members
 hide footbox
 
 participant Client as FE
-participant FertiScan as BE <<http:localhost:5000>>
+participant FertiScan as BE <<http://localhost:5000>>
 
 FE -> BE: POST /analyze
 note right BE
@@ -20,7 +20,6 @@ note left FE
   extracted from the
   fertiliser label.
 end note
-FE -> FE: create_inspection
 FE -> BE: POST inspections/
 note right BE
   Add the inspection
@@ -29,8 +28,8 @@ end note
 FE <<-- BE: //JSON, 200//
 note left FE
   {
-      "message": "...",
       "inspection_id": "<inspection_id>"
+      ...
   }  
 end note
 @enduml

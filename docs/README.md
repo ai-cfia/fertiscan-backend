@@ -1,7 +1,5 @@
 # Developer Documentation
 
-![domain](../out/domain_model/Model%20Diagram.png)
-
 ## Document Analysis Workflow
 
 ![workflow](../out/workflow_dss/FertiScan%20Sequence%20Diagram.png)
@@ -37,6 +35,11 @@ In essence, the `/analyze` route automates the extraction and structuring of
 - **Description**: The core backend service of the FertiScan system.
 - **Repository**: <https://github.com/ai-cfia/fertiscan-backend/>
 
+### FertiScan Pipeline
+
+- **Description**: The core analysis pipeline for FertiScan
+- **Repository**: <https://github.com/ai-cfia/fertiscan-pipeline/>
+
 ### Database
 
 - **Description**: The database where the information on fertiliser and labels
@@ -45,39 +48,8 @@ In essence, the `/analyze` route automates the extraction and structuring of
 
 ## API Endpoints
 
-### `GET /health`
-
-Check if the service is still alive.
-
-### `POST /analyze`
-
-Upload images for analysis and get the results as a JSON inspection.
-
-![analyze](../out/analyze_dss/Analyze%20DSS.png)
-
-### `POST /inspections`
-
-Create a new inspection and add it to the database.
-
-![create](../out/create_inspection_dss/FertiScan%20Sequence%20Diagram.png)
-
-### `PUT /inspections`
-
-Send the latest state of a inspection to the database.
-
-![update](../out/update_inspection_dss/FertiScan%20Sequence%20Diagram.png)
-
-### `DELETE /inspections`
-
-Remove all transient states of a inspection.
-
-![discard](../out/discard_inspection_dss/FertiScan%20Sequence%20Diagram.png)
-
-### `GET /inspections`
-
-Retrieve a list of inspections matching the search query.
-
-![search](../out/get_inspections_dss/FertiScan%20Sequence%20Diagram.png)
+The [Swagger UI](https://swagger.io/tools/swagger-ui/) for the API of FertiScan
+is available at [/docs](http://localhost:5000/docs).
 
 v1.0.0
 
