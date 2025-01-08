@@ -108,7 +108,9 @@ AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint
 AZURE_OPENAI_API_KEY=your_azure_openai_key
 AZURE_OPENAI_DEPLOYMENT=your_azure_openai_deployment
 
-PROMPT_PATH=path/to/file
+FERTISCAN_DB_URL=your_fertiscan_db_url
+FERTISCAN_SCHEMA=your_fertiscan_schema
+
 UPLOAD_PATH=path/to/file
 ALLOWED_ORIGINS=["http://url.to_frontend/"]
 ```
@@ -127,7 +129,6 @@ for writing commit messages.
 
 ## Additional Resources
 
-- [API Endpoints](./docs/swagger)
 - [Developer Documentation](./docs/README.md)
 
 Thank you for contributing to FertiScan!

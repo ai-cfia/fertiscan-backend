@@ -49,7 +49,7 @@ In essence, the `/analyze` route automates the extraction and structuring of
 ## API Endpoints
 
 The [Swagger UI](https://swagger.io/tools/swagger-ui/) for the API of FertiScan
-is available at [/docs](http://localhost:5000/docs).
+is available at docs.
 
 v1.0.0
 
