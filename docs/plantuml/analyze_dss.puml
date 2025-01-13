@@ -5,10 +5,10 @@ title FertiScan Document Analysis
 hide empty members
 hide footbox
 
-participant FertiScan as BE <<http:localhost:5000>>
+participant FertiScan as BE <<http://localhost:5000>>
 box Azure #LightBlue
 participant "Document Intelligence" as D
-participant "OpenAI" as O<<GPT-4>>
+participant "OpenAI" as O<<GPT>>
 end box
 
 -> BE: POST /analyze
