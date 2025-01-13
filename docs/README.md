@@ -37,12 +37,12 @@ In essence, the `/analyze` route automates the extraction and structuring of
 
 ### FertiScan Pipeline
 
-- **Description**: The core analysis pipeline for FertiScan
+- **Description**: The core analysis pipeline for FertiScan.
 - **Repository**: <https://github.com/ai-cfia/fertiscan-pipeline/>
 
 ### Database
 
-- **Description**: The database where the information on fertiliser and labels
+- **Description**: The database where the information on fertiliser and labels.
  is stored.
 - **Repository**: <https://github.com/ai-cfia/ailab-datastore/>
 
