@@ -267,7 +267,6 @@ pour rédiger les messages de commit.
 
 ## Ressources supplémentaires
 
-- [Points de terminaison API](./docs/swagger)
 - [Documentation développeur](./docs/README.md)
 
 Merci de contribuer à FertiScan !
