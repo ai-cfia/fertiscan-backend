@@ -1,8 +1,10 @@
 # CONTRIBUTING
 
-Thank you for your interest in contributing to the FertiScan backend project!
-Your contributions help make this project better for everyone. This guide will
-help you get started with contributing.
+([*Le français est disponible au bas de la page*](#comment-contribuer))
+
+Thank you for your interest in contributing to the FertiScan backend! Your
+contributions help make this project better for everyone. This guide will help
+you get started with contributing.
 
 ## Table of Contents
 
@@ -132,3 +134,141 @@ for writing commit messages.
 - [Developer Documentation](./docs/README.md)
 
 Thank you for contributing to FertiScan!
+
+---
+
+## Comment contribuer
+
+Merci de votre intérêt pour contribuer au backend de FertiScan ! Vos
+contributions aident à améliorer ce projet pour tout le monde. Ce guide vous
+aidera à commencer.
+
+## Table des matières
+
+1. [Code de conduite](#code-de-conduite)
+2. [Comment contribuer](#comment-contribuer)
+   - [Signaler des bugs](#signaler-des-bugs)
+   - [Suggérer des améliorations](#suggérer-des-améliorations)
+   - [Soumettre des Pull Requests](#soumettre-des-pull-requests)
+3. [Configuration pour le développement](#configuration-pour-le-développement)
+   - [Prérequis](#prérequis)
+   - [Exécution locale](#exécution-locale)
+   - [Exécution avec Docker](#exécution-avec-docker)
+   - [Variables d'environnement](#variables-denvironnement)
+4. [Guides de style](#guides-de-style)
+   - [Guide de style Python](#guide-de-style-python)
+   - [Messages de commit Git](#messages-de-commit-git)
+5. [Ressources supplémentaires](#ressources-supplémentaires)
+
+## Code de conduite
+
+Ce projet adhère au [Code de
+conduite](https://www.canada.ca/fr/gouvernement/systeme/gouvernement-numerique/normes-numeriques-gouvernement-canada.html).
+En participant, vous vous engagez à respecter ce code.
+
+## Comment contribuer
+
+### Signaler des bugs
+
+Si vous trouvez un bug, veuillez créer une issue et fournir des informations
+détaillées sur le problème, y compris les étapes pour le reproduire, le
+comportement attendu et le comportement réel.
+
+### Suggérer des améliorations
+
+Nous accueillons avec plaisir les suggestions pour de nouvelles fonctionnalités
+et améliorations. Veuillez créer une issue pour discuter de vos idées et
+expliquer les avantages et cas d'utilisation potentiels.
+
+### Soumettre des Pull Requests
+
+Suivez les directives dans
+[dev-rel-docs](https://github.com/ai-cfia/dev-rel-docs/blob/main/TRAINING.md).
+
+## Configuration pour le développement
+
+### Prérequis
+
+- Python 3.11+
+- [pip](https://pip.pypa.io/en/stable/installation/)
+- [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html)
+- Clés API Azure Document Intelligence et OpenAI
+
+### Exécution locale
+
+1. Clonez le dépôt :
+
+    ```sh
+    git clone https://github.com/ai-cfia/fertiscan-backend.git
+    cd fertiscan-backend
+    ```
+
+2. Installez les dépendances :
+
+    ```sh
+    pip install -r requirements.txt
+    ```
+
+3. Lancez le serveur en mode développement :
+
+    ```sh
+    fastapi dev app/main.py --port 5000
+    ```
+
+### Exécution avec Docker
+
+1. Construisez l'image Docker :
+
+    ```sh
+    docker build -t fertiscan-backend \
+    --build-arg ARG_AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint \
+    --build-arg ARG_AZURE_API_KEY=your_azure_form_recognizer_key \
+    --build-arg ARG_AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint \
+    --build-arg ARG_AZURE_OPENAI_API_KEY=your_azure_openai_key \
+    --build-arg ARG_PROMPT_PATH=path/to/prompt_file \
+    --build-arg ARG_UPLOAD_PATH=path/to/upload_file \
+    --build-arg ALLOWED_ORIGINS=["http://url.to_frontend/"] \
+    .
+    ```
+
+2. Lancez le conteneur Docker :
+
+    ```sh
+    docker run -p 5000:5000 fertiscan-backend
+    ```
+
+### Variables d'environnement
+
+Créez un fichier `.env` à partir de `.env.template` :
+
+```ini
+AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint
+AZURE_API_KEY=your_azure_form_recognizer_key
+AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint
+AZURE_OPENAI_API_KEY=your_azure_openai_key
+AZURE_OPENAI_DEPLOYMENT=your_azure_openai_deployment
+
+PROMPT_PATH=path/to/file
+UPLOAD_PATH=path/to/file
+ALLOWED_ORIGINS=["http://url.to_frontend/"]
+```
+
+## Guides de style
+
+### Guide de style Python
+
+- Suivez [PEP 8](https://www.python.org/dev/peps/pep-0008/) pour le code Python.
+- Utilisez [black](https://github.com/psf/black) pour le formatage du code.
+
+### Messages de commit Git
+
+Suivez [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+pour rédiger les messages de commit.
+
+## Ressources supplémentaires
+
+- [Points de terminaison API](./docs/swagger)
+- [Documentation développeur](./docs/README.md)
+
+Merci de contribuer à FertiScan !
+
