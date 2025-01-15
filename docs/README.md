@@ -61,7 +61,7 @@ v1.0.0
 For monitoring and logging, refer to the [following
 documentation.](./otel/README.md)
 
---- 
+---
 
 ## Documentation pour développeurs-euses
 
@@ -114,7 +114,7 @@ FertiScan est disponible à l'adresse `/docs`.
 
 v1.0.0
 
-## Instrumentation
+## Outils de mesure
 
 Pour la surveillance et la journalisation, consultez la [documentation
 suivante.](./otel/README.md)

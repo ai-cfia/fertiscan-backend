@@ -275,4 +275,3 @@ FertiScan est disponible à l'adresse `/docs`.
 
 Pour plus de détails, consultez la [documentation pour les
 développeurs](./docs/README.md).
-

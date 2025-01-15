@@ -137,7 +137,7 @@ Thank you for contributing to FertiScan!
 
 ---
 
-## Comment contribuer
+## Contributions
 
 Merci de votre intérêt pour contribuer au backend de FertiScan ! Vos
 contributions aident à améliorer ce projet pour tout le monde. Ce guide vous
@@ -271,4 +271,3 @@ pour rédiger les messages de commit.
 - [Documentation développeur](./docs/README.md)
 
 Merci de contribuer à FertiScan !
-
