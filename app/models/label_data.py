@@ -3,8 +3,6 @@ from pydantic import Field, model_validator
 
 
 class LabelData(FertilizerInspection):
-    registration_number: str | None = Field(None, pattern=r"^\d{7}[A-Z]$")
-
     @model_validator(mode="before")
     @classmethod
     def validate_to_json(cls, value):
