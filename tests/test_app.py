@@ -271,10 +271,7 @@ class TestAPIInspections(unittest.TestCase):
             "product": {
                 "name": "string",
                 "label_id": str(uuid.uuid4()),
-                "registration_number": [{
-                    "identifier": "2224256A",
-                    "type": "fertilizer_product",
-                }],
+                "registration_number": "2224256A",
                 "lot_number": "string",
                 "metrics": {
                     "weight": [],

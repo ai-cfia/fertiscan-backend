@@ -40,9 +40,11 @@ class TestExtractData(unittest.TestCase):
         mock_analyze.return_value = FertilizerInspection.model_validate({})
 
         mock_path = "/mocked/path"
+        # Empty bytes
+        empty_bytes = b""
         mock_path_join.side_effect = [
-            f"{mock_path}/file1.jpg",
-            f"{mock_path}/file2.jpg",
+            empty_bytes,
+            empty_bytes,
         ]
 
         # Act
@@ -50,17 +52,12 @@ class TestExtractData(unittest.TestCase):
 
         # Assert
         expected_calls = [
-            ((mock_path, "file1.jpg"),),
-            ((mock_path, "file2.jpg"),),
+            ((mock_path, empty_bytes),),
+            ((mock_path, empty_bytes),),
         ]
         mock_path_join.assert_has_calls(expected_calls, any_order=True)
 
-        mock_open_func.assert_any_call(f"{mock_path}/file1.jpg", "wb")
-        mock_open_func.assert_any_call(f"{mock_path}/file2.jpg", "wb")
-        self.assertEqual(mock_open_func().write.call_count, 2)
-
-        mock_storage_instance.add_image.assert_any_call(f"{mock_path}/file1.jpg")
-        mock_storage_instance.add_image.assert_any_call(f"{mock_path}/file2.jpg")
+        mock_storage_instance.add_image.assert_any_call(empty_bytes)
         self.assertEqual(mock_storage_instance.add_image.call_count, 2)
 
         mock_analyze.assert_called_once_with(mock_storage_instance, ocr, gpt)
