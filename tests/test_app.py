@@ -50,7 +50,10 @@ class TestAPIPipeline(unittest.TestCase):
         mock_inspection_data = {
             "company_name": "Test Company",
             "fertiliser_name": "Mock Fertilizer",
-            "registration_number": "REG123",
+            "registration_number": [{
+                "identifier": "REG123",
+                "type": "fertilizer_product",
+            }]
         }
         mock_inspection = FertilizerInspection.model_validate(mock_inspection_data)
         mock_extract_data.return_value = mock_inspection
@@ -93,7 +96,10 @@ class TestAPIPipeline(unittest.TestCase):
         mock_inspection_data = {
             "company_name": "Test Company",
             "fertiliser_name": "Mock Fertilizer",
-            "registration_number": "REG123",
+            "registration_number": [{
+                "identifier": "REG123",
+                "type": "fertilizer_product",
+            }]
         }
         mock_inspection = FertilizerInspection.model_validate(mock_inspection_data)
         mock_extract_data.return_value = mock_inspection
@@ -265,7 +271,10 @@ class TestAPIInspections(unittest.TestCase):
             "product": {
                 "name": "string",
                 "label_id": str(uuid.uuid4()),
-                "registration_number": "2224256A",
+                "registration_number": [{
+                    "identifier": "2224256A",
+                    "type": "fertilizer_product",
+                }],
                 "lot_number": "string",
                 "metrics": {
                     "weight": [],
@@ -312,7 +321,10 @@ class TestAPIInspections(unittest.TestCase):
             },
             "company_name": "string",
             "manufacturer_website": "string",
-            "registration_number": "2224256A",
+            "registration_number": [{
+                "identifier": "2224256A",
+                "type": "fertilizer_product",
+            }],
             "fertiliser_name": "string",
             "company_address": "string",
             "lot_number": "string",
