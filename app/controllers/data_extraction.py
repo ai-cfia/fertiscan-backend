@@ -33,10 +33,7 @@ def extract_data(files: dict[str, BinaryIO], ocr: OCR, gpt: GPT, folder_name: st
     label_storage = LabelStorage()
 
     for filename in files:
-        file_path = os.path.join(folder_name, filename)
-        with open(file_path, "wb") as f:
-            f.write(files[filename].read())
-        label_storage.add_image(file_path)
+        label_storage.add_image(files[filename].read())
 
     data = analyze(label_storage, ocr, gpt)
 
