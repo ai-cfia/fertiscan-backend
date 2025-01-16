@@ -146,7 +146,7 @@ behavior across services, with optional AI observability through Phoenix.
 
 ---
 
-# Instrumentation avec OpenTelemetry
+## Instrumentation avec OpenTelemetry
 
 L'application est instrumentée avec
 [OpenTelemetry](https://opentelemetry.io/docs/what-is-opentelemetry/) pour
@@ -222,7 +222,7 @@ async def lifespan(app: FastAPI):
     tracer_provider.shutdown()
 ```
 
-Dans ce code: 
+Dans ce code:
 
 1. **Attributs de ressources** : `service.name` est défini comme
    "fertiscan-backend" pour taguer les journaux et les traces provenant de ce
@@ -297,4 +297,3 @@ surveillance et le débogage :
 Cette configuration garantit que les journaux, traces et métriques sont
 correctement collectés et visualisés, offrant une vue complète des performances
 et du comportement de l'application à travers les services.
-
