@@ -14,7 +14,7 @@ class TestExtractData(unittest.TestCase):
         ocr = MagicMock()
         gpt = MagicMock()
         with self.assertRaises(ValueError):
-            extract_data(files, ocr, gpt, "mocked_folder")
+            extract_data(files, ocr, gpt)
 
     @patch("os.makedirs")
     @patch("os.path.join")
@@ -40,7 +40,7 @@ class TestExtractData(unittest.TestCase):
         mock_analyze.return_value = FertilizerInspection.model_validate({})
 
         # Act
-        result = extract_data(files, ocr, gpt, "mocked_folder")
+        result = extract_data(files, ocr, gpt)
 
         # mock_storage_instance.add_image.assert_any_call(empty_bytes)
         self.assertEqual(mock_storage_instance.add_image.call_count, 2)

@@ -65,7 +65,7 @@ async def analyze_document(
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
     file_dict = {custom_secure_filename(f.filename): f.file for f in files}
-    return extract_data(file_dict, ocr, gpt, settings.upload_folder)
+    return extract_data(file_dict, ocr, gpt)
 
 
 @app.post("/signup", tags=["Users"], status_code=201, response_model=User)
