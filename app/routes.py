@@ -55,7 +55,7 @@ async def health_check():
 async def analyze_document(
     ocr: Annotated[OCR, Depends(get_ocr)],
     gpt: Annotated[GPT, Depends(get_gpt)],
-    settings: Annotated[Settings, Depends(get_settings)],
+    # settings: Annotated[Settings, Depends(get_settings)],
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
     file_dict = {custom_secure_filename(f.filename): f.file for f in files}

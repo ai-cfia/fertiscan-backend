@@ -1,4 +1,3 @@
-import os
 from typing import BinaryIO
 
 from pipeline import GPT, OCR, LabelStorage, analyze
