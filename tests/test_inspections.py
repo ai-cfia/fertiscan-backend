@@ -185,7 +185,6 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
         conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
         cp.connection.return_value.__enter__.return_value = conn_mock
 
-        user = User(id=uuid.uuid4())
         inspection_id = uuid.uuid4()
 
         mock_get_pictures.return_value = []
