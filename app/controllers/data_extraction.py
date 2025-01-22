@@ -15,7 +15,6 @@ def extract_data(files: dict[str, BinaryIO], ocr: OCR, gpt: GPT):
             and file-like binary objects as values.
         ocr: OCR processing tool or function used for text extraction.
         gpt: GPT-based model or function used for data analysis.
-        folder_name (str): Folder path to save the temporary image files.
 
     Raises:
         ValueError: If no files are provided for analysis.

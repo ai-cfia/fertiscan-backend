@@ -49,35 +49,27 @@ generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
 1. Build the Docker image:
 
     ```sh
-    docker build -t fertiscan-backend \
-    --build-arg ARG_AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint \
-    --build-arg ARG_AZURE_API_KEY=your_azure_form_recognizer_key \
-    --build-arg ARG_AZURE_OPENAI_DEPLOYMENT=your_azure_openai_deployment \
-    --build-arg ARG_AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint \
-    --build-arg ARG_AZURE_OPENAI_KEY=your_azure_openai_key \
-    --build-arg ARG_FERTISCAN_STORAGE_URL=your_fertiscan_storage_url \
-    --build-arg ARG_FERTISCAN_DB_URL=your_fertiscan_db_url \
-    --build-arg ARG_FERTISCAN_SCHEMA=your_fertiscan_schema \
-    --build-arg ARG_ALLOWED_ORIGINS=["http://url.to_frontend/"] \
-    --build-arg OTEL_EXPORTER_OTLP_ENDPOINT=your_phoenix_endpoint \
-    --build-arg ARG_PROMPT_PATH=path/to/file \
-    --build-arg ARG_UPLOAD_PATH=path/to/file \
-    .
+    docker build -t fertiscan-backend .
     ```
 
 2. Run the Docker container:
 
     ```sh
-    docker run -p 5000:5000 fertiscan-backend
+    docker run -p 5000:5000 --env-file .env.secrets fertiscan-backend
     ```
 
 #### Docker Compose
 
-1. Create a `.env` file from [.env.template](./.env.template). Include the
-   following environment variables:
+1. Create a `.env.secrets` file from
+   [.env.secrets.template](./.env.secrets.template). Include the following
+   environment variables:
 
     ```ini
-    FERTISCAN_DB_URL=postgresql://postgres:postgres@postgres:5432/fertiscan
+    DB_USER=postgres
+    DB_PASSWORD=postgres
+    DB_HOST=postgres
+    DB_PORT=5432
+    DB_NAME=fertiscan
     BB_URL=bytebase_url
     BB_SERVICE_ACCOUNT=your-bytebase-sa@service.bytebase.com
     BB_SERVICE_KEY=your-bytebase-sa-key
@@ -111,7 +103,7 @@ following details:
 
 ### Environment Variables
 
-Create a `.env` file from [.env.template](./.env.template).
+Create a `.env.secrets` file from [.env.secrets.template](./.env.secrets.template).
 
 ```ini
 AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint
@@ -120,7 +112,11 @@ AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint
 AZURE_OPENAI_API_KEY=your_azure_openai_key
 AZURE_OPENAI_DEPLOYMENT=your_azure_openai_deployment
 
-FERTISCAN_DB_URL=your_fertiscan_db_url
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_HOST=your_db_host
+DB_PORT=your_db_port
+DB_NAME=your_db_name
 FERTISCAN_SCHEMA=your_fertiscan_schema
 
 UPLOAD_PATH=path/to/file
