@@ -1,5 +1,8 @@
 # Developer Documentation
 
+([*Le français est disponible au bas de la
+page*](#documentation-pour-développeurs-euses))
+
 ## Document Analysis Workflow
 
 ![workflow](../out/workflow_dss/FertiScan%20Sequence%20Diagram.png)
@@ -49,7 +52,7 @@ In essence, the `/analyze` route automates the extraction and structuring of
 ## API Endpoints
 
 The [Swagger UI](https://swagger.io/tools/swagger-ui/) for the API of FertiScan
-is available at docs.
+is available at `/docs`.
 
 v1.0.0
 
@@ -57,3 +60,61 @@ v1.0.0
 
 For monitoring and logging, refer to the [following
 documentation.](./otel/README.md)
+
+---
+
+## Documentation pour développeurs-euses
+
+## Workflow pour l'analyse des documents
+
+![workflow](../out/workflow_dss/FertiScan%20Sequence%20Diagram.png)
+
+La route `/analyze` sert à :
+
+- **Téléverser et traiter des documents** : Permet aux clients de téléverser des
+  images de documents pour analyse.
+- **Extraire et structurer les données** : Utilise Azure Document Intelligence
+  pour extraire le texte et les informations de mise en page des documents
+  téléversés.
+- **Générer des formulaires** : Utilise GPT-4 d'OpenAI pour générer un fichier
+  JSON structuré contenant toutes les informations nécessaires extraites du
+  document.
+- **Fournir des réponses** : Renvoie l'inspection générée au client, facilitant
+  les processus d'inspection et de validation en fournissant toutes les données
+  pertinentes dans un format structuré.
+
+En résumé, la route `/analyze` automatise l'extraction et la structuration des
+données à partir des documents, simplifiant considérablement le flux de travail
+pour les utilisateurs devant traiter et analyser le contenu de documents.
+
+## Déploiement
+
+![deployment](../out/deployment/Deployment.png)
+
+### FertiScan Web  
+
+- **Description** : L'interface utilisateur de l'application.
+- **Dépôt** : <https://github.com/ai-cfia/fertiscan-frontend/>
+
+### FertiScan Serveur
+
+- **Description** : Le service backend principal du système FertiScan.
+- **Dépôt** : <https://github.com/ai-cfia/fertiscan-backend/>
+
+### Base de données
+
+- **Description** : La base de données où sont stockées les informations sur les
+  engrais et les étiquettes.
+- **Dépôt** : <https://github.com/ai-cfia/ailab-datastore/>
+
+## Points de terminaison de l'API
+
+L'[interface Swagger UI](https://swagger.io/tools/swagger-ui/) pour l'API de
+FertiScan est disponible à l'adresse `/docs`.
+
+v1.0.0
+
+## Outils de mesure
+
+Pour la surveillance et la journalisation, consultez la [documentation
+suivante.](./otel/README.md)
