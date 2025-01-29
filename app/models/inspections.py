@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from fertiscan.db.metadata.inspection import DBInspection, GuaranteedAnalysis, SubLabel
+from fertiscan.db.metadata.inspection import DBInspection, Inspection
 from fertiscan.db.metadata.inspection import (
     OrganizationInformation as DBOrganizationInformation,
 )
@@ -31,18 +31,11 @@ class InspectionData(BaseModel):
     company_name: str | None = None
 
 
-class InspectionUpdate(BaseModel):
-    inspection_comment: str | None = None
-    verified: bool | None = False
-    company: OrganizationInformation | None = OrganizationInformation()
-    manufacturer: OrganizationInformation | None = OrganizationInformation()
-    product: ProductInformation
-    cautions: SubLabel
-    instructions: SubLabel
-    guaranteed_analysis: GuaranteedAnalysis
+class InspectionUpdate(Inspection):
+    pass
 
 
-class Inspection(InspectionUpdate):
+class InspectionResponse(InspectionUpdate):
     inspection_id: UUID
 
 

@@ -16,7 +16,11 @@ from app.controllers.inspections import (
     update_inspection,
 )
 from app.exceptions import InspectionNotFoundError, MissingUserAttributeError
-from app.models.inspections import DeletedInspection, Inspection, InspectionUpdate
+from app.models.inspections import (
+    DeletedInspection,
+    InspectionResponse,
+    InspectionUpdate,
+)
 from app.models.label_data import LabelData
 from app.models.users import User
 
@@ -144,7 +148,12 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
             "product": {
                 "name": "string",
                 "label_id": str(uuid.uuid4()),
-                "registration_number": "2224256A",
+                "registration_numbers": [
+                    {
+                        "registration_number": "2224256A",
+                        "is_an_ingredient": False,
+                    }
+                ],
                 "lot_number": "string",
                 "metrics": {
                     "weight": [],
@@ -165,6 +174,7 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
                 "en": [],
                 "fr": [],
             },
+            "ingredients": {"en": [], "fr": []},
         }
 
         mock_get_full_inspection_json.return_value = json.dumps(sample_inspection)
@@ -174,7 +184,7 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
         mock_get_full_inspection_json.assert_called_once_with(
             cursor_mock, inspection_id, user.id
         )
-        self.assertIsInstance(inspection, Inspection)
+        self.assertIsInstance(inspection, InspectionResponse)
 
     @patch("app.controllers.inspections.get_full_inspection_json")
     async def test_inspection_not_found_raises_error(
@@ -231,7 +241,12 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
             "product": {
                 "name": "Sample Product",
                 "label_id": str(uuid.uuid4()),
-                "registration_number": "2224256A",
+                "registration_numbers": [
+                    {
+                        "registration_number": "2224256A",
+                        "is_an_ingredient": False,
+                    }
+                ],
                 "lot_number": "string",
                 "metrics": {
                     "weight": [],
@@ -252,6 +267,7 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
                 "en": [],
                 "fr": [],
             },
+            "ingredients": {"en": [], "fr": []},
         }
         mock_register_analysis.return_value = mock_inspection_data
 
@@ -273,7 +289,7 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
             label_images,
             label_data.model_dump(),
         )
-        self.assertIsInstance(inspection, Inspection)
+        self.assertIsInstance(inspection, InspectionResponse)
         self.assertEqual(inspection.inspection_id, inspection_id)
 
     async def test_missing_label_data_raises_error(self):
@@ -309,7 +325,12 @@ class TestUpdateFunction(unittest.IsolatedAsyncioTestCase):
             "product": {
                 "name": "string",
                 "label_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                "registration_number": "3066014L",
+                "registration_numbers": [
+                    {
+                        "registration_number": "3066014L",
+                        "is_an_ingredient": False,
+                    }
+                ],
                 "lot_number": "string",
                 "metrics": {
                     "weight": [],
@@ -330,6 +351,7 @@ class TestUpdateFunction(unittest.IsolatedAsyncioTestCase):
                 "en": [],
                 "fr": [],
             },
+            "ingredients": {"en": [], "fr": []},
         }
 
         # Convert dict to InspectionUpdate model for tests that require validation
@@ -369,7 +391,7 @@ class TestUpdateFunction(unittest.IsolatedAsyncioTestCase):
             **self.update_data,
             "inspection_id": str(self.inspection_id),
         }
-        updated_inspection = Inspection.model_validate(updated_inspection)
+        updated_inspection = InspectionResponse.model_validate(updated_inspection)
         mock_db_update_inspection.return_value = updated_inspection
 
         inspection = await update_inspection(
@@ -384,7 +406,9 @@ class TestUpdateFunction(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(inspection.inspection_comment, "string")
         self.assertFalse(inspection.verified)
-        self.assertEqual(inspection.product.registration_number, "3066014L")
+        self.assertEqual(
+            inspection.product.registration_numbers[0].registration_number, "3066014L"
+        )
 
     @patch("app.controllers.inspections.db_update_inspection")
     async def test_inspection_not_found_raises_error(self, mock_db_update_inspection):
