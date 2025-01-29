@@ -14,7 +14,7 @@ class TestExtractData(unittest.TestCase):
         ocr = MagicMock()
         gpt = MagicMock()
         with self.assertRaises(ValueError):
-            extract_data(files, ocr, gpt, "mocked_folder")
+            extract_data(files, ocr, gpt)
 
     @patch("os.makedirs")
     @patch("os.path.join")
@@ -39,32 +39,11 @@ class TestExtractData(unittest.TestCase):
         mock_storage_instance.add_image = MagicMock()
         mock_analyze.return_value = FertilizerInspection.model_validate({})
 
-        mock_path = "/mocked/path"
-        mock_path_join.side_effect = [
-            f"{mock_path}/file1.jpg",
-            f"{mock_path}/file2.jpg",
-        ]
-
         # Act
-        result = extract_data(files, ocr, gpt, mock_path)
+        result = extract_data(files, ocr, gpt)
 
-        # Assert
-        expected_calls = [
-            ((mock_path, "file1.jpg"),),
-            ((mock_path, "file2.jpg"),),
-        ]
-        mock_path_join.assert_has_calls(expected_calls, any_order=True)
-
-        mock_open_func.assert_any_call(f"{mock_path}/file1.jpg", "wb")
-        mock_open_func.assert_any_call(f"{mock_path}/file2.jpg", "wb")
-        self.assertEqual(mock_open_func().write.call_count, 2)
-
-        mock_storage_instance.add_image.assert_any_call(f"{mock_path}/file1.jpg")
-        mock_storage_instance.add_image.assert_any_call(f"{mock_path}/file2.jpg")
+        # mock_storage_instance.add_image.assert_any_call(empty_bytes)
         self.assertEqual(mock_storage_instance.add_image.call_count, 2)
 
         mock_analyze.assert_called_once_with(mock_storage_instance, ocr, gpt)
         self.assertTrue(isinstance(result, LabelData))
-
-        # Check that os.makedirs was called
-        mock_makedirs.assert_called_once_with(mock_path, exist_ok=True)

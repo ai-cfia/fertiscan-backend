@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(alias="azure_openai_key")
     phoenix_endpoint: str | None = None
     swagger_path: str = "/docs"
-    upload_folder: str = "uploads"
+    # upload_folder: str = "uploads"
     allowed_origins: list[str]
     otel_exporter_otlp_endpoint: str = Field(alias="otel_exporter_otlp_endpoint")
 
