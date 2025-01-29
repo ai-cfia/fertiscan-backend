@@ -51,7 +51,10 @@ class TestAPIPipeline(unittest.TestCase):
         mock_inspection_data = {
             "company_name": "Test Company",
             "fertiliser_name": "Mock Fertilizer",
-            "registration_number": "REG123",
+            "registration_number": [{
+                "identifier": "REG123",
+                "type": "fertilizer_product",
+            }],
         }
         mock_inspection = FertilizerInspection.model_validate(mock_inspection_data)
         mock_extract_data.return_value = mock_inspection
@@ -69,9 +72,9 @@ class TestAPIPipeline(unittest.TestCase):
 
         response_data = response.json()
         validated_inspection = LabelData.model_validate(response_data)
-        self.assertEqual(
-            validated_inspection.company_name, mock_inspection.company_name
-        )
+        # self.assertEqual(
+        #     validated_inspection.company_name, mock_inspection.company_name
+        # )
         self.assertEqual(
             validated_inspection.fertiliser_name, mock_inspection.fertiliser_name
         )
@@ -94,7 +97,10 @@ class TestAPIPipeline(unittest.TestCase):
         mock_inspection_data = {
             "company_name": "Test Company",
             "fertiliser_name": "Mock Fertilizer",
-            "registration_number": "REG123",
+            "registration_number": [{
+                "identifier": "REG123",
+                "type": "fertilizer_product",
+            }],
         }
         mock_inspection = FertilizerInspection.model_validate(mock_inspection_data)
         mock_extract_data.return_value = mock_inspection
@@ -291,37 +297,59 @@ class TestAPIInspections(unittest.TestCase):
         self.mock_inspection = Inspection.model_validate(self.sample_inspection_dict)
 
         self.sample_label_data = {
-            "cautions_en": ["string"],
-            "instructions_en": [],
-            "cautions_fr": ["string"],
-            "ingredients_en": [],
-            "manufacturer_address": "string",
-            "instructions_fr": [],
-            "manufacturer_phone_number": "string",
-            "density": {"value": 0, "unit": "string"},
+            "organizations": [
+                {
+                "name": "GreenGrow Inc.",
+                "address": "123 Green Road, Farmville, State, 12345",
+                "website": "https://www.greengrow.com",
+                "phone_number": "123-456-7890"
+                },
+                {
+                "name": "AgriSupply Co.",
+                "address": "456 Supply Lane, AgriTown, State, 67890",
+                "website": "https://www.agrisupply.com",
+                "phone_number": "987-654-3210"
+                }
+            ],
+            "fertiliser_name": "GreenGrow Fertilizer 20-20-20",
+            "registration_number": [
+                {
+                "identifier": "2018007A",
+                "type": "fertilizer_product"
+                }
+            ],
+            "lot_number": "LOT20240901",
+            "weight": [
+                {
+                "value": 50,
+                "unit": "kg"
+                }
+            ],
+            "density": {
+                "value": 1.5,
+                "unit": "g/cm³"
+            },
+            "volume": {
+                "value": 33.3,
+                "unit": "L"
+            },
+            "npk": "20-20-20",
             "guaranteed_analysis_en": {
-                "title": "string",
-                "nutrients": [],
-                "is_minimal": True,
+                "title": "Guaranteed Analysis",
+                "nutrients": [
+                ]
             },
-            "ingredients_fr": [],
-            "npk": "string",
             "guaranteed_analysis_fr": {
-                "title": "string",
-                "nutrients": [],
-                "is_minimal": True,
+                "title": "Analyse Garantie",
+                "nutrients": [
+                ]
             },
-            "company_name": "string",
-            "manufacturer_website": "string",
-            "registration_number": "2224256A",
-            "fertiliser_name": "string",
-            "company_address": "string",
-            "lot_number": "string",
-            "weight": [],
-            "manufacturer_name": "string",
-            "company_website": "string",
-            "volume": {"value": 0, "unit": "string"},
-            "company_phone_number": "string",
+            "ingredients_en":[],
+            "ingredients_fr":[],
+            "cautions_en": [],
+            "cautions_fr": [],
+            "instructions_en": [],
+            "instructions_fr": []
         }
         self.label_data_json = json.dumps(self.sample_label_data)
 

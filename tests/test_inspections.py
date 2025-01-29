@@ -190,7 +190,7 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
         mock_get_pictures.return_value = []
         pictures = await get_pictures(cp, inspection_id)
 
-        mock_get_pictures.assert_called_with(cursor_mock, inspection_id)
+        mock_get_pictures.assert_called_once_with(cursor_mock, inspection_id)
         self.assertIsInstance(pictures, list)
         # self.assertGreaterEqual(mock_get_pictures.call_count, 1)
 

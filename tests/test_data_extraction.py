@@ -37,7 +37,7 @@ class TestExtractData(unittest.TestCase):
         ocr = MagicMock()
         gpt = MagicMock()
         mock_storage_instance.add_image = MagicMock()
-        mock_analyze.return_value = FertilizerInspection.model_validate({})
+        mock_analyze.return_value = FertilizerInspection()
 
         mock_path = "/mocked/path"
         mock_path_join.side_effect = [
