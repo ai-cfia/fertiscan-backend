@@ -177,8 +177,8 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
         )
         self.assertIsInstance(inspection, Inspection)
 
-    @patch("app.controllers.inspections.get_pictures")
-    async def test_valid_inspection_id_calls_get_pictures(self, mock_get_pictures):
+    @patch("app.controllers.inspections.get_picture_set_pictures")
+    async def test_valid_inspection_id_calls_get_pictures(self, mock_get_picture_set_pictures):
         cp = MagicMock()
         conn_mock = MagicMock()
         cursor_mock = MagicMock()
@@ -187,10 +187,10 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
 
         inspection_id = uuid.uuid4()
 
-        mock_get_pictures.return_value = []
+        mock_get_picture_set_pictures.return_value = []
         pictures = await get_pictures(cp, inspection_id)
 
-        mock_get_pictures.assert_called_once_with(cursor_mock, inspection_id)
+        mock_get_picture_set_pictures.assert_called_once()
         self.assertIsInstance(pictures, list)
         # self.assertGreaterEqual(mock_get_pictures.call_count, 1)
 

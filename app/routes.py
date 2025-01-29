@@ -101,7 +101,7 @@ async def get_inspection(
             status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
         )
 
-@router.get("/inspections/{id}/pictures", tags=["Inspections"]) # TODO: Could be a separate endpoint
+@router.get("/files/{id}/pictures", tags=["Files"]) # TODO: Could be a separate endpoint
 async def get_inspection_pictures(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
@@ -111,7 +111,20 @@ async def get_inspection_pictures(
         return await get_pictures(cp, id)
     except InspectionNotFoundError:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
+            status_code=HTTPStatus.NOT_FOUND, detail="Pictures not found"
+        )
+    
+@router.post("/files/{id}/pictures", tags=["Files"]) # TODO: Could be a separate endpoint
+async def post_inspection_pictures(
+    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
+    user: Annotated[User, Depends(fetch_user)],
+    id: UUID,
+):
+    # try:
+    #     pass
+    # except Exception as e:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail=str("This endpoint is not implemented")
         )
 
 @router.post("/inspections", tags=["Inspections"], response_model=Inspection)
