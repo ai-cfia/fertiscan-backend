@@ -56,11 +56,11 @@ async def health_check():
 async def analyze_document(
     ocr: Annotated[OCR, Depends(get_ocr)],
     gpt: Annotated[GPT, Depends(get_gpt)],
-    settings: Annotated[Settings, Depends(get_settings)],
+    # settings: Annotated[Settings, Depends(get_settings)],
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
     file_dict = {custom_secure_filename(f.filename): f.file for f in files}
-    return extract_data(file_dict, ocr, gpt, settings.upload_folder)
+    return extract_data(file_dict, ocr, gpt)
 
 
 @router.post("/signup", tags=["Users"], status_code=201, response_model=User)

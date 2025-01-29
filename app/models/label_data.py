@@ -1,5 +1,5 @@
 from pipeline import FertilizerInspection
-from pydantic import Field, model_validator
+from pydantic import model_validator
 
 
 class LabelData(FertilizerInspection):
