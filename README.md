@@ -1,6 +1,6 @@
 # FertiScan Backend
 
-([*Le français est disponible au bas de la page*](#fertiscan-backend-fr))
+([_Le français est disponible au bas de la page_](#fertiscan-backend-fr))
 
 FertiScan helps inspectors analyze and process fertilizer labels by extracting
 text and generating structured forms.
@@ -29,36 +29,36 @@ generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
 
 1. Clone the repository:
 
-    ```sh
-    git clone https://github.com/ai-cfia/fertiscan-backend.git
-    cd fertiscan-backend
-    ```
+   ```sh
+   git clone https://github.com/ai-cfia/fertiscan-backend.git
+   cd fertiscan-backend
+   ```
 
 2. Install dependencies:
 
-    ```sh
-    pip install -r requirements.txt
-    ```
+   ```sh
+   pip install -r requirements.txt
+   ```
 
 3. Start the server in development mode:
 
-    ```sh
-    fastapi dev app/main.py --port 5000
-    ```
+   ```sh
+   fastapi dev app/main.py --port 5000
+   ```
 
 ### Running with Docker
 
 1. Build the Docker image:
 
-    ```sh
-    docker build -t fertiscan-backend .
-    ```
+   ```sh
+   docker build -t fertiscan-backend .
+   ```
 
 2. Run the Docker container:
 
-    ```sh
-    docker run -p 5000:5000 --env-file .env.secrets fertiscan-backend
-    ```
+   ```sh
+   docker run -p 5000:5000 --env-file .env.secrets fertiscan-backend
+   ```
 
 #### Docker Compose
 
@@ -66,26 +66,26 @@ generation using an [LLM](https://en.wikipedia.org/wiki/Large_language_model).
    [.env.secrets.template](./.env.secrets.template). Include the following
    environment variables:
 
-    ```ini
-    DB_USER=postgres
-    DB_PASSWORD=postgres
-    DB_HOST=postgres
-    DB_PORT=5432
-    DB_NAME=fertiscan
-    BB_URL=bytebase_url
-    BB_SERVICE_ACCOUNT=your-bytebase-sa@service.bytebase.com
-    BB_SERVICE_KEY=your-bytebase-sa-key
-    BB_INSTANCE_ID=your-bytebase-instance-id
-    BB_DATABASE_ID=your-bytebase-database-id
-    ```
+   ```ini
+   DB_USER=postgres
+   DB_PASSWORD=postgres
+   DB_HOST=postgres
+   DB_PORT=5432
+   DB_NAME=fertiscan
+   BB_URL=bytebase_url
+   BB_SERVICE_ACCOUNT=your-bytebase-sa@service.bytebase.com
+   BB_SERVICE_KEY=your-bytebase-sa-key
+   BB_INSTANCE_ID=your-bytebase-instance-id
+   BB_DATABASE_ID=your-bytebase-database-id
+   ```
 
-    You can find their values in our vault under fertiscan-dev.
+   You can find their values in our vault under fertiscan-dev.
 
 2. Start the Docker container:
 
-    ```sh
-    docker-compose up --build
-    ```
+   ```sh
+   docker-compose up --build
+   ```
 
 > **Side note:** If you are on an ARM-based machine, you will need to build the
 > image with the `docker-compose build --build-arg TARGETARCH=arm64` command.
@@ -164,71 +164,71 @@ et la génération de formulaires à l'aide d'un
 
 1. Clonez le dépôt :
 
-    ```sh
-    git clone https://github.com/ai-cfia/fertiscan-backend.git
-    cd fertiscan-backend
-    ```
+   ```sh
+   git clone https://github.com/ai-cfia/fertiscan-backend.git
+   cd fertiscan-backend
+   ```
 
 2. Installez les dépendances :
 
-    ```sh
-    pip install -r requirements.txt
-    ```
+   ```sh
+   pip install -r requirements.txt
+   ```
 
 3. Démarrez le serveur en mode développement :
 
-    ```sh
-    fastapi dev app/main.py --port 5000
-    ```
+   ```sh
+   fastapi dev app/main.py --port 5000
+   ```
 
 ### Exécution avec Docker
 
 1. Construisez l'image Docker :
 
-    ```sh
-    docker build -t fertiscan-backend \
-    --build-arg ARG_AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint \
-    --build-arg ARG_AZURE_API_KEY=your_azure_form_recognizer_key \
-    --build-arg ARG_AZURE_OPENAI_DEPLOYMENT=your_azure_openai_deployment \
-    --build-arg ARG_AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint \
-    --build-arg ARG_AZURE_OPENAI_KEY=your_azure_openai_key \
-    --build-arg ARG_FERTISCAN_STORAGE_URL=your_fertiscan_storage_url \
-    --build-arg ARG_FERTISCAN_DB_URL=your_fertiscan_db_url \
-    --build-arg ARG_FERTISCAN_SCHEMA=your_fertiscan_schema \
-    --build-arg ARG_ALLOWED_ORIGINS=["http://url.to_frontend/"] \
-    --build-arg OTEL_EXPORTER_OTLP_ENDPOINT=your_phoenix_endpoint \
-    --build-arg ARG_PROMPT_PATH=path/to/file \
-    --build-arg ARG_UPLOAD_PATH=path/to/file \
-    .
-    ```
+   ```sh
+   docker build -t fertiscan-backend \
+   --build-arg ARG_AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint \
+   --build-arg ARG_AZURE_API_KEY=your_azure_form_recognizer_key \
+   --build-arg ARG_AZURE_OPENAI_DEPLOYMENT=your_azure_openai_deployment \
+   --build-arg ARG_AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint \
+   --build-arg ARG_AZURE_OPENAI_KEY=your_azure_openai_key \
+   --build-arg ARG_FERTISCAN_STORAGE_URL=your_fertiscan_storage_url \
+   --build-arg ARG_FERTISCAN_DB_URL=your_fertiscan_db_url \
+   --build-arg ARG_FERTISCAN_SCHEMA=your_fertiscan_schema \
+   --build-arg ARG_ALLOWED_ORIGINS=["http://url.to_frontend/"] \
+   --build-arg OTEL_EXPORTER_OTLP_ENDPOINT=your_phoenix_endpoint \
+   --build-arg ARG_PROMPT_PATH=path/to/file \
+   --build-arg ARG_UPLOAD_PATH=path/to/file \
+   .
+   ```
 
 2. Lancez le conteneur Docker :
 
-    ```sh
-    docker run -p 5000:5000 fertiscan-backend
-    ```
+   ```sh
+   docker run -p 5000:5000 fertiscan-backend
+   ```
 
 #### Docker-Compose
 
-1. Créez un fichier `.env` à partir du fichier [.env.template](./.env.template).
+1. Créez un fichier `.env` à partir du fichier [.env.secrets.template](./.env.secrets.template).
    Incluez les variables d'environnement suivantes :
 
-    ```ini
-    FERTISCAN_DB_URL=postgresql://postgres:postgres@postgres:5432/fertiscan
-    BB_URL=bytebase_url
-    BB_SERVICE_ACCOUNT=your-bytebase-sa@service.bytebase.com
-    BB_SERVICE_KEY=your-bytebase-sa-key
-    BB_INSTANCE_ID=your-bytebase-instance-id
-    BB_DATABASE_ID=your-bytebase-database-id
-    ```
+   ```ini
+   FERTISCAN_DB_URL=postgresql://postgres:postgres@postgres:5432/fertiscan
+   BB_URL=bytebase_url
+   BB_SERVICE_ACCOUNT=your-bytebase-sa@service.bytebase.com
+   BB_SERVICE_KEY=your-bytebase-sa-key
+   BB_INSTANCE_ID=your-bytebase-instance-id
+   BB_DATABASE_ID=your-bytebase-database-id
+   ```
 
-    Vous pouvez trouver leurs valeurs dans notre coffre-fort sous fertiscan-dev.
+   Vous pouvez trouver leurs valeurs dans notre coffre-fort sous fertiscan-dev.
 
 2. Lancez le conteneur Docker :
 
-    ```sh
-    docker-compose up --build
-    ```
+   ```sh
+   docker-compose up --build
+   ```
 
 > **Note** : Si vous êtes sur une machine ARM, vous devrez construire l'image
 > avec la commande `docker-compose build --build-arg TARGETARCH=arm64`.
@@ -248,7 +248,7 @@ serveur avec les détails suivants :
 
 ### Variables d'environnement
 
-Créez un fichier `.env` à partir du fichier [.env.template](./.env.template).
+Créez un fichier `.env` à partir du fichier [.env.secrets.template](./.env.secrets.template).
 
 ```ini
 AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint
