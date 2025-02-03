@@ -1,7 +1,7 @@
 # Developer Documentation
 
-([*Le français est disponible au bas de la
-page*](#documentation-pour-développeurs-euses))
+([_Le français est disponible au bas de la
+page_](#documentation-pour-développeurs-euses))
 
 ## Document Analysis Workflow
 
@@ -10,25 +10,25 @@ page*](#documentation-pour-développeurs-euses))
 The `/analyze` route serves to:
 
 - **Upload and Process Documents**: Allows clients to upload images of documents
- for analysis.
+  for analysis.
 - **Extract and Structure Data**: Utilizes Azure Document Intelligence to
- extract text and layout information from the uploaded documents.
+  extract text and layout information from the uploaded documents.
 - **Generate Forms**: Uses OpenAI's GPT-4 to generate a structured JSON
- inspection containing all the necessary information extracted from the
- document.
+  inspection containing all the necessary information extracted from the
+  document.
 - **Provide Responses**: Returns the generated inspection to the client,
- facilitating the inspection and validation processes by providing all relevant
- data in a structured format.
+  facilitating the inspection and validation processes by providing all relevant
+  data in a structured format.
 
 In essence, the `/analyze` route automates the extraction and structuring of
- data from documents, significantly simplifying the workflow for users who need
- to process and analyze document content.
+data from documents, significantly simplifying the workflow for users who need
+to process and analyze document content.
 
 ## Deployment
 
 ![deployment](../out/deployment/Deployment.png)
 
-### FertiScan Web
+### Plateforme Web Fertiscan
 
 - **Description**: The user interface of the application.
 - **Repository**: <https://github.com/ai-cfia/fertiscan-frontend/>
@@ -46,7 +46,7 @@ In essence, the `/analyze` route automates the extraction and structuring of
 ### Database
 
 - **Description**: The database where the information on fertiliser and labels.
- is stored.
+  is stored.
 - **Repository**: <https://github.com/ai-cfia/ailab-datastore/>
 
 ## API Endpoints
@@ -91,7 +91,7 @@ pour les utilisateurs devant traiter et analyser le contenu de documents.
 
 ![deployment](../out/deployment/Deployment.png)
 
-### FertiScan Web  
+### FertiScan Web
 
 - **Description** : L'interface utilisateur de l'application.
 - **Dépôt** : <https://github.com/ai-cfia/fertiscan-frontend/>

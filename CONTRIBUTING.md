@@ -1,6 +1,6 @@
 # CONTRIBUTING
 
-([*Le français est disponible au bas de la page*](#comment-contribuer))
+([_Le français est disponible au bas de la page_](#comment-contribuer))
 
 Thank you for your interest in contributing to the FertiScan backend! Your
 contributions help make this project better for everyone. This guide will help
@@ -60,48 +60,48 @@ Follow the guidelines in
 
 1. Clone the repository:
 
-    ```sh
-    git clone https://github.com/ai-cfia/fertiscan-backend.git
-    cd fertiscan-backend
-    ```
+   ```sh
+   git clone https://github.com/ai-cfia/fertiscan-backend.git
+   cd fertiscan-backend
+   ```
 
 2. Install dependencies:
 
-    ```sh
-    pip install -r requirements.txt
-    ```
+   ```sh
+   pip install -r requirements.txt
+   ```
 
 3. Start the server in development mode:
 
-    ```sh
-    fastapi dev app/main.py --port 5000
-    ```
+   ```sh
+   fastapi dev app/main.py --port 5000
+   ```
 
 ### Running with Docker
 
 1. Build the Docker image:
 
-    ```sh
-    docker build -t fertiscan-backend \
-    --build-arg ARG_AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint \
-    --build-arg ARG_AZURE_API_KEY=your_azure_form_recognizer_key \
-    --build-arg ARG_AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint \
-    --build-arg ARG_AZURE_OPENAI_API_KEY=your_azure_openai_key \
-    --build-arg ARG_PROMPT_PATH=path/to/prompt_file \
-    --build-arg ARG_UPLOAD_PATH=path/to/upload_file \
-    --build-arg ALLOWED_ORIGINS=["http://url.to_frontend/"] \
-    .
-    ```
+   ```sh
+   docker build -t fertiscan-backend \
+   --build-arg ARG_AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint \
+   --build-arg ARG_AZURE_API_KEY=your_azure_form_recognizer_key \
+   --build-arg ARG_AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint \
+   --build-arg ARG_AZURE_OPENAI_API_KEY=your_azure_openai_key \
+   --build-arg ARG_PROMPT_PATH=path/to/prompt_file \
+   --build-arg ARG_UPLOAD_PATH=path/to/upload_file \
+   --build-arg ALLOWED_ORIGINS=["http://url.to_frontend/"] \
+   .
+   ```
 
 2. Run the Docker container:
 
-    ```sh
-    docker run -p 5000:5000 fertiscan-backend
-    ```
+   ```sh
+   docker run -p 5000:5000 fertiscan-backend
+   ```
 
 ### Environment Variables
 
-Create a `.env` file from `.env.template`:
+Create a `.env` file from `.env.secrets.template`:
 
 ```ini
 AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint
@@ -198,48 +198,48 @@ Suivez les directives dans
 
 1. Clonez le dépôt :
 
-    ```sh
-    git clone https://github.com/ai-cfia/fertiscan-backend.git
-    cd fertiscan-backend
-    ```
+   ```sh
+   git clone https://github.com/ai-cfia/fertiscan-backend.git
+   cd fertiscan-backend
+   ```
 
 2. Installez les dépendances :
 
-    ```sh
-    pip install -r requirements.txt
-    ```
+   ```sh
+   pip install -r requirements.txt
+   ```
 
 3. Lancez le serveur en mode développement :
 
-    ```sh
-    fastapi dev app/main.py --port 5000
-    ```
+   ```sh
+   fastapi dev app/main.py --port 5000
+   ```
 
 ### Exécution avec Docker
 
 1. Construisez l'image Docker :
 
-    ```sh
-    docker build -t fertiscan-backend \
-    --build-arg ARG_AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint \
-    --build-arg ARG_AZURE_API_KEY=your_azure_form_recognizer_key \
-    --build-arg ARG_AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint \
-    --build-arg ARG_AZURE_OPENAI_API_KEY=your_azure_openai_key \
-    --build-arg ARG_PROMPT_PATH=path/to/prompt_file \
-    --build-arg ARG_UPLOAD_PATH=path/to/upload_file \
-    --build-arg ALLOWED_ORIGINS=["http://url.to_frontend/"] \
-    .
-    ```
+   ```sh
+   docker build -t fertiscan-backend \
+   --build-arg ARG_AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint \
+   --build-arg ARG_AZURE_API_KEY=your_azure_form_recognizer_key \
+   --build-arg ARG_AZURE_OPENAI_API_ENDPOINT=your_azure_openai_endpoint \
+   --build-arg ARG_AZURE_OPENAI_API_KEY=your_azure_openai_key \
+   --build-arg ARG_PROMPT_PATH=path/to/prompt_file \
+   --build-arg ARG_UPLOAD_PATH=path/to/upload_file \
+   --build-arg ALLOWED_ORIGINS=["http://url.to_frontend/"] \
+   .
+   ```
 
 2. Lancez le conteneur Docker :
 
-    ```sh
-    docker run -p 5000:5000 fertiscan-backend
-    ```
+   ```sh
+   docker run -p 5000:5000 fertiscan-backend
+   ```
 
 ### Variables d'environnement
 
-Créez un fichier `.env` à partir de `.env.template` :
+Créez un fichier `.env` à partir de `.env.secrets.template` :
 
 ```ini
 AZURE_API_ENDPOINT=your_azure_form_recognizer_endpoint
