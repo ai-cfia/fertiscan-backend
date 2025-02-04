@@ -2,6 +2,7 @@ import asyncio
 from uuid import UUID
 
 from azure.storage.blob import ContainerClient
+from datastore.blob.azure_storage_api import build_container_name
 from fertiscan import delete_inspection as db_delete_inspection
 from fertiscan import (
     get_full_inspection_json,
@@ -44,9 +45,9 @@ async def read_all_inspections(cp: ConnectionPool, user: User):
                 picture_set_id=entry[4],
                 label_info_id=entry[5],
                 product_name=entry[6],
-                manufacturer_info_id=entry[7],
-                company_info_id=entry[8],
-                company_name=entry[9],
+                main_organization_id=entry[7],
+                main_organization_name=entry[8],
+                # verified=entry[9],
             )
             for sublist in inspections
             for entry in sublist
@@ -88,7 +89,7 @@ async def create_inspection(
 
     with cp.connection() as conn, conn.cursor() as cursor:
         container_client = ContainerClient.from_connection_string(
-            connection_string, container_name=f"user-{user.id}"
+            connection_string, container_name=build_container_name(str(user.id))
         )
         label_data = label_data.model_dump(mode="json")
         inspection = await register_analysis(
@@ -139,7 +140,7 @@ async def delete_inspection(
         id = UUID(id)
 
     container_client = ContainerClient.from_connection_string(
-        connection_string, container_name=f"user-{user.id}"
+        connection_string, container_name=build_container_name(str(user.id))
     )
 
     with cp.connection() as conn, conn.cursor() as cursor:
