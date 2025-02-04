@@ -21,8 +21,8 @@ from psycopg_pool import ConnectionPool
 from app.exceptions import InspectionNotFoundError, MissingUserAttributeError, log_error
 from app.models.inspections import (
     DeletedInspection,
-    Inspection,
     InspectionData,
+    InspectionResponse,
     InspectionUpdate,
 )
 from app.models.label_data import LabelData
@@ -30,21 +30,6 @@ from app.models.users import User
 
 
 async def read_all_inspections(cp: ConnectionPool, user: User):
-    """
-    Retrieves all inspections associated with a user, both verified and unverified.
-
-    Args:
-        cp (ConnectionPool): The connection pool to manage database connections.
-        user (User): User instance containing user details, including the user ID.
-
-    Returns:
-        list[InspectionData]: A list of `InspectionData` objects representing
-        all inspections related to the user, including details like `upload_date`,
-        `updated_at`, `product_name`, and more.
-
-    Raises:
-        MissingUserAttributeError: Raised if the user ID is missing.
-    """
     if not user.id:
         raise MissingUserAttributeError("User ID is required for fetching inspections.")
 
@@ -54,7 +39,6 @@ async def read_all_inspections(cp: ConnectionPool, user: User):
             get_user_analysis_by_verified(cursor, user.id, False),
         )
 
-        # Flatten and transform results into InspectionData objects
         inspections = [
             InspectionData(
                 id=entry[0],
@@ -100,22 +84,6 @@ async def get_pictures(cp: ConnectionPool, id: UUID | str):
             raise InspectionNotFoundError(f"{e}") from e
 
 async def read_inspection(cp: ConnectionPool, user: User, id: UUID | str):
-    """
-    Retrieves a specific inspection associated with a user by inspection ID.
-
-    Args:
-        cp (ConnectionPool): The connection pool to manage database connections.
-        user (User): User instance containing user details, including the user ID.
-        id (UUID | str): The UUID of the inspection to read.
-
-    Returns:
-        Inspection: An `Inspection` object with the inspection details.
-
-    Raises:
-        MissingUserAttributeError: Raised if the user ID is missing.
-        ValueError: Raised if the inspection ID is not provided.
-        InspectionNotFoundError: Raised if the inspection with the given ID is not found.
-    """
     if not user.id:
         raise MissingUserAttributeError("User ID is required for fetching inspections.")
     if not id:
@@ -129,7 +97,7 @@ async def read_inspection(cp: ConnectionPool, user: User, id: UUID | str):
         except DBInspectionNotFoundError as e:
             log_error(e)
             raise InspectionNotFoundError(f"{e}") from e
-        return Inspection.model_validate_json(inspection)
+        return InspectionResponse.model_validate_json(inspection)
 
 
 async def create_inspection(
@@ -139,23 +107,6 @@ async def create_inspection(
     label_images: list[bytes],
     connection_string: str,
 ):
-    """
-    Creates a new inspection record associated with a user.
-
-    Args:
-        cp (ConnectionPool): The connection pool to manage database connections.
-        user (User): User instance containing user details, including the user ID.
-        label_data (LabelData): Data model containing label information required for the inspection.
-        label_images (list[bytes]): List of images (in byte format) to be associated with the inspection.
-        connection_string (str): Connection string for blob storage.
-
-    Returns:
-        Inspection: An `Inspection` object with the newly created inspection details.
-
-    Raises:
-        MissingUserAttributeError: If the user ID is missing.
-        ValueError: If label data or connection string is missing.
-    """
     if not user.id:
         raise MissingUserAttributeError("User ID is required for creating inspections.")
     if not label_data:
@@ -171,7 +122,7 @@ async def create_inspection(
         inspection = await register_analysis(
             cursor, container_client, user.id, label_images, label_data
         )
-        return Inspection.model_validate(inspection)
+        return InspectionResponse.model_validate(inspection)
 
 
 async def update_inspection(
@@ -179,24 +130,7 @@ async def update_inspection(
     user: User,
     id: str | UUID,
     inspection: InspectionUpdate,
-) -> Inspection:
-    """
-    Updates an existing inspection record associated with a user.
-
-    Args:
-        cp (ConnectionPool): Connection pool for managing database connections.
-        user (User): User instance with user details, including user ID.
-        id (str | UUID): Inspection ID for the record to update.
-        inspection (InspectionUpdate): Contains updated inspection details.
-
-    Returns:
-        Inspection: The updated inspection record.
-
-    Raises:
-        MissingUserAttributeError: If the user ID is missing.
-        ValueError: If inspection ID or details are missing.
-        InspectionNotFoundError: If the inspection record does not exist.
-    """
+):
     if not user.id:
         raise MissingUserAttributeError("User ID is required for updating inspections.")
     if not id:
@@ -214,7 +148,7 @@ async def update_inspection(
         except DBInspectionNotFoundError as e:
             log_error(e)
             raise InspectionNotFoundError(f"{e}") from e
-        return Inspection.model_validate(result.model_dump())
+        return InspectionResponse.model_validate(result.model_dump())
 
 
 async def delete_inspection(
@@ -223,22 +157,6 @@ async def delete_inspection(
     id: UUID | str,
     connection_string: str,
 ):
-    """
-    Deletes an inspection record and its associated picture set from the database.
-
-    Args:
-        cp (ConnectionPool): The connection pool for database management.
-        user (User): The user requesting the deletion.
-        id (UUID | str): The UUID of the inspection to delete.
-        connection_string (str): Connection string for Azure Blob Storage.
-
-    Returns:
-        DeletedInspection: The deleted inspection data.
-
-    Raises:
-        MissingUserAttributeError: If the user ID is missing.
-        ValueError: If id or connection_string are invalid.
-    """
     if not user.id:
         raise MissingUserAttributeError("User ID is required to delete an inspection.")
     if not id:

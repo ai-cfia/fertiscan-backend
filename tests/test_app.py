@@ -18,8 +18,7 @@ from app.dependencies import (
     get_settings,
 )
 from app.exceptions import InspectionNotFoundError, UserConflictError, UserNotFoundError
-
-from app.models.inspections import DeletedInspection, Inspection, InspectionData
+from app.models.inspections import DeletedInspection, InspectionData, InspectionResponse
 from app.models.label_data import LabelData
 from app.models.users import User
 from tests import app
@@ -51,10 +50,12 @@ class TestAPIPipeline(unittest.TestCase):
         mock_inspection_data = {
             "company_name": "Test Company",
             "fertiliser_name": "Mock Fertilizer",
-            "registration_number": [{
-                "identifier": "REG123",
-                "type": "fertilizer_product",
-            }],
+            "registration_number": [
+                {
+                    "identifier": "REG123",
+                    "type": "fertilizer_product",
+                }
+            ],
         }
         mock_inspection = FertilizerInspection.model_validate(mock_inspection_data)
         mock_extract_data.return_value = mock_inspection
@@ -97,10 +98,12 @@ class TestAPIPipeline(unittest.TestCase):
         mock_inspection_data = {
             "company_name": "Test Company",
             "fertiliser_name": "Mock Fertilizer",
-            "registration_number": [{
-                "identifier": "REG123",
-                "type": "fertilizer_product",
-            }],
+            "registration_number": [
+                {
+                    "identifier": "REG123",
+                    "type": "fertilizer_product",
+                }
+            ],
         }
         mock_inspection = FertilizerInspection.model_validate(mock_inspection_data)
         mock_extract_data.return_value = mock_inspection
@@ -272,7 +275,12 @@ class TestAPIInspections(unittest.TestCase):
             "product": {
                 "name": "string",
                 "label_id": str(uuid.uuid4()),
-                "registration_number": "2224256A",
+                "registration_numbers": [
+                    {
+                        "registration_number": "2224256A",
+                        "is_an_ingredient": False,
+                    }
+                ],
                 "lot_number": "string",
                 "metrics": {
                     "weight": [],
@@ -293,8 +301,11 @@ class TestAPIInspections(unittest.TestCase):
                 "en": [],
                 "fr": [],
             },
+            "ingredients": {"en": [], "fr": []},
         }
-        self.mock_inspection = Inspection.model_validate(self.sample_inspection_dict)
+        self.mock_inspection = InspectionResponse.model_validate(
+            self.sample_inspection_dict
+        )
 
         self.sample_label_data = {
             "organizations": [
@@ -375,7 +386,7 @@ class TestAPIInspections(unittest.TestCase):
         mock_read_inspection.return_value = self.mock_inspection
         response = self.client.get(f"/inspections/{uuid.uuid4()}")
         self.assertEqual(response.status_code, 200)
-        Inspection.model_validate(response.json())
+        InspectionResponse.model_validate(response.json())
 
     @patch("app.routes.read_inspection")
     def test_get_inspection_not_found(self, mock_read_inspection):
@@ -397,7 +408,7 @@ class TestAPIInspections(unittest.TestCase):
             files=self.files,
         )
         self.assertEqual(response.status_code, 200)
-        Inspection.model_validate(response.json())
+        InspectionResponse.model_validate(response.json())
 
     @patch("app.routes.create_inspection")
     def test_create_inspection_empty_files(self, mock_create_inspection):
@@ -436,7 +447,7 @@ class TestAPIInspections(unittest.TestCase):
     def test_update_inspection(self, mock_update_inspection):
         return_data = self.sample_inspection_dict.copy()
         return_data["inspection_id"] = uuid.uuid4()
-        return_inspection = Inspection.model_validate(return_data)
+        return_inspection = InspectionResponse.model_validate(return_data)
         mock_update_inspection.return_value = return_inspection
         inspection_id = uuid.uuid4()
 
@@ -445,10 +456,13 @@ class TestAPIInspections(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-        inspection_response = Inspection.model_validate(response.json())
+        inspection_response = InspectionResponse.model_validate(response.json())
         self.assertEqual(inspection_response.inspection_comment, "string")
         self.assertEqual(inspection_response.verified, False)
-        self.assertEqual(inspection_response.product.registration_number, "2224256A")
+        self.assertEqual(
+            inspection_response.product.registration_numbers[0].registration_number,
+            "2224256A",
+        )
 
     @patch("app.routes.update_inspection")
     def test_update_inspection_not_found(self, mock_update_inspection):

@@ -30,8 +30,8 @@ from app.dependencies import (
 from app.exceptions import InspectionNotFoundError, UserConflictError
 from app.models.inspections import (
     DeletedInspection,
-    Inspection,
     InspectionData,
+    InspectionResponse,
     InspectionUpdate,
 )
 from app.models.label_data import LabelData
@@ -88,7 +88,9 @@ async def get_inspections(
     return await read_all_inspections(cp, user)
 
 
-@router.get("/inspections/{id}", tags=["Inspections"], response_model=Inspection)
+@router.get(
+    "/inspections/{id}", tags=["Inspections"], response_model=InspectionResponse
+)
 async def get_inspection(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
@@ -127,7 +129,7 @@ async def post_inspection_pictures(
             status_code=HTTPStatus.BAD_REQUEST, detail=str("This endpoint is not implemented")
         )
 
-@router.post("/inspections", tags=["Inspections"], response_model=Inspection)
+@router.post("/inspections", tags=["Inspections"], response_model=InspectionResponse)
 async def post_inspection(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
@@ -140,7 +142,9 @@ async def post_inspection(
     return await create_inspection(cp, user, label_data, label_images, conn_string)
 
 
-@router.put("/inspections/{id}", tags=["Inspections"], response_model=Inspection)
+@router.put(
+    "/inspections/{id}", tags=["Inspections"], response_model=InspectionResponse
+)
 async def put_inspection(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
