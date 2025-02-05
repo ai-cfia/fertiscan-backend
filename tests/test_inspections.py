@@ -50,7 +50,7 @@ class TestReadAll(unittest.IsolatedAsyncioTestCase):
                     "Product A",
                     uuid.uuid4(),
                     "Company A",
-                    # True,
+                    True,
                 )
             ],
             [
@@ -64,7 +64,7 @@ class TestReadAll(unittest.IsolatedAsyncioTestCase):
                     "Product B",
                     uuid.uuid4(),
                     "Company B",
-                    # False,
+                    False,
                 )
             ],
         ]
