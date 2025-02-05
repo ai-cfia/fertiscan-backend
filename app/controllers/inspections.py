@@ -2,17 +2,16 @@ import asyncio
 from uuid import UUID
 
 from azure.storage.blob import ContainerClient
-from fertiscan import delete_inspection as db_delete_inspection
+# from fertiscan import delete_inspection as db_delete_inspection
 from fertiscan import (
-    get_full_inspection_json,
-    get_user_analysis_by_verified,
-    register_analysis,
+    InspectionController,
+    Inspection as InspectionModel,
 )
-from fertiscan.db.queries.inspection import get_inspection_dict
-from datastore.db.queries.picture import (
-    get_picture_set_pictures
+from datastore import (
+    Container,
+    ContainerController
 )
-from fertiscan import update_inspection as db_update_inspection
+# from fertiscan import update_inspection as db_update_inspection
 from fertiscan.db.queries.inspection import (
     InspectionNotFoundError as DBInspectionNotFoundError,
 )
@@ -34,9 +33,12 @@ async def read_all_inspections(cp: ConnectionPool, user: User):
         raise MissingUserAttributeError("User ID is required for fetching inspections.")
 
     with cp.connection() as conn, conn.cursor() as cursor:
+        controller = InspectionController(
+            InspectionModel(user_id=user.id)
+        )
         inspections = await asyncio.gather(
-            get_user_analysis_by_verified(cursor, user.id, True),
-            get_user_analysis_by_verified(cursor, user.id, False),
+            controller.get_user_analysis_by_verified(cursor, user.id, True),
+            controller.get_user_analysis_by_verified(cursor, user.id, False),
         )
 
         inspections = [
@@ -58,7 +60,7 @@ async def read_all_inspections(cp: ConnectionPool, user: User):
 
         return inspections
 
-async def get_pictures(cp: ConnectionPool, id: UUID | str):
+async def get_pictures(cp: ConnectionPool, user: User, id: UUID | str):
     """
     Retrieves the pictures associated with a user by inspection ID.
     """
@@ -69,16 +71,11 @@ async def get_pictures(cp: ConnectionPool, id: UUID | str):
 
     with cp.connection() as conn, conn.cursor() as cursor:
         try:
-            inspection = get_inspection_dict(cursor, id)
-            if inspection is None:
-                raise InspectionNotFoundError(f"Inspection not found for ID {id}")
+            inspection_controller = InspectionController(InspectionModel(user_id=user.id, id=id))
+            (container_id, folder_id) = await inspection_controller.get_inspection_image_location_data(cursor)
             
-            picture_set_id = inspection.get("picture_set_id")
-            if picture_set_id is None:
-                log_error(f"Picture set not found for inspection {id}")
-                raise DBInspectionNotFoundError(f"Picture set not found for inspection {id}")
-            
-            return get_picture_set_pictures(cursor, picture_set_id) # TODO: This function will be deprecated
+            container_controller = ContainerController(Container(id=container_id))
+            return await container_controller.get_folder_pictures(cursor, folder_id, user.id)
         except DBInspectionNotFoundError as e:
             log_error(e)
             raise InspectionNotFoundError(f"{e}") from e
@@ -93,7 +90,8 @@ async def read_inspection(cp: ConnectionPool, user: User, id: UUID | str):
 
     with cp.connection() as conn, conn.cursor() as cursor:
         try:
-            inspection = await get_full_inspection_json(cursor, id, user.id)
+            controller = InspectionController(InspectionModel(user_id=user.id, id=id))
+            inspection = await controller.get_full_inspection_analysis(cursor)
         except DBInspectionNotFoundError as e:
             log_error(e)
             raise InspectionNotFoundError(f"{e}") from e
@@ -119,9 +117,8 @@ async def create_inspection(
             connection_string, container_name=f"user-{user.id}"
         )
         label_data = label_data.model_dump(mode="json")
-        inspection = await register_analysis(
-            cursor, container_client, user.id, label_images, label_data
-        )
+        controller = InspectionController(InspectionModel(user_id=user.id))
+        inspection = await controller.register_analysis(cursor,label_data)
         return InspectionResponse.model_validate(inspection)
 
 
@@ -142,9 +139,10 @@ async def update_inspection(
         id = UUID(id)
 
     with cp.connection() as conn, conn.cursor() as cursor:
+        controller = InspectionController(InspectionModel(user_id=user.id, id=id))
         inspection_data = inspection.model_dump(mode="json")
         try:
-            result = await db_update_inspection(cursor, id, user.id, inspection_data)
+            result = await controller.update_inspection(cursor, inspection_data)
         except DBInspectionNotFoundError as e:
             log_error(e)
             raise InspectionNotFoundError(f"{e}") from e
@@ -166,10 +164,8 @@ async def delete_inspection(
     if not isinstance(id, UUID):
         id = UUID(id)
 
-    container_client = ContainerClient.from_connection_string(
-        connection_string, container_name=f"user-{user.id}"
-    )
-
     with cp.connection() as conn, conn.cursor() as cursor:
-        deleted = await db_delete_inspection(cursor, id, user.id, container_client)
+        controller = InspectionController(InspectionModel(user_id=user.id, id=id))
+        (container_id, _) = await controller.get_inspection_image_location_data(cursor)
+        deleted = await controller.delete_inspection(cursor, container_id)
         return DeletedInspection.model_validate(deleted.model_dump())
