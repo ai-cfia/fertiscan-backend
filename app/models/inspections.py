@@ -22,7 +22,7 @@ class InspectionData(BaseModel):
     product_name: str | None = None
     main_organization_id: UUID | None = None
     main_organization_name: str | None = None
-    # verified: bool | None = None
+    verified: bool | None = None
 
 
 class InspectionUpdate(Inspection):

@@ -47,7 +47,7 @@ async def read_all_inspections(cp: ConnectionPool, user: User):
                 product_name=entry[6],
                 main_organization_id=entry[7],
                 main_organization_name=entry[8],
-                # verified=entry[9],
+                verified=entry[9],
             )
             for sublist in inspections
             for entry in sublist

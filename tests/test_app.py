@@ -249,7 +249,7 @@ class TestAPIInspections(unittest.TestCase):
                 product_name="Product A",
                 main_organization_id=uuid.uuid4(),
                 main_organization_name="Company A",
-                # verified=True,
+                verified=True,
             ),
             InspectionData(
                 id=uuid.uuid4(),
@@ -261,7 +261,7 @@ class TestAPIInspections(unittest.TestCase):
                 product_name="Product B",
                 main_organization_id=uuid.uuid4(),
                 main_organization_name="Company B",
-                # verified=False,
+                verified=False,
             ),
         ]
 
