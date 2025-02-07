@@ -176,6 +176,7 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
                 "fr": [],
             },
             "ingredients": {"en": [], "fr": []},
+            "picture_set_id": str(uuid.uuid4()),
         }
 
         mock_get_full_inspection_json.return_value = json.dumps(sample_inspection)
@@ -269,6 +270,7 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
                 "fr": [],
             },
             "ingredients": {"en": [], "fr": []},
+            "picture_set_id": str(uuid.uuid4()),
         }
         mock_register_analysis.return_value = mock_inspection_data
 
@@ -353,6 +355,7 @@ class TestUpdateFunction(unittest.IsolatedAsyncioTestCase):
                 "fr": [],
             },
             "ingredients": {"en": [], "fr": []},
+            "picture_set_id": str(uuid.uuid4()),
         }
 
         # Convert dict to InspectionUpdate model for tests that require validation
