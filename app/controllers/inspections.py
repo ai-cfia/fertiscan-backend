@@ -103,19 +103,16 @@ async def create_inspection(
     user: User,
     label_data: LabelData,
     label_images: list[bytes],
-    connection_string: str,
+    # connection_string: str,
 ):
     if not user.id:
         raise MissingUserAttributeError("User ID is required for creating inspections.")
     if not label_data:
         raise ValueError("Label data is required for creating inspection.")
-    if not connection_string:
-        raise ValueError("Connection string is required for creating inspection.")
+    # if not connection_string:
+        # raise ValueError("Connection string is required for creating inspection.")
 
     with cp.connection() as conn, conn.cursor() as cursor:
-        container_client = ContainerClient.from_connection_string(
-            connection_string, container_name=f"user-{user.id}"
-        )
         label_data = label_data.model_dump(mode="json")
         controller = InspectionController(InspectionModel(user_id=user.id))
         inspection = await controller.register_analysis(cursor,label_data)
@@ -153,14 +150,14 @@ async def delete_inspection(
     cp: ConnectionPool,
     user: User,
     id: UUID | str,
-    connection_string: str,
+    # connection_string: str,
 ):
     if not user.id:
         raise MissingUserAttributeError("User ID is required to delete an inspection.")
     if not id:
         raise ValueError("Inspection ID is required for deletion.")
-    if not connection_string:
-        raise ValueError("Connection string is required for blob storage access.")
+    # if not connection_string:
+        # raise ValueError("Connection string is required for blob storage access.")
     if not isinstance(id, UUID):
         id = UUID(id)
 
