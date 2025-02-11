@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
+from datastore.blob.azure_storage_api import build_container_name
 from fertiscan.db.queries.inspection import (
     InspectionNotFoundError as DBInspectionNotFoundError,
 )
@@ -48,8 +49,8 @@ class TestReadAll(unittest.IsolatedAsyncioTestCase):
                     uuid.uuid4(),
                     "Product A",
                     uuid.uuid4(),
-                    uuid.uuid4(),
                     "Company A",
+                    True,
                 )
             ],
             [
@@ -62,8 +63,8 @@ class TestReadAll(unittest.IsolatedAsyncioTestCase):
                     uuid.uuid4(),
                     "Product B",
                     uuid.uuid4(),
-                    uuid.uuid4(),
                     "Company B",
+                    False,
                 )
             ],
         ]
@@ -175,6 +176,7 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
                 "fr": [],
             },
             "ingredients": {"en": [], "fr": []},
+            "picture_set_id": str(uuid.uuid4()),
         }
 
         mock_get_full_inspection_json.return_value = json.dumps(sample_inspection)
@@ -268,6 +270,7 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
                 "fr": [],
             },
             "ingredients": {"en": [], "fr": []},
+            "picture_set_id": str(uuid.uuid4()),
         }
         mock_register_analysis.return_value = mock_inspection_data
 
@@ -280,7 +283,7 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
         )
 
         mock_container_client.from_connection_string.assert_called_once_with(
-            fake_conn_str, container_name=f"user-{user.id}"
+            fake_conn_str, container_name=build_container_name(str(user.id))
         )
         mock_register_analysis.assert_called_once_with(
             cursor_mock,
@@ -352,6 +355,7 @@ class TestUpdateFunction(unittest.IsolatedAsyncioTestCase):
                 "fr": [],
             },
             "ingredients": {"en": [], "fr": []},
+            "picture_set_id": str(uuid.uuid4()),
         }
 
         # Convert dict to InspectionUpdate model for tests that require validation
@@ -492,7 +496,7 @@ class TestDeleteFunction(unittest.IsolatedAsyncioTestCase):
         )
 
         mock_container_client.from_connection_string.assert_called_once_with(
-            connection_string, container_name=f"user-{user.id}"
+            connection_string, container_name=build_container_name(str(user.id))
         )
         mock_db_delete_inspection.assert_called_once_with(
             cursor_mock, inspection_id, user.id, container_client_instance

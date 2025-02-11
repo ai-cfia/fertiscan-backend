@@ -5,17 +5,11 @@ from fertiscan.db.metadata.inspection import DBInspection, Inspection
 from fertiscan.db.metadata.inspection import (
     OrganizationInformation as DBOrganizationInformation,
 )
-from fertiscan.db.metadata.inspection import ProductInformation as DBProductInformation
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class OrganizationInformation(DBOrganizationInformation):
     id: UUID | None = None
-
-
-class ProductInformation(DBProductInformation):
-    label_id: UUID | None = None
-    registration_number: str | None = Field(None, pattern=r"^\d{7}[A-Z]$")
 
 
 class InspectionData(BaseModel):
@@ -26,9 +20,9 @@ class InspectionData(BaseModel):
     picture_set_id: UUID | None = None
     label_info_id: UUID
     product_name: str | None = None
-    manufacturer_info_id: UUID | None = None
-    company_info_id: UUID | None = None
-    company_name: str | None = None
+    main_organization_id: UUID | None = None
+    main_organization_name: str | None = None
+    verified: bool | None = None
 
 
 class InspectionUpdate(Inspection):

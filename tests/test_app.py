@@ -247,9 +247,9 @@ class TestAPIInspections(unittest.TestCase):
                 picture_set_id=uuid.uuid4(),
                 label_info_id=uuid.uuid4(),
                 product_name="Product A",
-                manufacturer_info_id=uuid.uuid4(),
-                company_info_id=uuid.uuid4(),
-                company_name="Company A",
+                main_organization_id=uuid.uuid4(),
+                main_organization_name="Company A",
+                verified=True,
             ),
             InspectionData(
                 id=uuid.uuid4(),
@@ -259,9 +259,9 @@ class TestAPIInspections(unittest.TestCase):
                 picture_set_id=uuid.uuid4(),
                 label_info_id=uuid.uuid4(),
                 product_name="Product B",
-                manufacturer_info_id=uuid.uuid4(),
-                company_info_id=uuid.uuid4(),
-                company_name="Company B",
+                main_organization_id=uuid.uuid4(),
+                main_organization_name="Company B",
+                verified=False,
             ),
         ]
 
@@ -302,6 +302,7 @@ class TestAPIInspections(unittest.TestCase):
                 "fr": [],
             },
             "ingredients": {"en": [], "fr": []},
+            "picture_set_id": str(uuid.uuid4()),
         }
         self.mock_inspection = InspectionResponse.model_validate(
             self.sample_inspection_dict
