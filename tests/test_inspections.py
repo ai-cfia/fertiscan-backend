@@ -234,7 +234,7 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
         user = User(id=None)
 
         with self.assertRaises(MissingUserAttributeError):
-            await create_inspection(cp, user, label_data, label_images, "fake_conn_str")
+            await create_inspection(cp, user, label_data, label_images)
 
     @patch("app.controllers.inspections.InspectionController.register_analysis")
     async def test_create_inspection_success(
@@ -249,7 +249,6 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
         label_data = LabelData()
         label_images = [b"image_data"]
         inspection_id = uuid.uuid4()
-        fake_conn_str = "fake_conn_str"
         mock_inspection_data = {
             "inspection_id": inspection_id,
             "inspection_comment": "string",
@@ -290,7 +289,7 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
         mock_register_analysis.return_value = mock_inspection_data
 
         inspection = await create_inspection(
-            cp, user, label_data, label_images, fake_conn_str
+            cp, user, label_data, label_images
         )
 
         mock_register_analysis.assert_called_once_with(
@@ -306,16 +305,7 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
         user = User(id=uuid.uuid4())
 
         with self.assertRaises(ValueError):
-            await create_inspection(cp, user, None, label_images, "fake_conn_str")
-
-    async def test_missing_connection_string_raises_error(self):
-        cp = MagicMock()
-        label_data = LabelData()
-        label_images = [b"image_data"]
-        user = User(id=uuid.uuid4())
-
-        with self.assertRaises(ValueError):
-            await create_inspection(cp, user, label_data, label_images, None)
+            await create_inspection(cp, user, None, label_images)
 
 
 class TestUpdateFunction(unittest.IsolatedAsyncioTestCase):
