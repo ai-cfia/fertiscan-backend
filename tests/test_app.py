@@ -284,7 +284,7 @@ class TestAPIInspections(unittest.TestCase):
                     "volume": {"edited": False},
                     "density": {"edited": False},
                 },
-                "npk": "string",
+                "npk": "10-10-10",
                 "warranty": "string",
                 "n": 0,
                 "p": 0,

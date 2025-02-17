@@ -1,18 +1,8 @@
 from enum import Enum
-from typing import Annotated
 
-import phonenumbers
 from pydantic import BaseModel, Field
-from pydantic_extra_types.phone_numbers import PhoneNumberValidator
 
-CAPhoneNumber = Annotated[
-    str | phonenumbers.PhoneNumber,
-    PhoneNumberValidator(
-        supported_regions=["US", "CA"],
-        number_format="E164",
-        default_region="CA",
-    ),
-]
+from app.models.phone_number import CAPhoneNumber
 
 
 class Organization(BaseModel):
