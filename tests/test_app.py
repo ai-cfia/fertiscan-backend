@@ -1,5 +1,4 @@
 import base64
-import json
 import unittest
 import uuid
 from datetime import datetime
@@ -79,9 +78,9 @@ class TestAPIPipeline(unittest.TestCase):
         self.assertEqual(
             validated_inspection.fertiliser_name, mock_inspection.fertiliser_name
         )
-        self.assertEqual(
-            validated_inspection.registration_number,
-            mock_inspection.registration_number,
+        self.assertListEqual(
+            [r.model_dump() for r in validated_inspection.registration_number],
+            [r.model_dump() for r in mock_inspection.registration_number],
         )
 
     @patch("app.routes.extract_data")
@@ -270,8 +269,6 @@ class TestAPIInspections(unittest.TestCase):
             "inspection_id": str(inspection_id),
             "inspection_comment": "string",
             "verified": False,
-            "company": {},
-            "manufacturer": {},
             "product": {
                 "name": "string",
                 "label_id": str(uuid.uuid4()),
@@ -287,7 +284,7 @@ class TestAPIInspections(unittest.TestCase):
                     "volume": {"edited": False},
                     "density": {"edited": False},
                 },
-                "npk": "string",
+                "npk": "10-10-10",
                 "warranty": "string",
                 "n": 0,
                 "p": 0,
@@ -309,13 +306,12 @@ class TestAPIInspections(unittest.TestCase):
         )
 
         self.sample_label_data = {
+            "organizations": [],
             "cautions_en": ["string"],
             "instructions_en": [],
             "cautions_fr": ["string"],
             "ingredients_en": [],
-            "manufacturer_address": "string",
             "instructions_fr": [],
-            "manufacturer_phone_number": "string",
             "density": {"value": 0, "unit": "string"},
             "guaranteed_analysis_en": {
                 "title": "string",
@@ -323,30 +319,20 @@ class TestAPIInspections(unittest.TestCase):
                 "is_minimal": True,
             },
             "ingredients_fr": [],
-            "npk": "string",
+            "npk": "10-10-10",
             "guaranteed_analysis_fr": {
                 "title": "string",
                 "nutrients": [],
                 "is_minimal": True,
             },
-            "company_name": "string",
-            "manufacturer_website": "string",
-            "registration_number": [
-                {
-                    "identifier": "2224256A",
-                    "type": "fertilizer_product",
-                }
-            ],
+            "registration_number": [],
             "fertiliser_name": "string",
-            "company_address": "string",
             "lot_number": "string",
             "weight": [],
-            "manufacturer_name": "string",
-            "company_website": "string",
             "volume": {"value": 0, "unit": "string"},
-            "company_phone_number": "string",
         }
-        self.label_data_json = json.dumps(self.sample_label_data)
+        self.sample_label_data = LabelData.model_validate(self.sample_label_data)
+        self.label_data_json = self.sample_label_data.model_dump_json()
 
         self.files = [
             ("files", ("image1.png", BytesIO(b"fake_image_data_1"), "image/png")),
@@ -391,7 +377,7 @@ class TestAPIInspections(unittest.TestCase):
             data={"label_data": self.label_data_json},
             files=self.files,
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.json())
         InspectionResponse.model_validate(response.json())
 
     @patch("app.routes.create_inspection")
