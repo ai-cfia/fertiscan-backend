@@ -86,7 +86,7 @@ class TestReadAll(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(inspections[0].product_name, "Product A")
         self.assertEqual(inspections[1].product_name, "Product B")
 
-    @patch("app.controllers.inspections.InspectionController.get_user_analysis_by_verified")
+    @patch("app.controllers.inspections.get_user_analysis_by_verified")
     async def test_no_inspections_for_verified_and_unverified(
         self, mock_get_user_analysis_by_verified
     ):

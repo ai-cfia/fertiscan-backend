@@ -8,6 +8,6 @@ opentelemetry-exporter-otlp==1.27.0
 opentelemetry-instrumentation==0.48b0
 opentelemetry-instrumentation-fastapi==0.48b0
 opentelemetry-instrumentation-logging==0.48b0
-openinference-instrumentation-dspy==0.1.14
+openinference-instrumentation-dspy
 fastapi[standard]==0.115.4
 pydantic-settings==2.7.1

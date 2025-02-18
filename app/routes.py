@@ -117,7 +117,7 @@ async def get_inspection_pictures(
         )
     
 @router.post("/files/{id}/pictures", tags=["Files"]) # TODO: Could be a separate endpoint
-async def post_inspection_pictures(
+async def post_pictures(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
     id: UUID,
