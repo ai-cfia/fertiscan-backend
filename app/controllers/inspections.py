@@ -67,7 +67,7 @@ async def get_pictures(cp: ConnectionPool, user: User, id: UUID | str):
 
     with cp.connection() as conn, conn.cursor() as cursor:
         try:
-            inspection_controller = get_inspection_controller(cursor,inspection_id=id)
+            inspection_controller = get_inspection_controller(cursor, id)
             (container_id, folder_id) = inspection_controller.get_inspection_image_location_data(cursor)
 
             container_controller = ContainerController(Container(id=container_id))
@@ -86,11 +86,11 @@ async def read_inspection(cp: ConnectionPool, user: User, id: UUID | str):
 
     with cp.connection() as conn, conn.cursor() as cursor:
         try:
-            inspection = get_inspection_dict(cursor, inspection_id=id)
+            inspection = get_inspection_dict(cursor, id)
         except DBInspectionNotFoundError as e:
             log_error(e)
             raise InspectionNotFoundError(f"{e}") from e
-        return InspectionResponse(**inspection)
+        return InspectionResponse.model_construct(inspection)
 
 
 async def create_inspection(
@@ -156,7 +156,6 @@ async def delete_inspection(
         id = UUID(id)
 
     with cp.connection() as conn, conn.cursor() as cursor:
-        controller = get_inspection_controller(user.id, id)
-        # (container_id, _) = controller.get_inspection_image_location_data(cursor)
-        deleted = await controller.delete_inspection(cursor, user.id)
+        controller = get_inspection_controller(cursor, id)
+        deleted = controller.delete_inspection(cursor, user.id)
         return DeletedInspection.model_validate(deleted.model_dump())

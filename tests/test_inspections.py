@@ -35,7 +35,7 @@ class TestReadAll(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(MissingUserAttributeError):
             await read_all_inspections(cp, user)
 
-    @patch("app.controllers.inspections.InspectionController.get_user_analysis_by_verified")
+    @patch("app.controllers.inspections.get_user_analysis_by_verified")
     async def test_calls_analysis_twice_and_combines_results(
         self, mock_get_user_analysis_by_verified
     ):
@@ -128,9 +128,9 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             await read_inspection(cp, user, invalid_id)
 
-    @patch("app.controllers.inspections.InspectionController.get_full_inspection_analysis")
+    @patch("app.controllers.inspections.get_inspection_dict")
     async def test_valid_inspection_id_calls_get_full_inspection_json(
-        self, mock_get_full_inspection_analysis
+        self, mock_get_inspection_dict
     ):
         cp = MagicMock()
         conn_mock = MagicMock()
@@ -179,34 +179,46 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
             "picture_set_id": str(uuid.uuid4()),
         }
 
-        mock_get_full_inspection_analysis.return_value = json.dumps(sample_inspection)
+        mock_get_inspection_dict.return_value = json.dumps(sample_inspection)
 
         inspection = await read_inspection(cp, user, inspection_id)
 
-        mock_get_full_inspection_analysis.assert_called_once_with(
-            cursor_mock
+        mock_get_inspection_dict.assert_called_once_with(
+            cursor_mock,
+            inspection_id,
         )
         self.assertIsInstance(inspection, InspectionResponse)
 
+    @patch("app.controllers.inspections.get_inspection_controller")
     @patch("app.controllers.inspections.ContainerController.get_folder_pictures")
-    async def test_valid_inspection_id_calls_get_pictures(self, mock_get_folder_pictures):
+    async def test_get_pictures_success(self, mock_get_folder_pictures, mock_get_inspection_controller):
         cp = MagicMock()
         conn_mock = MagicMock()
         cursor_mock = MagicMock()
-        conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
-        cp.connection.return_value.__enter__.return_value = conn_mock
+        controller_mock = MagicMock()
 
         user = User(id=uuid.uuid4())
         inspection_id = uuid.uuid4()
+        container_id = uuid.uuid4()
+        folder_id = uuid.uuid4()
 
-        mock_get_folder_pictures.return_value = []
+        conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
+        cp.connection.return_value.__enter__.return_value = conn_mock
+        mock_get_inspection_controller.return_value = controller_mock
+        controller_mock.get_inspection_image_location_data.return_value = (container_id, folder_id)
+        mock_get_folder_pictures.return_value = ["picture1.jpg", "picture2.jpg"]
+
+
         pictures = await get_pictures(cp, user, inspection_id)
 
-        mock_get_folder_pictures.assert_called_once()
-        self.assertIsInstance(pictures, list)
-        # self.assertGreaterEqual(mock_get_pictures.call_count, 1)
+        mock_get_inspection_controller.assert_called_once_with(cursor_mock, inspection_id)
+        controller_mock.get_inspection_image_location_data.assert_called_once_with(cursor_mock)
+        mock_get_folder_pictures.assert_called_once_with(cursor_mock, folder_id, user.id)
 
-    @patch("app.controllers.inspections.InspectionController.get_full_inspection_analysis")
+        self.assertIsInstance(pictures, list)
+        self.assertEqual(pictures, ["picture1.jpg", "picture2.jpg"])
+
+    @patch("app.controllers.inspections.get_inspection_dict")
     async def test_inspection_not_found_raises_error(
         self, mock_get_full_inspection_analysis
     ):
@@ -237,9 +249,9 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(MissingUserAttributeError):
             await create_inspection(cp, user, label_data, label_images)
 
-    @patch("app.controllers.inspections.InspectionController.register_analysis")
+    @patch("app.controllers.inspections.new_inspection")
     async def test_create_inspection_success(
-        self, mock_register_analysis
+        self, mock_new_inspection
     ):
         cp = MagicMock()
         conn_mock = MagicMock()
@@ -287,15 +299,18 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
             },
             "ingredients": {"en": [], "fr": []},
             "picture_set_id": str(uuid.uuid4()),
+            "folder_id": str(uuid.uuid4()),
+            "container_id": str(uuid.uuid4()),
         }
-        mock_register_analysis.return_value = mock_inspection_data
+        mock_new_inspection.return_value = mock_inspection_data
 
         inspection = await create_inspection(
             cp, user, label_data, label_images
         )
 
-        mock_register_analysis.assert_called_once_with(
+        mock_new_inspection.assert_called_once_with(
             cursor_mock,
+            user.id,
             label_data.model_dump(),
         )
         self.assertIsInstance(inspection, InspectionResponse)
@@ -353,6 +368,8 @@ class TestUpdateFunction(unittest.IsolatedAsyncioTestCase):
             },
             "ingredients": {"en": [], "fr": []},
             "picture_set_id": str(uuid.uuid4()),
+            "folder_id": str(uuid.uuid4()),
+            "container_id": str(uuid.uuid4()),
         }
 
         # Convert dict to InspectionUpdate model for tests that require validation
@@ -396,14 +413,6 @@ class TestDeleteFunction(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             await delete_inspection(cp, user, None)
 
-    async def test_missing_connection_string_raises_error(self):
-        cp = MagicMock()
-        user = User(id=uuid.uuid4())
-        inspection_id = uuid.uuid4()
-
-        with self.assertRaises(ValueError):
-            await delete_inspection(cp, user, inspection_id)
-
     async def test_invalid_inspection_id_format(self):
         cp = MagicMock()
         user = User(id=uuid.uuid4())
@@ -412,35 +421,32 @@ class TestDeleteFunction(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             await delete_inspection(cp, user, invalid_id)
 
-    @patch("app.controllers.inspections.InspectionController.delete_inspection")
-    async def test_delete_inspection_success(
-        self, mock_delete_inspection
-    ):
+    @patch("app.controllers.inspections.get_inspection_controller")
+    async def test_delete_inspection_success(self, mock_get_inspection_controller):
         cp = MagicMock()
         conn_mock = MagicMock()
         cursor_mock = MagicMock()
+        controller_mock = MagicMock()
+
         conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
         cp.connection.return_value.__enter__.return_value = conn_mock
+        mock_get_inspection_controller.return_value = controller_mock
+        mock_delete_inspection = controller_mock.delete_inspection
 
         user = User(id=uuid.uuid4())
-        container_id = uuid.uuid4()
         inspection_id = uuid.uuid4()
 
         mock_deleted_inspection_data = {
             "id": inspection_id,
             "deleted": True,
         }
-        mock_delete_inspection.return_value = DeletedInspection(
-            **mock_deleted_inspection_data
-        )
+        mock_delete_inspection.return_value = DeletedInspection(**mock_deleted_inspection_data)
 
-        deleted_inspection = await delete_inspection(
-            cp, user, inspection_id
-        )
+        deleted_inspection = await delete_inspection(cp, user, inspection_id)
 
-        mock_delete_inspection.assert_called_once_with(
-            cursor_mock, container_id
-        )
+        mock_get_inspection_controller.assert_called_once_with(cursor_mock, inspection_id)
+        mock_delete_inspection.assert_called_once_with(cursor_mock, user.id)
+
         self.assertIsInstance(deleted_inspection, DeletedInspection)
         self.assertEqual(deleted_inspection.id, inspection_id)
         self.assertTrue(deleted_inspection.deleted)

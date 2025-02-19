@@ -300,65 +300,38 @@ class TestAPIInspections(unittest.TestCase):
             },
             "ingredients": {"en": [], "fr": []},
             "picture_set_id": str(uuid.uuid4()),
+            "folder_id": str(uuid.uuid4()),
+            "container_id": str(uuid.uuid4()),
         }
         self.mock_inspection = InspectionResponse.model_validate(
             self.sample_inspection_dict
         )
 
         self.sample_label_data = {
-            "organizations": [
-                {
-                "name": "GreenGrow Inc.",
-                "address": "123 Green Road, Farmville, State, 12345",
-                "website": "https://www.greengrow.com",
-                "phone_number": "123-456-7890"
-                },
-                {
-                "name": "AgriSupply Co.",
-                "address": "456 Supply Lane, AgriTown, State, 67890",
-                "website": "https://www.agrisupply.com",
-                "phone_number": "987-654-3210"
-                }
-            ],
-            "fertiliser_name": "GreenGrow Fertilizer 20-20-20",
-            "registration_number": [
-                {
-                "identifier": "2018007A",
-                "type": "fertilizer_product"
-                }
-            ],
-            "lot_number": "LOT20240901",
-            "weight": [
-                {
-                "value": 50,
-                "unit": "kg"
-                }
-            ],
-            "density": {
-                "value": 1.5,
-                "unit": "g/cm³"
-            },
-            "volume": {
-                "value": 33.3,
-                "unit": "L"
-            },
-            "npk": "20-20-20",
-            "guaranteed_analysis_en": {
-                "title": "Guaranteed Analysis",
-                "nutrients": [
-                ]
-            },
-            "guaranteed_analysis_fr": {
-                "title": "Analyse Garantie",
-                "nutrients": [
-                ]
-            },
-            "ingredients_en":[],
-            "ingredients_fr":[],
-            "cautions_en": [],
-            "cautions_fr": [],
+            "organizations": [],
+            "cautions_en": ["string"],
             "instructions_en": [],
-            "instructions_fr": []
+            "cautions_fr": ["string"],
+            "ingredients_en": [],
+            "instructions_fr": [],
+            "density": {"value": 0, "unit": "string"},
+            "guaranteed_analysis_en": {
+                "title": "string",
+                "nutrients": [],
+                "is_minimal": True,
+            },
+            "ingredients_fr": [],
+            "npk": "10-10-10",
+            "guaranteed_analysis_fr": {
+                "title": "string",
+                "nutrients": [],
+                "is_minimal": True,
+            },
+            "registration_number": [],
+            "fertiliser_name": "string",
+            "lot_number": "string",
+            "weight": [],
+            "volume": {"value": 0, "unit": "string"},
         }
         self.sample_label_data = LabelData.model_validate(self.sample_label_data)
         self.label_data_json = self.sample_label_data.model_dump_json()
