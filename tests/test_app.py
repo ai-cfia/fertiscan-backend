@@ -300,6 +300,8 @@ class TestAPIInspections(unittest.TestCase):
             },
             "ingredients": {"en": [], "fr": []},
             "picture_set_id": str(uuid.uuid4()),
+            "folder_id": str(uuid.uuid4()),
+            "container_id": str(uuid.uuid4()),
         }
         self.mock_inspection = InspectionResponse.model_validate(
             self.sample_inspection_dict
