@@ -11,3 +11,4 @@ opentelemetry-instrumentation-logging==0.48b0
 openinference-instrumentation-dspy
 fastapi[standard]==0.115.4
 pydantic-settings==2.7.1
+pydantic-extra-types==2.10.2

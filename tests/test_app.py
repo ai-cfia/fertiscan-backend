@@ -1,5 +1,4 @@
 import base64
-import json
 import unittest
 import uuid
 from datetime import datetime
@@ -79,9 +78,9 @@ class TestAPIPipeline(unittest.TestCase):
         self.assertEqual(
             validated_inspection.fertiliser_name, mock_inspection.fertiliser_name
         )
-        self.assertEqual(
-            validated_inspection.registration_number,
-            mock_inspection.registration_number,
+        self.assertListEqual(
+            [r.model_dump() for r in validated_inspection.registration_number],
+            [r.model_dump() for r in mock_inspection.registration_number],
         )
 
     @patch("app.routes.extract_data")
@@ -247,9 +246,9 @@ class TestAPIInspections(unittest.TestCase):
                 picture_set_id=uuid.uuid4(),
                 label_info_id=uuid.uuid4(),
                 product_name="Product A",
-                manufacturer_info_id=uuid.uuid4(),
-                company_info_id=uuid.uuid4(),
-                company_name="Company A",
+                main_organization_id=uuid.uuid4(),
+                main_organization_name="Company A",
+                verified=True,
             ),
             InspectionData(
                 id=uuid.uuid4(),
@@ -259,9 +258,9 @@ class TestAPIInspections(unittest.TestCase):
                 picture_set_id=uuid.uuid4(),
                 label_info_id=uuid.uuid4(),
                 product_name="Product B",
-                manufacturer_info_id=uuid.uuid4(),
-                company_info_id=uuid.uuid4(),
-                company_name="Company B",
+                main_organization_id=uuid.uuid4(),
+                main_organization_name="Company B",
+                verified=False,
             ),
         ]
 
@@ -270,8 +269,6 @@ class TestAPIInspections(unittest.TestCase):
             "inspection_id": str(inspection_id),
             "inspection_comment": "string",
             "verified": False,
-            "company": {},
-            "manufacturer": {},
             "product": {
                 "name": "string",
                 "label_id": str(uuid.uuid4()),
@@ -287,7 +284,7 @@ class TestAPIInspections(unittest.TestCase):
                     "volume": {"edited": False},
                     "density": {"edited": False},
                 },
-                "npk": "string",
+                "npk": "10-10-10",
                 "warranty": "string",
                 "n": 0,
                 "p": 0,
@@ -302,6 +299,7 @@ class TestAPIInspections(unittest.TestCase):
                 "fr": [],
             },
             "ingredients": {"en": [], "fr": []},
+            "picture_set_id": str(uuid.uuid4()),
         }
         self.mock_inspection = InspectionResponse.model_validate(
             self.sample_inspection_dict
@@ -362,7 +360,8 @@ class TestAPIInspections(unittest.TestCase):
             "instructions_en": [],
             "instructions_fr": []
         }
-        self.label_data_json = json.dumps(self.sample_label_data)
+        self.sample_label_data = LabelData.model_validate(self.sample_label_data)
+        self.label_data_json = self.sample_label_data.model_dump_json()
 
         self.files = [
             ("files", ("image1.png", BytesIO(b"fake_image_data_1"), "image/png")),
@@ -407,7 +406,7 @@ class TestAPIInspections(unittest.TestCase):
             data={"label_data": self.label_data_json},
             files=self.files,
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.json())
         InspectionResponse.model_validate(response.json())
 
     @patch("app.routes.create_inspection")

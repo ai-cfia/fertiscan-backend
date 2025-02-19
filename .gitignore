@@ -11,7 +11,7 @@ logs/
 .vscode
 
 # Upload folder
-uploads/*
+uploads/
 
 # C extensions
 *.so

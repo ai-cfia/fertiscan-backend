@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
+from datastore.blob.azure_storage_api import build_container_name
 from fertiscan.db.queries.inspection import (
     InspectionNotFoundError as DBInspectionNotFoundError,
 )
@@ -49,8 +50,8 @@ class TestReadAll(unittest.IsolatedAsyncioTestCase):
                     uuid.uuid4(),
                     "Product A",
                     uuid.uuid4(),
-                    uuid.uuid4(),
                     "Company A",
+                    True,
                 )
             ],
             [
@@ -63,8 +64,8 @@ class TestReadAll(unittest.IsolatedAsyncioTestCase):
                     uuid.uuid4(),
                     "Product B",
                     uuid.uuid4(),
-                    uuid.uuid4(),
                     "Company B",
+                    False,
                 )
             ],
         ]
@@ -144,8 +145,7 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
             "inspection_id": str(inspection_id),
             "inspection_comment": "string",
             "verified": False,
-            "company": {},
-            "manufacturer": {},
+            "organizations": [],
             "product": {
                 "name": "string",
                 "label_id": str(uuid.uuid4()),
@@ -161,7 +161,7 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
                     "volume": {"edited": False},
                     "density": {"edited": False},
                 },
-                "npk": "string",
+                "npk": "10-10-10",
                 "warranty": "string",
                 "n": 0,
                 "p": 0,
@@ -176,6 +176,7 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
                 "fr": [],
             },
             "ingredients": {"en": [], "fr": []},
+            "picture_set_id": str(uuid.uuid4()),
         }
 
         mock_get_full_inspection_analysis.return_value = json.dumps(sample_inspection)
@@ -270,7 +271,7 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
                     "volume": {"edited": False},
                     "density": {"edited": False},
                 },
-                "npk": "string",
+                "npk": "10-10-10",
                 "warranty": "string",
                 "n": 0,
                 "p": 0,
@@ -285,6 +286,7 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
                 "fr": [],
             },
             "ingredients": {"en": [], "fr": []},
+            "picture_set_id": str(uuid.uuid4()),
         }
         mock_register_analysis.return_value = mock_inspection_data
 
@@ -335,7 +337,7 @@ class TestUpdateFunction(unittest.IsolatedAsyncioTestCase):
                     "volume": {"edited": False},
                     "density": {"edited": False},
                 },
-                "npk": "string",
+                "npk": "10-10-10",
                 "warranty": "string",
                 "n": 0,
                 "p": 0,
@@ -350,6 +352,7 @@ class TestUpdateFunction(unittest.IsolatedAsyncioTestCase):
                 "fr": [],
             },
             "ingredients": {"en": [], "fr": []},
+            "picture_set_id": str(uuid.uuid4()),
         }
 
         # Convert dict to InspectionUpdate model for tests that require validation

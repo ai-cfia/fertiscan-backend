@@ -2,7 +2,7 @@ from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from pipeline import GPT, OCR
 from psycopg_pool import ConnectionPool
@@ -23,6 +23,7 @@ from app.dependencies import (
     fetch_user,
     get_connection_pool,
     get_gpt,
+    get_label_data,
     get_ocr,
     get_settings,
     validate_files,
@@ -56,7 +57,6 @@ async def health_check():
 async def analyze_document(
     ocr: Annotated[OCR, Depends(get_ocr)],
     gpt: Annotated[GPT, Depends(get_gpt)],
-    # settings: Annotated[Settings, Depends(get_settings)],
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
     file_dict = {custom_secure_filename(f.filename): f.file for f in files}
@@ -134,7 +134,7 @@ async def post_inspection(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
     settings: Annotated[Settings, Depends(get_settings)],
-    label_data: Annotated[LabelData, Form(...)],
+    label_data: Annotated[LabelData, Depends(get_label_data)],
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
     label_images = [await f.read() for f in files]
