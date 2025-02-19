@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     db_host: str
     db_port: int
     db_name: str
+    db_ssl_mode: str = "prefer"
     fertiscan_schema: str
     azure_storage_account_name: str
     azure_storage_account_key: str
@@ -46,7 +47,6 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(alias="azure_openai_key")
     phoenix_endpoint: str | None = None
     swagger_path: str = "/docs"
-    # upload_folder: str = "uploads"
     allowed_origins: list[str]
     otel_exporter_otlp_endpoint: str = Field(alias="otel_exporter_otlp_endpoint")
 
@@ -69,6 +69,7 @@ class Settings(BaseSettings):
             host=self.db_host,
             port=self.db_port,
             dbname=self.db_name,
+            sslmode=self.db_ssl_mode,
         )
 
 
