@@ -2,13 +2,14 @@ from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile
 from fastapi.responses import RedirectResponse
 from pipeline import GPT, OCR
 from psycopg_pool import ConnectionPool
 
 from app.config import Settings
 from app.controllers.data_extraction import extract_data
+from app.controllers.files import read_file, read_folder
 from app.controllers.inspections import (
     create_inspection,
     delete_inspection,
@@ -27,7 +28,7 @@ from app.dependencies import (
     get_settings,
     validate_files,
 )
-from app.exceptions import InspectionNotFoundError, UserConflictError
+from app.exceptions import FileNotFoundError, InspectionNotFoundError, UserConflictError
 from app.models.inspections import (
     DeletedInspection,
     InspectionData,
@@ -149,3 +150,28 @@ async def delete_inspection_(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
         )
+
+
+@router.get("/files/{folder_id}", tags=["Files"], response_model=list[UUID])
+async def get_folder(
+    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
+    user: Annotated[User, Depends(fetch_user)],
+    folder_id: UUID,
+):
+    return await read_folder(cp, user.id, folder_id)
+
+
+@router.get("/files/{folder_id}/{file_id}", tags=["Files"], response_class=Response)
+async def get_file(
+    settings: Annotated[Settings, Depends(get_settings)],
+    user: Annotated[User, Depends(fetch_user)],
+    folder_id: UUID,
+    file_id: UUID,
+):
+    conn = settings.azure_storage_connection_string
+    try:
+        binaries = await read_file(conn, user.id, folder_id, file_id)
+        return Response(content=binaries)
+        # in the future, the mimetype should be saved upstream and returned here
+    except FileNotFoundError:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="File not found")

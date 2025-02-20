@@ -16,7 +16,12 @@ from app.dependencies import (
     get_ocr,
     get_settings,
 )
-from app.exceptions import InspectionNotFoundError, UserConflictError, UserNotFoundError
+from app.exceptions import (
+    FileNotFoundError,
+    InspectionNotFoundError,
+    UserConflictError,
+    UserNotFoundError,
+)
 from app.models.inspections import DeletedInspection, InspectionData, InspectionResponse
 from app.models.label_data import LabelData
 from app.models.users import User
@@ -460,3 +465,56 @@ class TestAPIInspections(unittest.TestCase):
             f"/inspections/{inspection_id}", json={"verified": True}
         )
         self.assertEqual(response.status_code, 422)
+
+
+class TestAPIFiles(unittest.TestCase):
+    def setUp(self) -> None:
+        self.client = TestClient(app)
+        self.test_user = User(username="test_user", id=uuid.uuid4())
+
+        app.dependency_overrides.clear()
+        app.dependency_overrides[get_connection_pool] = lambda: Mock()
+        app.dependency_overrides[fetch_user] = lambda: self.test_user
+        app.dependency_overrides[get_settings] = lambda: Mock(
+            azure_storage_connection_string="mock_connection_string"
+        )
+
+        self.folder_id = uuid.uuid4()
+        self.file_id = uuid.uuid4()
+
+    @patch("app.routes.read_folder")
+    def test_get_folder(self, mock_read_folder):
+        """Test retrieving a folder's file list"""
+        mock_read_folder.return_value = [uuid.uuid4(), uuid.uuid4()]
+        response = self.client.get(f"/files/{self.folder_id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.json(), list)
+
+    def test_get_folder_unauthenticated(self):
+        """Test unauthorized access to folder retrieval"""
+        del app.dependency_overrides[fetch_user]
+        response = self.client.get(f"/files/{self.folder_id}")
+        self.assertEqual(response.status_code, 401)
+
+    @patch("app.routes.read_file")
+    def test_get_file(self, mock_read_file):
+        """Test retrieving a specific file from a folder"""
+        mock_read_file.return_value = b"fake_image_data"
+        response = self.client.get(f"/files/{self.folder_id}/{self.file_id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"fake_image_data")
+        self.assertEqual(response.headers["content-type"], "image/png")
+
+    @patch("app.routes.read_file")
+    def test_get_file_not_found(self, mock_read_file):
+        """Test retrieving a non-existent file"""
+        mock_read_file.side_effect = FileNotFoundError()
+        response = self.client.get(f"/files/{self.folder_id}/{self.file_id}")
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["detail"], "File not found")
+
+    def test_get_file_unauthenticated(self):
+        """Test unauthorized access to file retrieval"""
+        del app.dependency_overrides[fetch_user]
+        response = self.client.get(f"/files/{self.folder_id}/{self.file_id}")
+        self.assertEqual(response.status_code, 401)

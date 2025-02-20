@@ -27,6 +27,14 @@ class InspectionNotFoundError(InspectionError):
     pass
 
 
+class FileError(Exception):
+    pass
+
+
+class FileNotFoundError(FileError):
+    pass
+
+
 def log_error(error: Exception):
     """Logs the error message and traceback."""
     logger.error(f"Error occurred: {error}")
