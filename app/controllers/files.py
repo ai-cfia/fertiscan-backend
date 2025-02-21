@@ -18,7 +18,7 @@ from app.models.files import Folder
 
 async def read_folder(
     cp: ConnectionPool, user_id: UUID | str, picture_set_id: UUID | str
-):
+) -> Folder:
     if not isinstance(user_id, UUID):
         user_id = UUID(user_id)
     if not isinstance(picture_set_id, UUID):
@@ -27,7 +27,8 @@ async def read_folder(
     with cp.connection() as conn, conn.cursor(row_factory=dict_row) as cursor:
         pictures = get_picture_set_pictures(cursor, picture_set_id)
         file_ids: list[UUID] = [p["id"] for p in pictures]
-        return file_ids
+        folder = Folder(id=picture_set_id, owner_id=user_id, file_ids=file_ids)
+        return folder
 
 
 async def create_folder(

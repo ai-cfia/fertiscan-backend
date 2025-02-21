@@ -153,13 +153,25 @@ async def delete_inspection_(
         )
 
 
-@router.get("/files/{folder_id}", tags=["Files"], response_model=list[UUID])
+@router.get("/files/{folder_id}", tags=["Files"], response_model=FolderResponse)
 async def get_folder(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
     folder_id: UUID,
 ):
     return await read_folder(cp, user.id, folder_id)
+
+
+@router.post("/files", tags=["Files"], response_model=FolderResponse)
+async def post_files(
+    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
+    user: Annotated[User, Depends(fetch_user)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    files: Annotated[list[UploadFile], Depends(validate_files)],
+):
+    label_images = [await f.read() for f in files]
+    conn_string = settings.azure_storage_connection_string
+    return await create_folder(cp, conn_string, user.id, label_images)
 
 
 @router.get("/files/{folder_id}/{file_id}", tags=["Files"], response_class=Response)
@@ -176,16 +188,3 @@ async def get_file(
         # in the future, the mimetype should be saved upstream and returned here
     except FileNotFoundError:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="File not found")
-
-
-@router.post("/files", tags=["Files"], response_model=FolderResponse)
-async def post_files(
-    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
-    user: Annotated[User, Depends(fetch_user)],
-    settings: Annotated[Settings, Depends(get_settings)],
-    files: Annotated[list[UploadFile], Depends(validate_files)],
-):
-    label_images = [await f.read() for f in files]
-    conn_string = settings.azure_storage_connection_string
-    folder = await create_folder(cp, conn_string, user.id, label_images)
-    return FolderResponse.model_validate(folder.model_dump())

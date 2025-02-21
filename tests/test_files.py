@@ -12,17 +12,24 @@ from app.models.files import Folder
 
 class TestReadFolder(unittest.IsolatedAsyncioTestCase):
     @patch("app.controllers.files.get_picture_set_pictures")
-    async def test_valid_folder_returns_file_ids(self, mock_get_pictures):
+    async def test_read_folder_success(self, mock_get_pictures):
+        """Test retrieving a folder successfully"""
         sample_picture_ids = [{"id": uuid.uuid4()}, {"id": uuid.uuid4()}]
         mock_get_pictures.return_value = sample_picture_ids
-        cp = MagicMock()
+        mock_cp = MagicMock(spec=ConnectionPool)
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cp.connection.return_value.__enter__.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
         user_id = uuid.uuid4()
         picture_set_id = uuid.uuid4()
-        file_ids = await read_folder(cp, user_id, picture_set_id)
-        self.assertEqual(len(file_ids), 2)
-        self.assertEqual(file_ids[0], sample_picture_ids[0]["id"])
-        self.assertEqual(file_ids[1], sample_picture_ids[1]["id"])
-        mock_get_pictures.assert_called_once()
+        folder = await read_folder(mock_cp, user_id, picture_set_id)
+        self.assertIsInstance(folder, Folder)
+        self.assertEqual(folder.id, picture_set_id)
+        self.assertEqual(folder.owner_id, user_id)
+        self.assertEqual(folder.file_ids, [p["id"] for p in sample_picture_ids])
+        mock_get_pictures.assert_called_once_with(mock_cursor, picture_set_id)
+
 
 
 class TestReadFile(unittest.IsolatedAsyncioTestCase):

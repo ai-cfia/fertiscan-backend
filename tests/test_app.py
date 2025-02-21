@@ -3,7 +3,7 @@ import unittest
 import uuid
 from datetime import datetime
 from io import BytesIO
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, Mock, patch
 
 from fastapi.testclient import TestClient
 from pipeline import FertilizerInspection
@@ -485,11 +485,17 @@ class TestAPIFiles(unittest.TestCase):
 
     @patch("app.routes.read_folder")
     def test_get_folder(self, mock_read_folder):
-        """Test retrieving a folder's file list"""
-        mock_read_folder.return_value = [uuid.uuid4(), uuid.uuid4()]
-        response = self.client.get(f"/files/{self.folder_id}")
+        """Test retrieving a folder successfully"""
+        folder_id = self.folder_id
+        file_ids = [uuid.uuid4(), uuid.uuid4()]
+        mock_read_folder.return_value = Folder(
+            id=folder_id, owner_id=self.test_user.id, file_ids=file_ids
+        )
+        response = self.client.get(f"/files/{folder_id}")
         self.assertEqual(response.status_code, 200)
-        self.assertIsInstance(response.json(), list)
+        data = response.json()
+        self.assertEqual(data["id"], str(folder_id))
+        self.assertEqual(set(data["file_ids"]), {str(file_ids[0]), str(file_ids[1])})
 
     def test_get_folder_unauthenticated(self):
         """Test unauthorized access to folder retrieval"""
@@ -498,13 +504,16 @@ class TestAPIFiles(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
 
     @patch("app.routes.read_file")
-    def test_get_file(self, mock_read_file):
+    async def test_get_file(self, mock_read_file):
         """Test retrieving a specific file from a folder"""
         mock_read_file.return_value = b"fake_image_data"
         response = self.client.get(f"/files/{self.folder_id}/{self.file_id}")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b"fake_image_data")
         self.assertEqual(response.headers["content-type"], "image/png")
+        mock_read_file.assert_called_once_with(
+            ANY, self.test_user.id, self.folder_id, self.file_id
+        )
 
     @patch("app.routes.read_file")
     def test_get_file_not_found(self, mock_read_file):
