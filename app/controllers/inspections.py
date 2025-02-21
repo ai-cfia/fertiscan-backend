@@ -4,20 +4,19 @@ from uuid import UUID
 from azure.storage.blob import ContainerClient
 from datastore.blob.azure_storage_api import build_container_name
 from fertiscan import delete_inspection as db_delete_inspection
-from fertiscan import (
-    get_full_inspection_json,
-    get_user_analysis_by_verified,
-    register_analysis,
-)
+from fertiscan import get_full_inspection_json, get_user_analysis_by_verified
 from fertiscan import update_inspection as db_update_inspection
+from fertiscan.db.metadata.inspection import build_inspection_import
 from fertiscan.db.queries.inspection import (
     InspectionNotFoundError as DBInspectionNotFoundError,
 )
+from fertiscan.db.queries.inspection import new_inspection_with_label_info
 from psycopg_pool import ConnectionPool
 
 from app.exceptions import InspectionNotFoundError, MissingUserAttributeError, log_error
 from app.models.inspections import (
     DeletedInspection,
+    Inspection,
     InspectionData,
     InspectionResponse,
     InspectionUpdate,
@@ -74,28 +73,20 @@ async def read_inspection(cp: ConnectionPool, user: User, id: UUID | str):
 
 
 async def create_inspection(
-    cp: ConnectionPool,
-    user: User,
-    label_data: LabelData,
-    label_images: list[bytes],
-    connection_string: str,
+    cp: ConnectionPool, user: User, label_data: LabelData | dict
 ):
     if not user.id:
         raise MissingUserAttributeError("User ID is required for creating inspections.")
-    if not label_data:
-        raise ValueError("Label data is required for creating inspection.")
-    if not connection_string:
-        raise ValueError("Connection string is required for creating inspection.")
+    if not isinstance(label_data, LabelData):
+        label_data = LabelData.model_validate(label_data)
 
     with cp.connection() as conn, conn.cursor() as cursor:
-        container_client = ContainerClient.from_connection_string(
-            connection_string, container_name=build_container_name(str(user.id))
+        formatted_analysis = build_inspection_import(
+            label_data.model_dump(mode="json"), user.id, label_data.picture_set_id
         )
-        label_data = label_data.model_dump(mode="json")
-        inspection = await register_analysis(
-            cursor, container_client, user.id, label_images, label_data
-        )
-        return InspectionResponse.model_validate(inspection)
+        inspection = new_inspection_with_label_info(cursor, user.id, formatted_analysis)
+        inspection = Inspection.model_validate(inspection)
+        return inspection
 
 
 async def update_inspection(

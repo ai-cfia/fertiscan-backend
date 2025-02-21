@@ -23,7 +23,6 @@ from app.dependencies import (
     fetch_user,
     get_connection_pool,
     get_gpt,
-    get_label_data,
     get_ocr,
     get_settings,
     validate_files,
@@ -32,6 +31,7 @@ from app.exceptions import FileNotFoundError, InspectionNotFoundError, UserConfl
 from app.models.files import FolderResponse
 from app.models.inspections import (
     DeletedInspection,
+    InspectionCreate,
     InspectionData,
     InspectionResponse,
     InspectionUpdate,
@@ -109,13 +109,9 @@ async def get_inspection(
 async def post_inspection(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
-    settings: Annotated[Settings, Depends(get_settings)],
-    label_data: Annotated[LabelData, Depends(get_label_data)],
-    files: Annotated[list[UploadFile], Depends(validate_files)],
+    data: InspectionCreate,
 ):
-    label_images = [await f.read() for f in files]
-    conn_string = settings.azure_storage_connection_string
-    return await create_inspection(cp, user, label_data, label_images, conn_string)
+    return await create_inspection(cp, user, data)
 
 
 @router.put(

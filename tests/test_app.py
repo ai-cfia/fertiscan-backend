@@ -336,9 +336,10 @@ class TestAPIInspections(unittest.TestCase):
             "lot_number": "string",
             "weight": [],
             "volume": {"value": 0, "unit": "string"},
+            "picture_set_id": str(uuid.uuid4()),
         }
         self.sample_label_data = LabelData.model_validate(self.sample_label_data)
-        self.label_data_json = self.sample_label_data.model_dump_json()
+        self.label_data_dict = self.sample_label_data.model_dump(mode="json")
 
         self.files = [
             ("files", ("image1.png", BytesIO(b"fake_image_data_1"), "image/png")),
@@ -380,8 +381,7 @@ class TestAPIInspections(unittest.TestCase):
         mock_create_inspection.return_value = self.mock_inspection
         response = self.client.post(
             "/inspections",
-            data={"label_data": self.label_data_json},
-            files=self.files,
+            json=self.label_data_dict,
         )
         self.assertEqual(response.status_code, 200, response.json())
         InspectionResponse.model_validate(response.json())
@@ -395,8 +395,7 @@ class TestAPIInspections(unittest.TestCase):
         del app.dependency_overrides[fetch_user]
         response = self.client.post(
             "/inspections",
-            data={"label_data": self.label_data_json},
-            files=self.files,
+            json=self.label_data_dict,
         )
         self.assertEqual(response.status_code, 401)
 
