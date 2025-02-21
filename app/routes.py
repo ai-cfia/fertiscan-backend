@@ -9,7 +9,7 @@ from psycopg_pool import ConnectionPool
 
 from app.config import Settings
 from app.controllers.data_extraction import extract_data
-from app.controllers.files import read_file, read_folder
+from app.controllers.files import create_folder, read_file, read_folder
 from app.controllers.inspections import (
     create_inspection,
     delete_inspection,
@@ -29,6 +29,7 @@ from app.dependencies import (
     validate_files,
 )
 from app.exceptions import FileNotFoundError, InspectionNotFoundError, UserConflictError
+from app.models.files import FolderResponse
 from app.models.inspections import (
     DeletedInspection,
     InspectionData,
@@ -175,3 +176,16 @@ async def get_file(
         # in the future, the mimetype should be saved upstream and returned here
     except FileNotFoundError:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="File not found")
+
+
+@router.post("/files", tags=["Files"], response_model=FolderResponse)
+async def post_files(
+    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
+    user: Annotated[User, Depends(fetch_user)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    files: Annotated[list[UploadFile], Depends(validate_files)],
+):
+    label_images = [await f.read() for f in files]
+    conn_string = settings.azure_storage_connection_string
+    folder = await create_folder(cp, conn_string, user.id, label_images)
+    return FolderResponse.model_validate(folder.model_dump())

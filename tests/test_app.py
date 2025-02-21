@@ -22,6 +22,7 @@ from app.exceptions import (
     UserConflictError,
     UserNotFoundError,
 )
+from app.models.files import Folder
 from app.models.inspections import DeletedInspection, InspectionData, InspectionResponse
 from app.models.label_data import LabelData
 from app.models.users import User
@@ -518,3 +519,35 @@ class TestAPIFiles(unittest.TestCase):
         del app.dependency_overrides[fetch_user]
         response = self.client.get(f"/files/{self.folder_id}/{self.file_id}")
         self.assertEqual(response.status_code, 401)
+
+    @patch("app.routes.create_folder")
+    def test_post_files_success(self, mock_create_folder):
+        """Test uploading files successfully"""
+        folder_id = uuid.uuid4()
+        file_ids = [uuid.uuid4(), uuid.uuid4()]
+        mock_create_folder.return_value = Folder(id=folder_id, file_ids=file_ids)
+        files = [
+            ("files", ("test1.png", b"fake_image_data1", "image/png")),
+            ("files", ("test2.png", b"fake_image_data2", "image/png")),
+        ]
+        response = self.client.post("/files", files=files)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["id"], str(folder_id))
+        self.assertEqual(set(data["file_ids"]), {str(file_ids[0]), str(file_ids[1])})
+        mock_create_folder.assert_called_once()
+
+    def test_post_files_unauthenticated(self):
+        """Test unauthorized file upload"""
+        del app.dependency_overrides[fetch_user]
+        response = self.client.post("/files", files=[])
+        self.assertEqual(response.status_code, 401)
+
+    @patch("app.routes.create_folder")
+    def test_post_files_empty(self, mock_create_folder):
+        """Test uploading no files"""
+        response = self.client.post("/files", files=[])
+        self.assertEqual(
+            response.status_code, 422
+        )  # Unprocessable Entity due to validation
+        mock_create_folder.assert_not_called()

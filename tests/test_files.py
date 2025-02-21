@@ -3,9 +3,11 @@ import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from datastore.blob.azure_storage_api import GetBlobError, build_container_name
+from psycopg_pool import ConnectionPool
 
-from app.controllers.files import read_file, read_folder
+from app.controllers.files import create_folder, read_file, read_folder
 from app.exceptions import FileNotFoundError
+from app.models.files import Folder
 
 
 class TestReadFolder(unittest.IsolatedAsyncioTestCase):
@@ -58,3 +60,91 @@ class TestReadFile(unittest.IsolatedAsyncioTestCase):
         self.assertIn(
             f"File {file_id} not found in folder {folder_id}", str(context.exception)
         )
+
+
+class TestCreateFolder(unittest.IsolatedAsyncioTestCase):
+    @patch("app.controllers.files.upload_pictures", new_callable=AsyncMock)
+    @patch("app.controllers.files.create_picture_set", new_callable=AsyncMock)
+    @patch("app.controllers.files.ContainerClient.from_connection_string")
+    async def test_create_folder_success(
+        self, mock_container_client, mock_create_picture_set, mock_upload_pictures
+    ):
+        # Setup mocks
+        mock_cp = MagicMock(spec=ConnectionPool)
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cp.connection.return_value.__enter__.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+        mock_container_client.return_value = MagicMock()
+        picture_set_id = uuid.uuid4()
+        picture_ids = [uuid.uuid4(), uuid.uuid4()]
+        mock_create_picture_set.return_value = picture_set_id
+        mock_upload_pictures.return_value = picture_ids
+
+        connection_string = "fake_conn_str"
+        user_id = uuid.uuid4()
+        label_images = [b"image1", b"image2"]
+
+        # Call function
+        result = await create_folder(mock_cp, connection_string, user_id, label_images)
+
+        # Assertions
+        self.assertIsInstance(result, Folder)
+        self.assertEqual(result.id, picture_set_id)
+        self.assertEqual(result.file_ids, picture_ids)
+        self.assertIsNone(result.metadata)
+        self.assertIsNone(result.owner_id)
+        self.assertIsNone(result.upload_date)
+        self.assertIsNone(result.name)
+
+        mock_container_client.assert_called_once_with(
+            connection_string, container_name=build_container_name(str(user_id))
+        )
+        mock_create_picture_set.assert_called_once_with(
+            mock_cursor, mock_container_client.return_value, len(label_images), user_id
+        )
+        mock_upload_pictures.assert_called_once_with(
+            mock_cursor,
+            str(user_id),
+            label_images,
+            mock_container_client.return_value,
+            str(picture_set_id),
+        )
+
+    @patch("app.controllers.files.upload_pictures", new_callable=AsyncMock)
+    @patch("app.controllers.files.create_picture_set", new_callable=AsyncMock)
+    @patch("app.controllers.files.ContainerClient.from_connection_string")
+    async def test_create_folder_invalid_user_id(
+        self, mock_container_client, mock_create_picture_set, mock_upload_pictures
+    ):
+        # Setup mocks
+        mock_cp = MagicMock(spec=ConnectionPool)
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cp.connection.return_value.__enter__.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+        mock_container_client.return_value = MagicMock()
+        picture_set_id = uuid.uuid4()
+        picture_ids = [uuid.uuid4(), uuid.uuid4()]
+        mock_create_picture_set.return_value = picture_set_id
+        mock_upload_pictures.return_value = picture_ids
+
+        connection_string = "fake_conn_str"
+        user_id = str(uuid.uuid4())
+        label_images = [b"image1", b"image2"]
+
+        # Call function
+        result = await create_folder(mock_cp, connection_string, user_id, label_images)
+
+        # Assertions
+        self.assertIsInstance(result, Folder)
+        self.assertEqual(result.id, picture_set_id)
+        self.assertEqual(result.file_ids, picture_ids)
+
+        mock_container_client.assert_called_once_with(
+            connection_string, container_name=build_container_name(str(user_id))
+        )
+        mock_create_picture_set.assert_called_once()
+        mock_upload_pictures.assert_called_once()
