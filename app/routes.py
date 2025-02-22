@@ -2,6 +2,7 @@ from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
+import filetype
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile
 from fastapi.responses import RedirectResponse
 from pipeline import GPT, OCR
@@ -216,7 +217,9 @@ async def get_file(
     conn = settings.azure_storage_connection_string
     try:
         binaries = await read_file(conn, user.id, folder_id, file_id)
-        return Response(content=binaries)
+        kind = filetype.guess(binaries)
+        mime_type = kind.mime if kind else "application/octet-stream"
+        return Response(content=binaries, media_type=mime_type)
         # in the future, the mimetype should be saved upstream and returned here
     except FileNotFoundError:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="File not found")
