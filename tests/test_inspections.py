@@ -19,6 +19,7 @@ from app.controllers.inspections import (
 from app.exceptions import InspectionNotFoundError, MissingUserAttributeError
 from app.models.inspections import (
     DeletedInspection,
+    Inspection,
     InspectionResponse,
     InspectionUpdate,
 )
@@ -212,16 +213,15 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
     async def test_missing_user_id_raises_error(self):
         cp = MagicMock()
         label_data = LabelData()
-        label_images = [b"image_data"]
         user = User(id=None)
 
         with self.assertRaises(MissingUserAttributeError):
-            await create_inspection(cp, user, label_data, label_images, "fake_conn_str")
+            await create_inspection(cp, user, label_data)
 
-    @patch("app.controllers.inspections.register_analysis")
-    @patch("app.controllers.inspections.ContainerClient")
-    async def test_create_inspection_success(
-        self, mock_container_client, mock_register_analysis
+    @patch("app.controllers.inspections.build_inspection_import")
+    @patch("app.controllers.inspections.new_inspection_with_label_info")
+    async def test_create_inspection_success_with_label_data(
+        self, mock_db_create_inspection, mock_build_inspection_import
     ):
         cp = MagicMock()
         conn_mock = MagicMock()
@@ -229,12 +229,12 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
         conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
         cp.connection.return_value.__enter__.return_value = conn_mock
         user = User(id=uuid.uuid4())
-        label_data = LabelData()
-        label_images = [b"image_data"]
-        inspection_id = uuid.uuid4()
-        fake_conn_str = "fake_conn_str"
+        label_data = LabelData(picture_set_id=uuid.uuid4())
+
+        mock_build_inspection_import.return_value = "mock_formatted_analysis"
+
         mock_inspection_data = {
-            "inspection_id": inspection_id,
+            "inspection_id": str(uuid.uuid4()),
             "inspection_comment": "string",
             "verified": False,
             "company": {},
@@ -271,45 +271,21 @@ class TestCreateFunction(unittest.IsolatedAsyncioTestCase):
             "ingredients": {"en": [], "fr": []},
             "picture_set_id": str(uuid.uuid4()),
         }
-        mock_register_analysis.return_value = mock_inspection_data
+        mock_db_create_inspection.return_value = mock_inspection_data
 
-        container_client_instance = (
-            mock_container_client.from_connection_string.return_value
-        )
+        inspection = await create_inspection(cp, user, label_data)
 
-        inspection = await create_inspection(
-            cp, user, label_data, label_images, fake_conn_str
+        self.assertIsInstance(inspection, Inspection)
+        self.assertEqual(
+            str(inspection.inspection_id), mock_inspection_data["inspection_id"]
         )
-
-        mock_container_client.from_connection_string.assert_called_once_with(
-            fake_conn_str, container_name=build_container_name(str(user.id))
-        )
-        mock_register_analysis.assert_called_once_with(
-            cursor_mock,
-            container_client_instance,
-            user.id,
-            label_images,
-            label_data.model_dump(),
-        )
-        self.assertIsInstance(inspection, InspectionResponse)
-        self.assertEqual(inspection.inspection_id, inspection_id)
 
     async def test_missing_label_data_raises_error(self):
         cp = MagicMock()
-        label_images = [b"image_data"]
         user = User(id=uuid.uuid4())
 
         with self.assertRaises(ValueError):
-            await create_inspection(cp, user, None, label_images, "fake_conn_str")
-
-    async def test_missing_connection_string_raises_error(self):
-        cp = MagicMock()
-        label_data = LabelData()
-        label_images = [b"image_data"]
-        user = User(id=uuid.uuid4())
-
-        with self.assertRaises(ValueError):
-            await create_inspection(cp, user, label_data, label_images, None)
+            await create_inspection(cp, user, None)
 
 
 class TestUpdateFunction(unittest.IsolatedAsyncioTestCase):

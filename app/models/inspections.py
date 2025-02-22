@@ -10,6 +10,7 @@ from fertiscan.db.metadata.inspection import ProductInformation as DBProductInfo
 from fertiscan.db.metadata.inspection import RegistrationNumber as DBRegistrationNumber
 from pydantic import BaseModel, Field
 
+from app.models.label_data import LabelData
 from app.models.phone_number import CAPhoneNumber
 
 
@@ -49,11 +50,15 @@ class Inspection(DBInspection):
     picture_set_id: UUID
 
 
+class InspectionCreate(LabelData):
+    picture_set_id: UUID
+
+
 class InspectionUpdate(Inspection):
     pass
 
 
-class InspectionResponse(InspectionUpdate):
+class InspectionResponse(Inspection):
     inspection_id: UUID
 
 

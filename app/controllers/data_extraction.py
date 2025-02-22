@@ -1,36 +1,44 @@
-from typing import BinaryIO
+import asyncio
+from uuid import UUID
 
 from pipeline import GPT, OCR, LabelStorage, analyze
+from psycopg_pool import ConnectionPool
 
+from app.controllers.files import create_folder, delete_folder
+from app.exceptions import log_error
 from app.models.label_data import LabelData
 
 
-def extract_data(files: dict[str, BinaryIO], ocr: OCR, gpt: GPT):
-    """
-    Extracts data from provided image files using OCR and GPT.
-
-    Args:
-        files (dict[str, BinaryIO]): A dictionary with filenames as keys
-            and file-like binary objects as values.
-        ocr: OCR processing tool or function used for text extraction.
-        gpt: GPT-based model or function used for data analysis.
-
-    Raises:
-        ValueError: If no files are provided for analysis.
-
-    Returns:
-        LabelData: A `LabelData` object populated with extracted and validated data.
-    """
+async def extract_data(
+    cp: ConnectionPool,
+    conn_string: str,
+    ocr: OCR,
+    gpt: GPT,
+    user_id: UUID | str,
+    files: list[bytes],
+):
     if not files:
         raise ValueError("No files to analyze")
 
-    # TODO: Validate file types if necessary
-
     label_storage = LabelStorage()
+    for f in files:
+        label_storage.add_image(f)
 
-    for filename in files:
-        label_storage.add_image(files[filename].read())
+    t_analyze = asyncio.to_thread(analyze, label_storage, ocr, gpt)
+    t_folder = create_folder(cp, conn_string, user_id, files)
 
-    data = analyze(label_storage, ocr, gpt)
+    data, folder = await asyncio.gather(t_analyze, t_folder, return_exceptions=True)
 
-    return LabelData.model_validate(data.model_dump())
+    if isinstance(data, Exception):
+        if not isinstance(folder, Exception):
+            asyncio.create_task(delete_folder(cp, conn_string, user_id, folder.id))
+        raise data
+
+    label_data = LabelData.model_validate(data.model_dump())
+
+    if isinstance(folder, Exception):
+        log_error(folder)
+    else:
+        label_data.picture_set_id = folder.id
+
+    return label_data

@@ -60,9 +60,3 @@ def validate_files(files: list[UploadFile] = File(..., min_length=1)):
                 detail=f"File {f.filename} is empty",
             )
     return files
-
-
-def get_label_data(label_data: Annotated[LabelData | str, Form(...)]):
-    if isinstance(label_data, str):
-        return LabelData.model_validate_json(label_data)
-    return label_data
