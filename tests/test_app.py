@@ -43,12 +43,15 @@ class TestAPIPipeline(unittest.TestCase):
     def setUp(self) -> None:
         self.client = TestClient(app)
 
-        def override_service_dep():
+        def override_mock():
             return Mock()
 
         app.dependency_overrides.clear()
-        app.dependency_overrides[get_ocr] = override_service_dep
-        app.dependency_overrides[get_gpt] = override_service_dep
+        app.dependency_overrides[get_connection_pool] = override_mock
+        app.dependency_overrides[get_ocr] = override_mock
+        app.dependency_overrides[get_gpt] = override_mock
+        app.dependency_overrides[get_settings] = override_mock
+        app.dependency_overrides[fetch_user] = lambda: Mock(id="test-user")
 
     @patch("app.routes.extract_data")
     def test_analyze_document(self, mock_extract_data):
@@ -56,6 +59,7 @@ class TestAPIPipeline(unittest.TestCase):
             "company_name": "Test Company",
             "fertiliser_name": "Mock Fertilizer",
             "registration_number": [
+                {"identifier": "REG123", "type": "fertilizer_product"},
             ],
         }
         mock_inspection = FertilizerInspection.model_validate(mock_inspection_data)
@@ -74,9 +78,6 @@ class TestAPIPipeline(unittest.TestCase):
 
         response_data = response.json()
         validated_inspection = LabelData.model_validate(response_data)
-        # self.assertEqual(
-        #     validated_inspection.company_name, mock_inspection.company_name
-        # )
         self.assertEqual(
             validated_inspection.fertiliser_name, mock_inspection.fertiliser_name
         )
@@ -87,7 +88,7 @@ class TestAPIPipeline(unittest.TestCase):
 
     @patch("app.routes.extract_data")
     def test_analyze_empty_file(self, mock_extract_data):
-        """Test analyze_document with an empty file that triggers ResponseValidationError"""
+        """Test analyze_document with an empty file that triggers validation error"""
         mock_extract_data.return_value = None
         files = [("files", ("empty.txt", b"", "text/plain"))]
         response = self.client.post("/analyze", files=files)
@@ -100,10 +101,7 @@ class TestAPIPipeline(unittest.TestCase):
             "company_name": "Test Company",
             "fertiliser_name": "Mock Fertilizer",
             "registration_number": [
-                {
-                    "identifier": "REG123",
-                    "type": "fertilizer_product",
-                }
+                {"identifier": "REG123", "type": "fertilizer_product"},
             ],
         }
         mock_inspection = FertilizerInspection.model_validate(mock_inspection_data)

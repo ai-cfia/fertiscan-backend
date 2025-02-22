@@ -61,12 +61,16 @@ async def health_check():
 
 @router.post("/analyze", response_model=LabelData, tags=["Pipeline"])
 async def analyze_document(
+    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     ocr: Annotated[OCR, Depends(get_ocr)],
     gpt: Annotated[GPT, Depends(get_gpt)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    user: Annotated[User, Depends(fetch_user)],
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
-    file_dict = {custom_secure_filename(f.filename): f.file for f in files}
-    return extract_data(file_dict, ocr, gpt)
+    conn_string = settings.azure_storage_connection_string
+    label_images = [await f.read() for f in files]
+    return await extract_data(cp, conn_string, ocr, gpt, user.id, label_images)
 
 
 @router.post("/signup", tags=["Users"], status_code=201, response_model=User)
