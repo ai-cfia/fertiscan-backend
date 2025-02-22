@@ -9,7 +9,13 @@ from psycopg_pool import ConnectionPool
 
 from app.config import Settings
 from app.controllers.data_extraction import extract_data
-from app.controllers.files import create_folder, read_file, read_folder
+from app.controllers.files import (
+    create_folder,
+    delete_folder,
+    read_file,
+    read_folder,
+    read_folders,
+)
 from app.controllers.inspections import (
     create_inspection,
     delete_inspection,
@@ -28,7 +34,7 @@ from app.dependencies import (
     validate_files,
 )
 from app.exceptions import FileNotFoundError, InspectionNotFoundError, UserConflictError
-from app.models.files import FolderResponse
+from app.models.files import DeleteFolderResponse, FolderResponse
 from app.models.inspections import (
     DeletedInspection,
     InspectionCreate,
@@ -39,7 +45,6 @@ from app.models.inspections import (
 from app.models.label_data import LabelData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
-from app.sanitization import custom_secure_filename
 
 router = APIRouter()
 
@@ -149,17 +154,28 @@ async def delete_inspection_(
         )
 
 
+@router.get("/files", tags=["Files"], response_model=list[FolderResponse])
+async def get_folders(
+    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
+    user: Annotated[User, Depends(fetch_user)],
+):
+    return await read_folders(cp, user.id)
+
+
 @router.get("/files/{folder_id}", tags=["Files"], response_model=FolderResponse)
 async def get_folder(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
     folder_id: UUID,
 ):
-    return await read_folder(cp, user.id, folder_id)
+    try:
+        return await read_folder(cp, user.id, folder_id)
+    except FileNotFoundError:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Folder not found")
 
 
 @router.post("/files", tags=["Files"], response_model=FolderResponse)
-async def post_files(
+async def create_folder_(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     user: Annotated[User, Depends(fetch_user)],
     settings: Annotated[Settings, Depends(get_settings)],
@@ -168,6 +184,22 @@ async def post_files(
     label_images = [await f.read() for f in files]
     conn_string = settings.azure_storage_connection_string
     return await create_folder(cp, conn_string, user.id, label_images)
+
+
+@router.delete(
+    "/files/{folder_id}", tags=["Files"], response_model=DeleteFolderResponse
+)
+async def delete_folder_(
+    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
+    user: Annotated[User, Depends(fetch_user)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    folder_id: UUID,
+):
+    conn_string = settings.azure_storage_connection_string
+    try:
+        return await delete_folder(cp, conn_string, user.id, folder_id)
+    except FileNotFoundError:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Folder not found")
 
 
 @router.get("/files/{folder_id}/{file_id}", tags=["Files"], response_class=Response)

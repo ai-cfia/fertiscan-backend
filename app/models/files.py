@@ -28,3 +28,8 @@ class Folder(BaseModel):
 
 class FolderResponse(Folder):
     id: UUID
+
+
+class DeleteFolderResponse(Folder):
+    id: UUID
+    deleted: bool = True
