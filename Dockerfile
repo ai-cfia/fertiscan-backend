@@ -15,4 +15,5 @@ RUN mkdir -p /.dspy_cache && chown -R 1000:1000 /.dspy_cache
 
 USER 1000
 
-CMD ["opentelemetry-instrument", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5000"]
+# CMD ["opentelemetry-instrument", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5000"]

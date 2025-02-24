@@ -1,7 +1,6 @@
 from http import HTTPStatus
-from typing import Annotated
 
-from fastapi import Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import Depends, File, HTTPException, Request, UploadFile
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pipeline import GPT, OCR
 from psycopg_pool import ConnectionPool
@@ -9,7 +8,6 @@ from psycopg_pool import ConnectionPool
 from app.config import Settings
 from app.controllers.users import sign_in
 from app.exceptions import UserNotFoundError
-from app.models.label_data import LabelData
 from app.models.users import User
 
 auth = HTTPBasic()
