@@ -4,13 +4,11 @@ import uuid
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-from datastore.blob.azure_storage_api import build_container_name
 from fertiscan.db.queries.inspection import (
     InspectionNotFoundError as DBInspectionNotFoundError,
 )
 
 from app.controllers.inspections import (
-    get_pictures,
     create_inspection,
     delete_inspection,
     read_all_inspections,
@@ -189,34 +187,34 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
         )
         self.assertIsInstance(inspection, InspectionResponse)
 
-    @patch("app.controllers.inspections.get_inspection_controller")
-    @patch("app.controllers.inspections.ContainerController.get_folder_pictures")
-    async def test_get_pictures_success(self, mock_get_folder_pictures, mock_get_inspection_controller):
-        cp = MagicMock()
-        conn_mock = MagicMock()
-        cursor_mock = MagicMock()
-        controller_mock = MagicMock()
+    # @patch("app.controllers.inspections.get_inspection_controller")
+    # @patch("app.controllers.inspections.ContainerController.get_folder_pictures")
+    # async def test_get_pictures_success(self, mock_get_folder_pictures, mock_get_inspection_controller):
+    #     cp = MagicMock()
+    #     conn_mock = MagicMock()
+    #     cursor_mock = MagicMock()
+    #     controller_mock = MagicMock()
 
-        user = User(id=uuid.uuid4())
-        inspection_id = uuid.uuid4()
-        container_id = uuid.uuid4()
-        folder_id = uuid.uuid4()
+    #     user = User(id=uuid.uuid4())
+    #     inspection_id = uuid.uuid4()
+    #     container_id = uuid.uuid4()
+    #     folder_id = uuid.uuid4()
 
-        conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
-        cp.connection.return_value.__enter__.return_value = conn_mock
-        mock_get_inspection_controller.return_value = controller_mock
-        controller_mock.get_inspection_image_location_data.return_value = (container_id, folder_id)
-        mock_get_folder_pictures.return_value = ["picture1.jpg", "picture2.jpg"]
+    #     conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
+    #     cp.connection.return_value.__enter__.return_value = conn_mock
+    #     mock_get_inspection_controller.return_value = controller_mock
+    #     controller_mock.get_inspection_image_location_data.return_value = (container_id, folder_id)
+    #     mock_get_folder_pictures.return_value = ["picture1.jpg", "picture2.jpg"]
 
 
-        pictures = await get_pictures(cp, user, inspection_id)
+    #     pictures = await get_pictures(cp, user, inspection_id)
 
-        mock_get_inspection_controller.assert_called_once_with(cursor_mock, inspection_id)
-        controller_mock.get_inspection_image_location_data.assert_called_once_with(cursor_mock)
-        mock_get_folder_pictures.assert_called_once_with(cursor_mock, folder_id, user.id)
+    #     mock_get_inspection_controller.assert_called_once_with(cursor_mock, inspection_id)
+    #     controller_mock.get_inspection_image_location_data.assert_called_once_with(cursor_mock)
+    #     mock_get_folder_pictures.assert_called_once_with(cursor_mock, folder_id, user.id)
 
-        self.assertIsInstance(pictures, list)
-        self.assertEqual(pictures, ["picture1.jpg", "picture2.jpg"])
+    #     self.assertIsInstance(pictures, list)
+    #     self.assertEqual(pictures, ["picture1.jpg", "picture2.jpg"])
 
     @patch("app.controllers.inspections.get_inspection_dict")
     async def test_inspection_not_found_raises_error(

@@ -13,7 +13,7 @@ from app.controllers.files import read_file, read_folder
 from app.controllers.inspections import (
     create_inspection,
     delete_inspection,
-    get_pictures,
+    # get_pictures,
     read_all_inspections,
     read_inspection,
     update_inspection,
@@ -104,31 +104,31 @@ async def get_inspection(
             status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
         )
 
-@router.get("/files/{id}/pictures", tags=["Files"]) # TODO: Could be a separate endpoint
-async def get_inspection_pictures(
-    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
-    user: Annotated[User, Depends(fetch_user)],
-    id: UUID,
-):
-    try:
-        return await get_pictures(cp, id)
-    except InspectionNotFoundError:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Pictures not found"
-        )
-    
-@router.post("/files/{id}/pictures", tags=["Files"]) # TODO: Could be a separate endpoint
-async def post_pictures(
-    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
-    user: Annotated[User, Depends(fetch_user)],
-    id: UUID,
-):
-    # try:
-    #     pass
-    # except Exception as e:
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail=str("This endpoint is not implemented")
-        )
+# @router.get("/files/{id}/pictures", tags=["Files"]) # TODO: Could be a separate endpoint
+# async def get_inspection_pictures(
+#     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
+#     user: Annotated[User, Depends(fetch_user)],
+#     id: UUID,
+# ):
+#     try:
+#         return await get_pictures(cp, id)
+#     except InspectionNotFoundError:
+#         raise HTTPException(
+#             status_code=HTTPStatus.NOT_FOUND, detail="Pictures not found"
+#         )
+
+# @router.post("/files/{id}/pictures", tags=["Files"]) # TODO: Could be a separate endpoint
+# async def post_pictures(
+#     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
+#     user: Annotated[User, Depends(fetch_user)],
+#     id: UUID,
+# ):
+#     # try:
+#     #     pass
+#     # except Exception as e:
+#         raise HTTPException(
+#             status_code=HTTPStatus.BAD_REQUEST, detail=str("This endpoint is not implemented")
+#         )
 
 @router.post("/inspections", tags=["Inspections"], response_model=InspectionResponse)
 async def post_inspection(
@@ -139,8 +139,7 @@ async def post_inspection(
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
     label_images = [await f.read() for f in files]
-    conn_string = settings.azure_storage_connection_string
-    return await create_inspection(cp, user, label_data, label_images, conn_string)
+    return await create_inspection(cp, user, label_data, label_images)
 
 
 @router.put(
@@ -170,8 +169,7 @@ async def delete_inspection_(
     id: UUID,
 ):
     try:
-        conn_string = settings.azure_storage_connection_string
-        return await delete_inspection(cp, user, id, conn_string)
+        return await delete_inspection(cp, user, id)
     except InspectionNotFoundError:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
