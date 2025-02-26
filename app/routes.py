@@ -103,7 +103,6 @@ async def get_inspection(
             status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
         )
 
-
 @router.post("/inspections", tags=["Inspections"], response_model=InspectionResponse)
 async def post_inspection(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
@@ -113,8 +112,7 @@ async def post_inspection(
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
     label_images = [await f.read() for f in files]
-    conn_string = settings.azure_storage_connection_string
-    return await create_inspection(cp, user, label_data, label_images, conn_string)
+    return await create_inspection(cp, user, label_data, label_images)
 
 
 @router.put(
@@ -144,8 +142,7 @@ async def delete_inspection_(
     id: UUID,
 ):
     try:
-        conn_string = settings.azure_storage_connection_string
-        return await delete_inspection(cp, user, id, conn_string)
+        return await delete_inspection(cp, user, id)
     except InspectionNotFoundError:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"

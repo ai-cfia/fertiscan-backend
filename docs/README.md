@@ -91,7 +91,7 @@ pour les utilisateurs devant traiter et analyser le contenu de documents.
 
 ![deployment](../out/deployment/Deployment.png)
 
-### FertiScan Web
+### FertiScan Web (fr)
 
 - **Description** : L'interface utilisateur de l'application.
 - **Dépôt** : <https://github.com/ai-cfia/fertiscan-frontend/>

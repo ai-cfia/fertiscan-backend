@@ -123,6 +123,8 @@ class TestInspection(TestCase):
             "guaranteed_analysis": {"values": [{"name": "Nitrogen", "value": 10.0}]},
             "ingredients": {"values": [{"name": "Ingredient A", "amount": 5.0}]},
             "picture_set_id": str(uuid4()),
+            "folder_id": str(uuid4()),
+            "container_id": str(uuid4()),
         }
 
     def test_valid_inspection(self):
@@ -171,6 +173,8 @@ class TestInspectionResponse(TestCase):
             "guaranteed_analysis": {"values": [{"name": "Nitrogen", "value": 10.0}]},
             "ingredients": {"values": [{"name": "Ingredient A", "amount": 5.0}]},
             "picture_set_id": str(uuid4()),
+            "folder_id": str(uuid4()),
+            "container_id": str(uuid4()),
         }
 
     def test_valid_inspection_response(self):
