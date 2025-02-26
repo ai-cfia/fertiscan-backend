@@ -1,24 +1,28 @@
+import io
+import json
 from uuid import UUID
 
-from azure.storage.blob import ContainerClient
-from datastore import (
-    create_picture_set,
-    delete_picture_set_permanently,
-    upload_pictures,
-)
-from datastore.blob.azure_storage_api import (
-    GetBlobError,
-    build_blob_name,
-    build_container_name,
-    get_blob,
-)
-from datastore.db.queries.picture import PictureSetNotFoundError
+import filetype
+from datastore.blob.azure_storage_api import build_container_name
+from datastore.db.metadata.picture_set import build_picture_set_metadata
+from PIL import Image
 from psycopg.rows import dict_row
 from psycopg.sql import SQL
 from psycopg_pool import ConnectionPool
 
-from app.exceptions import FileNotFoundError
-from app.models.files import Folder
+from app.exceptions import (
+    FileCreationError,
+    FileNotFoundError,
+    FolderCreationError,
+    FolderDeletionError,
+    FolderNotFoundError,
+    StorageFileNotFound,
+    UserNotFoundError,
+    log_error,
+)
+from app.models.files import Folder, UploadedFile
+from app.models.users import User
+from app.services.file_storage import StorageBackend
 
 
 async def read_folders(cp: ConnectionPool, user_id: UUID | str):
@@ -55,36 +59,95 @@ async def read_folder(
         )
         cursor.execute(query, (str(user_id), str(picture_set_id)))
         if (folder := cursor.fetchone()) is None:
-            raise FileNotFoundError(f"Folder {picture_set_id} not found")
+            raise FolderNotFoundError(f"Folder {picture_set_id} not found")
         return Folder.model_validate(folder)
 
 
 async def create_folder(
     cp: ConnectionPool,
-    connection_string: str,
+    storage: StorageBackend,
     user_id: UUID | str,
-    label_images: list[bytes],
+    files: list[bytes],
+    name: str | None = None,
 ):
     if not isinstance(user_id, UUID):
         user_id = UUID(user_id)
 
-    with cp.connection() as conn, conn.cursor() as cursor:
-        container_client = ContainerClient.from_connection_string(
-            connection_string, container_name=build_container_name(str(user_id))
+    with cp.connection() as conn, conn.cursor(row_factory=dict_row) as cursor:
+        query = SQL("SELECT * FROM users WHERE id = %s;")
+        cursor.execute(query, (user_id,))
+        if (user := cursor.fetchone()) is None:
+            raise UserNotFoundError(f"User {user_id} not found")
+        user = User.model_validate(user)
+        picture_set_metadata = build_picture_set_metadata(user.id, len(files))
+        # create picture set or get default set
+        query = SQL(
+            """
+            INSERT INTO picture_set (
+                picture_set,
+                owner_id,
+                name
+            ) VALUES (%s, %s, %s)
+            RETURNING *;
+            """
         )
-        picture_set_id = await create_picture_set(
-            cursor, container_client, len(label_images), user_id
-        )
-        picture_ids = await upload_pictures(
-            cursor, str(user_id), label_images, container_client, str(picture_set_id)
-        )
-        folder = Folder(id=picture_set_id, file_ids=picture_ids)
+        cursor.execute(query, (picture_set_metadata, user.id, name))
+        if (folder := cursor.fetchone()) is None:
+            query = SQL(
+                """
+                SELECT ps.*
+                FROM picture_set ps
+                JOIN users u ON ps.id = u.default_set_id
+                WHERE u.id = %s;
+                """
+            )
+            cursor.execute(query, (user.id,))
+            if (folder := cursor.fetchone()) is None:
+                raise FolderCreationError("Error creating folder")
+
+        folder = Folder.model_validate(folder)
+
+        # save each file
+        for i, f in enumerate(files):
+            # in db
+            kind = filetype.guess(f)
+            mime_type = kind.mime if kind else "application/octet-stream"
+            img = Image.open(io.BytesIO(f))
+            metadata = json.dumps(
+                {
+                    "mime_type": mime_type,
+                    "size": len(f),
+                    "sort_order": i,
+                    "width": img.width,
+                    "height": img.height,
+                    "format": img.format,
+                }
+            )
+            query = SQL(
+                """
+                INSERT INTO picture (
+                    picture,
+                    picture_set_id,
+                    nb_obj
+                ) VALUES (%s, %s, %s)
+                RETURNING *;
+                """
+            )
+            cursor.execute(query, (metadata, folder.id, len(files)))
+            if (file := cursor.fetchone()) is None:
+                raise FileCreationError("File creation failed for unknown reason")
+            file = UploadedFile.model_validate(file)
+            # in storage
+            storage.save_file(
+                build_container_name(str(user.id)), str(folder.id), str(file.id), f
+            )
+            folder.file_ids.append(file.id)
         return folder
 
 
 async def delete_folder(
     cp: ConnectionPool,
-    connection_string: str,
+    storage: StorageBackend,
     user_id: UUID | str,
     folder_id: UUID | str,
 ):
@@ -93,23 +156,36 @@ async def delete_folder(
     if not isinstance(folder_id, UUID):
         folder_id = UUID(folder_id)
 
-    container_client = ContainerClient.from_connection_string(
-        connection_string, container_name=build_container_name(str(user_id))
-    )
-
-    with cp.connection() as conn, conn.cursor() as cursor:
+    with cp.connection() as conn, conn.cursor(row_factory=dict_row) as cursor:
+        query = SQL("SELECT * FROM users WHERE id = %s;")
+        cursor.execute(query, (user_id,))
+        if (user := cursor.fetchone()) is None:
+            raise UserNotFoundError(f"User {user_id} not found")
+        user = User.model_validate(user)
+        if user.default_folder_id == folder_id:
+            raise FolderDeletionError("Cannot delete default picture set")
+        query = SQL(
+            "DELETE FROM picture_set WHERE id = %s AND owner_id = %s RETURNING *;"
+        )
+        cursor.execute(query, (folder_id, user.id))
+        if (deleted_folder := cursor.fetchone()) is None:
+            raise FolderNotFoundError(f"Folder {folder_id} not found")
+        deleted_folder = Folder.model_validate(deleted_folder)
         try:
-            await delete_picture_set_permanently(
-                cursor, str(user_id), folder_id, container_client
+            storage.delete_folder(
+                build_container_name(str(user.id)),
+                str(folder_id),
             )
-        except PictureSetNotFoundError:
-            raise FileNotFoundError(f"Folder not found with ID: {folder_id}")
-
-        return Folder(id=folder_id)
+        except Exception as e:
+            log_error(e)
+            raise FolderDeletionError(
+                f"Error deleting folder {folder_id} from storage"
+            ) from e
+        return deleted_folder
 
 
 async def read_file(
-    connection_string: str,
+    storage: StorageBackend,
     user_id: UUID | str,
     folder_id: UUID | str,
     file_id: UUID | str,
@@ -121,17 +197,11 @@ async def read_file(
     if not isinstance(file_id, UUID):
         file_id = UUID(file_id)
 
-    container_client = ContainerClient.from_connection_string(
-        connection_string, container_name=build_container_name(str(user_id))
-    )
-    blob_name = build_blob_name(str(folder_id), str(file_id))
-
     try:
-        blob: bytes = await get_blob(container_client, blob_name)
-        return blob
-    except GetBlobError as e:
-        if "The specified blob does not exist." in str(e):
-            raise FileNotFoundError(
-                f"File {file_id} not found in folder {folder_id}"
-            ) from e
-        raise
+        return storage.read_file(
+            build_container_name(str(user_id)),
+            str(folder_id),
+            str(file_id),
+        )
+    except StorageFileNotFound as e:
+        raise FileNotFoundError from e

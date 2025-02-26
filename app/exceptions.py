@@ -27,11 +27,39 @@ class InspectionNotFoundError(InspectionError):
     pass
 
 
+class FolderError(Exception):
+    pass
+
+
+class FolderNotFoundError(FolderError):
+    pass
+
+
+class FolderCreationError(FolderError):
+    pass
+
+
+class FolderDeletionError(FolderError):
+    pass
+
+
 class FileError(Exception):
     pass
 
 
 class FileNotFoundError(FileError):
+    pass
+
+
+class FileCreationError(FileError):
+    pass
+
+
+class StorageError(Exception):
+    pass
+
+
+class StorageFileNotFound(StorageError):
     pass
 
 

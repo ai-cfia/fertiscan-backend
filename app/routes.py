@@ -2,7 +2,6 @@ from http import HTTPStatus
 from typing import Annotated
 from uuid import UUID
 
-import filetype
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile
 from fastapi.responses import RedirectResponse
 from pipeline import GPT, OCR
@@ -32,9 +31,15 @@ from app.dependencies import (
     get_gpt,
     get_ocr,
     get_settings,
+    get_storage,
     validate_files,
 )
-from app.exceptions import FileNotFoundError, InspectionNotFoundError, UserConflictError
+from app.exceptions import (
+    FileNotFoundError,
+    FolderNotFoundError,
+    InspectionNotFoundError,
+    UserConflictError,
+)
 from app.models.files import DeleteFolderResponse, FolderResponse
 from app.models.inspections import (
     DeletedInspection,
@@ -46,6 +51,7 @@ from app.models.inspections import (
 from app.models.label_data import LabelData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
+from app.services.file_storage import StorageBackend
 
 router = APIRouter()
 
@@ -65,13 +71,12 @@ async def analyze_document(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     ocr: Annotated[OCR, Depends(get_ocr)],
     gpt: Annotated[GPT, Depends(get_gpt)],
-    settings: Annotated[Settings, Depends(get_settings)],
+    storage: Annotated[StorageBackend, Depends(get_storage)],
     user: Annotated[User, Depends(fetch_user)],
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
-    conn_string = settings.azure_storage_connection_string
     label_images = [await f.read() for f in files]
-    return await extract_data(cp, conn_string, ocr, gpt, user.id, label_images)
+    return await extract_data(cp, storage, ocr, gpt, user.id, label_images)
 
 
 @router.post("/signup", tags=["Users"], status_code=201, response_model=User)
@@ -175,20 +180,19 @@ async def get_folder(
 ):
     try:
         return await read_folder(cp, user.id, folder_id)
-    except FileNotFoundError:
+    except FolderNotFoundError:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Folder not found")
 
 
 @router.post("/files", tags=["Files"], response_model=FolderResponse)
 async def create_folder_(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
+    storage: Annotated[StorageBackend, Depends(get_storage)],
     user: Annotated[User, Depends(fetch_user)],
-    settings: Annotated[Settings, Depends(get_settings)],
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
     label_images = [await f.read() for f in files]
-    conn_string = settings.azure_storage_connection_string
-    return await create_folder(cp, conn_string, user.id, label_images)
+    return await create_folder(cp, storage, user.id, label_images)
 
 
 @router.delete(
@@ -196,30 +200,25 @@ async def create_folder_(
 )
 async def delete_folder_(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
+    storage: Annotated[StorageBackend, Depends(get_storage)],
     user: Annotated[User, Depends(fetch_user)],
-    settings: Annotated[Settings, Depends(get_settings)],
     folder_id: UUID,
 ):
-    conn_string = settings.azure_storage_connection_string
     try:
-        return await delete_folder(cp, conn_string, user.id, folder_id)
-    except FileNotFoundError:
+        return await delete_folder(cp, storage, user.id, folder_id)
+    except FolderNotFoundError:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Folder not found")
 
 
 @router.get("/files/{folder_id}/{file_id}", tags=["Files"], response_class=Response)
 async def get_file(
-    settings: Annotated[Settings, Depends(get_settings)],
+    storage: Annotated[StorageBackend, Depends(get_storage)],
     user: Annotated[User, Depends(fetch_user)],
     folder_id: UUID,
     file_id: UUID,
 ):
-    conn = settings.azure_storage_connection_string
     try:
-        binaries = await read_file(conn, user.id, folder_id, file_id)
-        kind = filetype.guess(binaries)
-        mime_type = kind.mime if kind else "application/octet-stream"
-        return Response(content=binaries, media_type=mime_type)
-        # in the future, the mimetype should be saved upstream and returned here
+        file = await read_file(storage, user.id, folder_id, file_id)
+        return Response(content=file.content, media_type=file.content_type)
     except FileNotFoundError:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="File not found")

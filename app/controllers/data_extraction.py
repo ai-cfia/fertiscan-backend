@@ -7,11 +7,12 @@ from psycopg_pool import ConnectionPool
 from app.controllers.files import create_folder, delete_folder
 from app.exceptions import log_error
 from app.models.label_data import LabelData
+from app.services.file_storage import StorageBackend
 
 
 async def extract_data(
     cp: ConnectionPool,
-    conn_string: str,
+    storage: StorageBackend,
     ocr: OCR,
     gpt: GPT,
     user_id: UUID | str,
@@ -25,13 +26,13 @@ async def extract_data(
         label_storage.add_image(f)
 
     t_analyze = asyncio.to_thread(analyze, label_storage, ocr, gpt)
-    t_folder = create_folder(cp, conn_string, user_id, files)
+    t_folder = create_folder(cp, storage, user_id, files)
 
     data, folder = await asyncio.gather(t_analyze, t_folder, return_exceptions=True)
 
     if isinstance(data, Exception):
         if not isinstance(folder, Exception):
-            asyncio.create_task(delete_folder(cp, conn_string, user_id, folder.id))
+            asyncio.create_task(delete_folder(cp, storage, user_id, folder.id))
         raise data
 
     label_data = LabelData.model_validate(data.model_dump())
