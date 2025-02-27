@@ -1,72 +1,73 @@
-from datastore import UserAlreadyExistsError as DBUserAlreadyExistsError
-from datastore import get_user, new_user
-from datastore.db.queries.user import UserNotFoundError as DBUserNotFoundError
+from uuid import UUID
+
 from fastapi.logger import logger
+from psycopg.rows import dict_row
+from psycopg.sql import SQL
 from psycopg_pool import ConnectionPool
 
 from app.exceptions import (
     MissingUserAttributeError,
+    StorageFileNotFound,
     UserConflictError,
+    UserDeletionError,
     UserNotFoundError,
     log_error,
 )
 from app.models.users import User
+from app.services.file_storage import StorageBackend
 
 
-async def sign_up(cp: ConnectionPool, user: User, connection_string: str) -> User:
-    """
-    Registers a new user in the system.
-
-    Args:
-        cp (ConnectionPool): The connection pool to manage database connections.
-        user (User): The User instance containing the user's details.
-        connection_string (str): The database connection string for setup.
-
-    Raises:
-        MissingUserAttributeError: Raised if the username is not provided.
-        UserConflictError: Raised if a user with the same username already exists.
-
-    Returns:
-        User: The newly created User object with the assigned database ID.
-    """
+async def sign_up(cp: ConnectionPool, user: User) -> User:
     if not user.username:
         raise MissingUserAttributeError("Username is required for sign-up.")
 
-    try:
-        with cp.connection() as conn, conn.cursor() as cursor:
-            logger.debug(f"Creating user: {user.username}")
-            user_db = await new_user(cursor, user.username, connection_string)
-    except DBUserAlreadyExistsError as e:
-        log_error(e)
-        raise UserConflictError(f"User '{user.username}' already exists.") from e
+    with cp.connection() as conn, conn.cursor(row_factory=dict_row) as cursor:
+        logger.debug(f"Creating user: {user.username}")
 
-    return user.model_copy(update={"id": user_db.id})
+        query = SQL(
+            "INSERT INTO users (email, default_set_id) "
+            "SELECT %s, NULL "
+            "WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = %s) "
+            "RETURNING *;"
+        )
+        cursor.execute(query, (user.username, user.username))
+
+        if (new_user := cursor.fetchone()) is None:
+            raise UserConflictError(f"User '{user.username}' already exists.")
+
+        return User.model_validate(new_user)
 
 
 async def sign_in(cp: ConnectionPool, user: User) -> User:
-    """
-    Authenticates an existing user in the system.
-
-    Args:
-        cp (ConnectionPool): The connection pool to manage database connections.
-        user (User): The User instance containing the user's details.
-
-    Raises:
-        MissingUserAttributeError: Raised if the username is not provided.
-        UserNotFoundError: Raised if the user is not found in the database.
-
-    Returns:
-        User: The authenticated User object with the retrieved database ID.
-    """
     if not user.username:
         raise MissingUserAttributeError("Username is required for sign-in.")
 
-    try:
-        with cp.connection() as conn, conn.cursor() as cursor:
-            logger.debug(f"Fetching user ID for username: {user.username}")
-            user_db = await get_user(cursor, user.username)
-    except DBUserNotFoundError as e:
-        log_error(e)
-        raise UserNotFoundError(f"User '{user.username}' not found.") from e
+    with cp.connection() as conn, conn.cursor(row_factory=dict_row) as cursor:
+        logger.debug(f"Fetching user ID for username: {user.username}")
+        query = SQL("SELECT * FROM users WHERE email = %s;")
+        cursor.execute(query, (user.username,))
+        if (user_db := cursor.fetchone()) is None:
+            raise UserNotFoundError(f"User '{user.username}' not found.")
+        return User.model_validate(user_db)
 
-    return user.model_copy(update={"id": user_db.id})
+
+# async def delete_user(
+#     cp: ConnectionPool, storage: StorageBackend, user_id: UUID | str
+# ) -> dict:
+#     if not isinstance(user_id, UUID):
+#         user_id = UUID(user_id)
+
+#     with cp.connection() as conn, conn.cursor(row_factory=dict_row) as cursor:
+#         logger.debug(f"Deleting user with ID: {user_id}")
+
+#         query = SQL("DELETE FROM users WHERE id = %s RETURNING *;")
+#         cursor.execute(query, (str(user_id),))
+#         if (deleted_user := cursor.fetchone()) is None:
+#             raise UserNotFoundError(f"User with ID '{user_id}' not found.")
+#         deleted_user = User.model_validate(deleted_user)
+
+#         try:
+#             storage.delete_namespace(user_id)
+#         except StorageFileNotFound as e:
+#             log_error(e)
+#             raise UserDeletionError(f"{e}") from e

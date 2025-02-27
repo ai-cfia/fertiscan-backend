@@ -1,8 +1,10 @@
+import io
 import unittest
 import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
-from datastore.blob.azure_storage_api import GetBlobError, build_container_name
+from datastore.blob.azure_storage_api import build_container_name
+from PIL import Image
 from psycopg_pool import ConnectionPool
 
 from app.controllers.files import (
@@ -12,9 +14,16 @@ from app.controllers.files import (
     read_folder,
     read_folders,
 )
-from app.exceptions import FileNotFoundError
+from app.exceptions import (
+    FileCreationError,
+    FileNotFoundError,
+    FolderCreationError,
+    FolderDeletionError,
+    FolderNotFoundError,
+    StorageFileNotFound,
+    UserNotFoundError,
+)
 from app.models.files import Folder
-from datastore.db.queries.picture import PictureSetNotFoundError
 
 
 class TestReadFolders(unittest.IsolatedAsyncioTestCase):
@@ -114,188 +123,291 @@ class TestReadFolder(unittest.IsolatedAsyncioTestCase):
         picture_set_id = uuid.uuid4()
         mock_cursor.fetchone.return_value = None
 
-        with self.assertRaises(FileNotFoundError) as context:
+        with self.assertRaises(FolderNotFoundError) as context:
             await read_folder(mock_cp, user_id, picture_set_id)
 
         self.assertIn(f"Folder {picture_set_id} not found", str(context.exception))
 
 
 class TestDeleteFolder(unittest.IsolatedAsyncioTestCase):
-    @patch("app.controllers.files.delete_picture_set_permanently")
-    @patch("app.controllers.files.ContainerClient.from_connection_string")
-    async def test_delete_folder_success(
-        self, mock_container_client, mock_delete_picture_set
-    ):
+    @patch("app.controllers.files.StorageBackend")
+    async def test_delete_folder_success(self, mock_storage):
         mock_cp = MagicMock(spec=ConnectionPool)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
         mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
 
-        mock_container_client.return_value = MagicMock()
-        mock_delete_picture_set.return_value = None
+        mock_storage_instance = mock_storage.return_value
+        mock_storage_instance.delete_folder = MagicMock()
 
-        connection_string = "fake_conn_str"
         user_id = uuid.uuid4()
         folder_id = uuid.uuid4()
 
-        folder = await delete_folder(mock_cp, connection_string, user_id, folder_id)
+        mock_cursor.fetchone.side_effect = [
+            {"id": str(user_id), "default_folder_id": str(uuid.uuid4())},  # User exists
+            {"id": str(folder_id), "owner_id": str(user_id)},  # Folder exists
+        ]
+
+        folder = await delete_folder(mock_cp, mock_storage_instance, user_id, folder_id)
 
         self.assertIsInstance(folder, Folder)
         self.assertEqual(folder.id, folder_id)
 
-        mock_container_client.assert_called_once_with(
-            connection_string, container_name=build_container_name(str(user_id))
-        )
-        mock_delete_picture_set.assert_called_once_with(
-            mock_cursor, str(user_id), folder_id, mock_container_client.return_value
-        )
+        mock_storage_instance.delete_folder.assert_called_once()
 
-    @patch("app.controllers.files.delete_picture_set_permanently")
-    @patch("app.controllers.files.ContainerClient.from_connection_string")
-    async def test_delete_folder_not_found(
-        self, mock_container_client, mock_delete_picture_set
-    ):
+    @patch("app.controllers.files.StorageBackend")
+    async def test_delete_folder_user_not_found(self, mock_storage):
         mock_cp = MagicMock(spec=ConnectionPool)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
         mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
 
-        mock_container_client.return_value = MagicMock()
-        mock_delete_picture_set.side_effect = PictureSetNotFoundError()
+        mock_cursor.fetchone.return_value = None  # User not found
 
-        connection_string = "fake_conn_str"
         user_id = uuid.uuid4()
         folder_id = uuid.uuid4()
 
-        with self.assertRaises(FileNotFoundError) as context:
-            await delete_folder(mock_cp, connection_string, user_id, folder_id)
+        with self.assertRaises(UserNotFoundError):
+            await delete_folder(mock_cp, mock_storage.return_value, user_id, folder_id)
 
-        self.assertIn(f"Folder not found with ID: {folder_id}", str(context.exception))
+    @patch("app.controllers.files.StorageBackend")
+    async def test_delete_folder_default_folder(self, mock_storage):
+        mock_cp = MagicMock(spec=ConnectionPool)
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cp.connection.return_value.__enter__.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
 
-        mock_container_client.assert_called_once_with(
-            connection_string, container_name=build_container_name(str(user_id))
-        )
-        mock_delete_picture_set.assert_called_once_with(
-            mock_cursor, str(user_id), folder_id, mock_container_client.return_value
-        )
+        user_id = uuid.uuid4()
+        folder_id = uuid.uuid4()
+
+        mock_cursor.fetchone.side_effect = [
+            {"id": str(user_id), "default_folder_id": str(folder_id)},  # User exists
+        ]
+
+        with self.assertRaises(FolderDeletionError):
+            await delete_folder(mock_cp, mock_storage.return_value, user_id, folder_id)
+
+    @patch("app.controllers.files.StorageBackend")
+    async def test_delete_folder_not_found(self, mock_storage):
+        mock_cp = MagicMock(spec=ConnectionPool)
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cp.connection.return_value.__enter__.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+        user_id = uuid.uuid4()
+        folder_id = uuid.uuid4()
+
+        mock_cursor.fetchone.side_effect = [
+            {"id": str(user_id), "default_folder_id": str(uuid.uuid4())},  # User exists
+            None,  # Folder not found
+        ]
+
+        with self.assertRaises(FolderNotFoundError):
+            await delete_folder(mock_cp, mock_storage.return_value, user_id, folder_id)
+
+    @patch("app.controllers.files.StorageBackend")
+    async def test_delete_folder_storage_error(self, mock_storage):
+        mock_cp = MagicMock(spec=ConnectionPool)
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cp.connection.return_value.__enter__.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+        mock_storage_instance = mock_storage.return_value
+        mock_storage_instance.delete_folder.side_effect = Exception("Storage error")
+
+        user_id = uuid.uuid4()
+        folder_id = uuid.uuid4()
+
+        mock_cursor.fetchone.side_effect = [
+            {"id": str(user_id), "default_folder_id": str(uuid.uuid4())},  # User exists
+            {"id": str(folder_id), "owner_id": str(user_id)},  # Folder exists
+        ]
+
+        with self.assertRaises(FolderDeletionError):
+            await delete_folder(mock_cp, mock_storage_instance, user_id, folder_id)
 
 
 class TestCreateFolder(unittest.IsolatedAsyncioTestCase):
-    @patch("app.controllers.files.upload_pictures", new_callable=AsyncMock)
-    @patch("app.controllers.files.create_picture_set", new_callable=AsyncMock)
-    @patch("app.controllers.files.ContainerClient.from_connection_string")
-    async def test_create_folder_success(
-        self, mock_container_client, mock_create_picture_set, mock_upload_pictures
-    ):
+    @classmethod
+    def setUpClass(cls):
+        """Generate a valid in-memory image once for all tests."""
+        img = Image.new("RGB", (100, 100), color="red")
+        img_bytes = io.BytesIO()
+        img.save(img_bytes, format="JPEG")
+        cls.image = img_bytes.getvalue()
+
+    @patch("app.controllers.files.StorageBackend")
+    async def test_create_folder_success(self, mock_storage):
         mock_cp = MagicMock(spec=ConnectionPool)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
         mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
 
-        mock_container_client.return_value = MagicMock()
-        picture_set_id = uuid.uuid4()
-        picture_ids = [uuid.uuid4(), uuid.uuid4()]
-        mock_create_picture_set.return_value = picture_set_id
-        mock_upload_pictures.return_value = picture_ids
+        mock_storage_instance = mock_storage.return_value
+        mock_storage_instance.save_file = MagicMock()
 
-        connection_string = "fake_conn_str"
         user_id = uuid.uuid4()
-        label_images = [b"image1", b"image2"]
+        folder_id = uuid.uuid4()
+        file_id_1 = uuid.uuid4()
+        file_id_2 = uuid.uuid4()
+        files = [self.image, self.image]
 
-        result = await create_folder(mock_cp, connection_string, user_id, label_images)
+        mock_cursor.fetchone.side_effect = [
+            {"id": str(user_id), "default_folder_id": str(uuid.uuid4())},  # User exists
+            {"id": str(folder_id), "owner_id": str(user_id)},  # Folder created
+            {"id": str(file_id_1), "picture_set_id": str(folder_id)},  # First file
+            {"id": str(file_id_2), "picture_set_id": str(folder_id)},  # Second file
+        ]
 
-        self.assertIsInstance(result, Folder)
-        self.assertEqual(result.id, picture_set_id)
-        self.assertEqual(result.file_ids, picture_ids)
-        self.assertIsNone(result.metadata)
-        self.assertIsNone(result.owner_id)
-        self.assertIsNone(result.upload_date)
-        self.assertIsNone(result.name)
-
-        mock_container_client.assert_called_once_with(
-            connection_string, container_name=build_container_name(str(user_id))
-        )
-        mock_create_picture_set.assert_called_once_with(
-            mock_cursor, mock_container_client.return_value, len(label_images), user_id
-        )
-        mock_upload_pictures.assert_called_once_with(
-            mock_cursor,
-            str(user_id),
-            label_images,
-            mock_container_client.return_value,
-            str(picture_set_id),
+        folder = await create_folder(
+            mock_cp, mock_storage_instance, user_id, files, name="test_folder"
         )
 
-    @patch("app.controllers.files.upload_pictures", new_callable=AsyncMock)
-    @patch("app.controllers.files.create_picture_set", new_callable=AsyncMock)
-    @patch("app.controllers.files.ContainerClient.from_connection_string")
-    async def test_create_folder_invalid_user_id(
-        self, mock_container_client, mock_create_picture_set, mock_upload_pictures
-    ):
+        self.assertIsInstance(folder, Folder)
+        self.assertEqual(folder.id, folder_id)
+        self.assertEqual(len(folder.file_ids), len(files))
+
+        mock_storage_instance.save_file.assert_called()
+
+    @patch("app.controllers.files.StorageBackend")
+    async def test_create_folder_user_not_found(self, mock_storage):
         mock_cp = MagicMock(spec=ConnectionPool)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
         mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
 
-        mock_container_client.return_value = MagicMock()
-        picture_set_id = uuid.uuid4()
-        picture_ids = [uuid.uuid4(), uuid.uuid4()]
-        mock_create_picture_set.return_value = picture_set_id
-        mock_upload_pictures.return_value = picture_ids
+        mock_cursor.fetchone.return_value = None  # User not found
 
-        connection_string = "fake_conn_str"
-        user_id = str(uuid.uuid4())
-        label_images = [b"image1", b"image2"]
+        user_id = uuid.uuid4()
+        files = [self.image]
 
-        result = await create_folder(mock_cp, connection_string, user_id, label_images)
+        with self.assertRaises(UserNotFoundError):
+            await create_folder(mock_cp, mock_storage.return_value, user_id, files)
 
-        self.assertIsInstance(result, Folder)
-        self.assertEqual(result.id, picture_set_id)
-        self.assertEqual(result.file_ids, picture_ids)
+    @patch("app.controllers.files.StorageBackend")
+    async def test_create_folder_fallback_to_default(self, mock_storage):
+        mock_cp = MagicMock(spec=ConnectionPool)
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cp.connection.return_value.__enter__.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
 
-        mock_container_client.assert_called_once_with(
-            connection_string, container_name=build_container_name(str(user_id))
-        )
-        mock_create_picture_set.assert_called_once()
-        mock_upload_pictures.assert_called_once()
+        user_id = uuid.uuid4()
+        files = [self.image, self.image]  # Two files
+        default_folder_id = uuid.uuid4()
+        file_id_1 = uuid.uuid4()
+        file_id_2 = uuid.uuid4()
+
+        mock_cursor.fetchone.side_effect = [
+            {
+                "id": str(user_id),
+                "default_folder_id": str(default_folder_id),
+            },  # Get user
+            None,  # Folder creation failed
+            {
+                "id": str(default_folder_id),
+                "owner_id": str(user_id),
+            },  # Fallback to default folder
+            {
+                "id": str(file_id_1),
+                "picture_set_id": str(default_folder_id),
+            },  # Insert file 1
+            {
+                "id": str(file_id_2),
+                "picture_set_id": str(default_folder_id),
+            },  # Insert file 2
+        ]
+
+        folder = await create_folder(mock_cp, mock_storage.return_value, user_id, files)
+
+        self.assertIsInstance(folder, Folder)
+        self.assertEqual(folder.id, default_folder_id)
+        self.assertEqual(len(folder.file_ids), len(files))
+
+    @patch("app.controllers.files.StorageBackend")
+    async def test_create_folder_fails(self, mock_storage):
+        mock_cp = MagicMock(spec=ConnectionPool)
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cp.connection.return_value.__enter__.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+        user_id = uuid.uuid4()
+        files = [self.image]
+
+        mock_cursor.fetchone.side_effect = [
+            {"id": str(user_id), "default_folder_id": str(uuid.uuid4())},  # User exists
+            None,  # Folder creation failed
+            None,  # No default folder found
+        ]
+
+        with self.assertRaises(FolderCreationError):
+            await create_folder(mock_cp, mock_storage.return_value, user_id, files)
+
+    @patch("app.controllers.files.StorageBackend")
+    async def test_create_folder_file_creation_fails(self, mock_storage):
+        mock_cp = MagicMock(spec=ConnectionPool)
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cp.connection.return_value.__enter__.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+        mock_storage_instance = mock_storage.return_value
+        mock_storage_instance.save_file = MagicMock()
+
+        user_id = uuid.uuid4()
+        folder_id = uuid.uuid4()
+        files = [self.image]
+
+        mock_cursor.fetchone.side_effect = [
+            {"id": str(user_id), "default_folder_id": str(uuid.uuid4())},  # User exists
+            {"id": str(folder_id), "owner_id": str(user_id)},  # Folder created
+            None,  # File creation failed
+        ]
+
+        with self.assertRaises(FileCreationError):
+            await create_folder(mock_cp, mock_storage_instance, user_id, files)
 
 
 class TestReadFile(unittest.IsolatedAsyncioTestCase):
-    @patch("app.controllers.files.get_blob", new_callable=AsyncMock)
-    @patch("app.controllers.files.ContainerClient.from_connection_string")
-    async def test_valid_file_returns_blob(self, mock_container_client, mock_get_blob):
+    @patch("app.controllers.files.StorageBackend")
+    async def test_valid_file_returns_blob(self, mock_storage):
+        """Test that a valid file returns expected binary data."""
+        mock_storage_instance = mock_storage.return_value
         expected_blob = b"sample binary data"
-        mock_get_blob.return_value = expected_blob
-        container_client_instance = mock_container_client.return_value
-        connection_string = "fake_conn_str"
+        mock_storage_instance.read_file.return_value = expected_blob
+
         user_id = uuid.uuid4()
         folder_id = uuid.uuid4()
         file_id = uuid.uuid4()
-        blob = await read_file(connection_string, user_id, folder_id, file_id)
+
+        blob = await read_file(mock_storage_instance, user_id, folder_id, file_id)
+
         self.assertEqual(blob, expected_blob)
-        mock_container_client.assert_called_once_with(
-            connection_string, container_name=build_container_name(str(user_id))
-        )
-        mock_get_blob.assert_called_once_with(
-            container_client_instance, f"{folder_id}/{file_id}"
+        mock_storage_instance.read_file.assert_called_once_with(
+            build_container_name(str(user_id)), str(folder_id), str(file_id)
         )
 
-    @patch("app.controllers.files.get_blob", new_callable=AsyncMock)
-    @patch("app.controllers.files.ContainerClient.from_connection_string")
-    async def test_file_not_found_raises_error(
-        self, mock_container_client, mock_get_blob
-    ):
-        mock_get_blob.side_effect = GetBlobError("The specified blob does not exist.")
-        connection_string = "fake_conn_str"
+    @patch("app.controllers.files.StorageBackend")
+    async def test_file_not_found_raises_error(self, mock_storage):
+        """Test that a missing file raises FileNotFoundError."""
+        mock_storage_instance = mock_storage.return_value
+        mock_storage_instance.read_file.side_effect = StorageFileNotFound()
+
         user_id = uuid.uuid4()
         folder_id = uuid.uuid4()
         file_id = uuid.uuid4()
-        with self.assertRaises(FileNotFoundError) as context:
-            await read_file(connection_string, user_id, folder_id, file_id)
-        self.assertIn(
-            f"File {file_id} not found in folder {folder_id}", str(context.exception)
+
+        with self.assertRaises(FileNotFoundError):
+            await read_file(mock_storage_instance, user_id, folder_id, file_id)
+
+        mock_storage_instance.read_file.assert_called_once_with(
+            build_container_name(str(user_id)), str(folder_id), str(file_id)
         )

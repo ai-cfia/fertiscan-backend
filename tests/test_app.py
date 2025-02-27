@@ -15,9 +15,11 @@ from app.dependencies import (
     get_gpt,
     get_ocr,
     get_settings,
+    get_storage,
 )
 from app.exceptions import (
     FileNotFoundError,
+    FolderNotFoundError,
     InspectionNotFoundError,
     UserConflictError,
     UserNotFoundError,
@@ -471,6 +473,8 @@ class TestAPIFiles(unittest.TestCase):
         app.dependency_overrides[get_settings] = lambda: Mock(
             azure_storage_connection_string="mock_connection_string"
         )
+        self.mock_get_storage = Mock()
+        app.dependency_overrides[get_storage] = lambda: self.mock_get_storage
 
         self.folder_id = uuid.uuid4()
         self.file_id = uuid.uuid4()
@@ -522,7 +526,7 @@ class TestAPIFiles(unittest.TestCase):
 
     @patch("app.routes.read_folder")
     def test_get_folder_not_found(self, mock_read_folder):
-        mock_read_folder.side_effect = FileNotFoundError()
+        mock_read_folder.side_effect = FolderNotFoundError()
         response = self.client.get(f"/files/{self.folder_id}")
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "Folder not found")
@@ -566,7 +570,7 @@ class TestAPIFiles(unittest.TestCase):
         self.assertEqual(data["id"], str(self.folder_id))
         self.assertTrue(data["deleted"])
         mock_delete_folder.assert_called_once_with(
-            ANY, "mock_connection_string", self.test_user.id, self.folder_id
+            ANY, self.mock_get_storage, self.test_user.id, self.folder_id
         )
 
     def test_delete_folder_unauthenticated(self):
@@ -576,7 +580,7 @@ class TestAPIFiles(unittest.TestCase):
 
     @patch("app.routes.delete_folder")
     def test_delete_folder_not_found(self, mock_delete_folder):
-        mock_delete_folder.side_effect = FileNotFoundError()
+        mock_delete_folder.side_effect = FolderNotFoundError()
         response = self.client.delete(f"/files/{self.folder_id}")
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "Folder not found")
