@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 
 from PIL import Image
 from psycopg_pool import ConnectionPool
+
 from app.controllers.files import (
     create_folder,
     delete_folder,
