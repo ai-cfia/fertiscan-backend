@@ -1,7 +1,6 @@
 from http import HTTPStatus
-from typing import Annotated
 
-from fastapi import Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import Depends, File, HTTPException, Request, UploadFile
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pipeline import GPT, OCR
 from psycopg_pool import ConnectionPool
@@ -9,7 +8,6 @@ from psycopg_pool import ConnectionPool
 from app.config import Settings
 from app.controllers.users import sign_in
 from app.exceptions import UserNotFoundError
-from app.models.label_data import LabelData
 from app.models.users import User
 
 auth = HTTPBasic()
@@ -60,9 +58,3 @@ def validate_files(files: list[UploadFile] = File(..., min_length=1)):
                 detail=f"File {f.filename} is empty",
             )
     return files
-
-
-def get_label_data(label_data: Annotated[LabelData | str, Form(...)]):
-    if isinstance(label_data, str):
-        return LabelData.model_validate_json(label_data)
-    return label_data

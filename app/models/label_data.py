@@ -1,4 +1,5 @@
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -54,3 +55,4 @@ class LabelData(BaseModel):
     instructions_fr: list[str] = []
     ingredients_en: list[Nutrient] = []
     ingredients_fr: list[Nutrient] = []
+    picture_set_id: UUID | None = None

@@ -3,18 +3,18 @@ from http import HTTPStatus
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, Request
-from fastapi.logger import logger
+# from fastapi.logger import logger
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from opentelemetry import trace
-from opentelemetry._logs import set_logger_provider
-from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
-from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
+# from opentelemetry import trace
+# from opentelemetry._logs import set_logger_provider
+# from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+# from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+# from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+# from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+# from opentelemetry.sdk.resources import Resource
+# from opentelemetry.sdk.trace import TracerProvider
+# from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from pipeline import GPT, OCR
 from psycopg.conninfo import make_conninfo
 from psycopg_pool import ConnectionPool
@@ -74,40 +74,40 @@ class Settings(BaseSettings):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    settings: Settings = app.settings
+    # settings: Settings = app.settings
     app.pool.open()
-    resource = Resource.create(
-        {
-            "service.name": "fertiscan-backend",
-        }
-    )
+    # resource = Resource.create(
+    #     {
+    #         "service.name": "fertiscan-backend",
+    #     }
+    # )
 
-    # Tracing setup
-    tracer_provider = TracerProvider(resource=resource)
-    trace.set_tracer_provider(tracer_provider)
-    tracer_provider.add_span_processor(
-        BatchSpanProcessor(
-            OTLPSpanExporter(
-                endpoint=settings.otel_exporter_otlp_endpoint, insecure=True
-            )
-        )
-    )
-    # Logging setup
-    logger_provider = LoggerProvider(resource=resource)
-    set_logger_provider(logger_provider)
-    logger_provider.add_log_record_processor(
-        BatchLogRecordProcessor(
-            OTLPLogExporter(
-                endpoint=settings.otel_exporter_otlp_endpoint, insecure=True
-            )
-        )
-    )
-    handler = LoggingHandler(logger_provider=logger_provider)
-    logger.addHandler(handler)
+    # # Tracing setup
+    # tracer_provider = TracerProvider(resource=resource)
+    # trace.set_tracer_provider(tracer_provider)
+    # tracer_provider.add_span_processor(
+    #     BatchSpanProcessor(
+    #         OTLPSpanExporter(
+    #             endpoint=settings.otel_exporter_otlp_endpoint, insecure=True
+    #         )
+    #     )
+    # )
+    # # Logging setup
+    # logger_provider = LoggerProvider(resource=resource)
+    # set_logger_provider(logger_provider)
+    # logger_provider.add_log_record_processor(
+    #     BatchLogRecordProcessor(
+    #         OTLPLogExporter(
+    #             endpoint=settings.otel_exporter_otlp_endpoint, insecure=True
+    #         )
+    #     )
+    # )
+    # handler = LoggingHandler(logger_provider=logger_provider)
+    # logger.addHandler(handler)
     yield
     app.pool.close()
-    logger_provider.shutdown()
-    tracer_provider.shutdown()
+    # logger_provider.shutdown()
+    # tracer_provider.shutdown()
 
 
 def create_app(settings: Settings, router: APIRouter, lifespan=None):
