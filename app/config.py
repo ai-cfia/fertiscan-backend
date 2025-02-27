@@ -26,7 +26,7 @@ from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings
 
 from app.exceptions import log_error
-from app.services.file_storage import MinIOStorage
+from app.services.file_storage import MinIOStorageManager, build_storage_name
 
 load_dotenv(".env.secrets")
 load_dotenv(".env.config")
@@ -160,7 +160,7 @@ def create_app(settings: Settings, router: APIRouter, lifespan=None):
         secure=settings.minio_secure,
     )
 
-    storage = MinIOStorage(minio_client)
+    storage = MinIOStorageManager(minio_client, build_storage_name)
 
     app.storage = storage
 
