@@ -1,8 +1,6 @@
 import unittest
-from unittest.mock import AsyncMock, MagicMock, patch
-
-from datastore import UserAlreadyExistsError as DBUserAlreadyExistsError
-from datastore.db.queries.user import UserNotFoundError as DBUserNotFoundError
+from unittest.mock import MagicMock
+from uuid import uuid4
 
 from app.controllers.users import sign_in, sign_up
 from app.exceptions import (
@@ -21,17 +19,16 @@ class TestSignUpSuccess(unittest.IsolatedAsyncioTestCase):
         conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
         cp.connection.return_value.__enter__.return_value = conn_mock
         mock_user = User(username="test_user")
-        mock_new_user = AsyncMock(return_value=MagicMock(id=1))
-        mock_storage_url = "mocked_storage_url"
+        user_id = uuid4()
+        mock_new_user = {"id": user_id, "email": "test_user"}
 
-        with patch("app.controllers.users.new_user", mock_new_user):
-            result = await sign_up(cp, mock_user, mock_storage_url)
+        cursor_mock.fetchone.return_value = mock_new_user
+
+        result = await sign_up(cp, mock_user)
 
         cp.connection.assert_called_once()
-        mock_new_user.assert_awaited_once_with(
-            cursor_mock, "test_user", mock_storage_url
-        )
-        self.assertEqual(result.id, 1)
+        cursor_mock.execute.assert_called_once()
+        self.assertEqual(result.id, user_id)  # Ensure UUID matches
         self.assertEqual(result.username, "test_user")
 
     async def test_sign_up_missing_username(self):
@@ -39,7 +36,7 @@ class TestSignUpSuccess(unittest.IsolatedAsyncioTestCase):
         mock_user = User(username="")
 
         with self.assertRaises(MissingUserAttributeError):
-            await sign_up(cp, mock_user, "mock_storage_url")
+            await sign_up(cp, mock_user)
 
     async def test_sign_up_user_already_exists(self):
         cp = MagicMock()
@@ -48,11 +45,11 @@ class TestSignUpSuccess(unittest.IsolatedAsyncioTestCase):
         conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
         cp.connection.return_value.__enter__.return_value = conn_mock
         mock_user = User(username="existing_user")
-        mock_new_user = AsyncMock(side_effect=DBUserAlreadyExistsError)
 
-        with patch("app.controllers.users.new_user", mock_new_user):
-            with self.assertRaises(UserConflictError):
-                await sign_up(cp, mock_user, "mock_storage_url")
+        cursor_mock.fetchone.return_value = None  # Simulating conflict
+
+        with self.assertRaises(UserConflictError):
+            await sign_up(cp, mock_user)
 
     async def test_successful_user_sign_in(self):
         cp = MagicMock()
@@ -61,14 +58,14 @@ class TestSignUpSuccess(unittest.IsolatedAsyncioTestCase):
         conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
         cp.connection.return_value.__enter__.return_value = conn_mock
         mock_user = User(username="test_user")
-        mock_get_user = AsyncMock(return_value=MagicMock(id=1))
+        mock_existing_user = {"id": uuid4(), "email": "test_user"}
+        cursor_mock.fetchone.return_value = mock_existing_user
 
-        with patch("app.controllers.users.get_user", mock_get_user):
-            result = await sign_in(cp, mock_user)
+        result = await sign_in(cp, mock_user)
 
         cp.connection.assert_called_once()
-        mock_get_user.assert_awaited_once_with(cursor_mock, "test_user")
-        self.assertEqual(result.id, 1)
+        cursor_mock.execute.assert_called_once()
+        self.assertEqual(result.id, mock_existing_user["id"])
         self.assertEqual(result.username, "test_user")
 
     async def test_sign_in_missing_username(self):
@@ -85,8 +82,8 @@ class TestSignUpSuccess(unittest.IsolatedAsyncioTestCase):
         conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
         cp.connection.return_value.__enter__.return_value = conn_mock
         mock_user = User(username="non_existent_user")
-        mock_get_user = AsyncMock(side_effect=DBUserNotFoundError)
 
-        with patch("app.controllers.users.get_user", mock_get_user):
-            with self.assertRaises(UserNotFoundError):
-                await sign_in(cp, mock_user)
+        cursor_mock.fetchone.return_value = None  # Simulating user not found
+
+        with self.assertRaises(UserNotFoundError):
+            await sign_in(cp, mock_user)

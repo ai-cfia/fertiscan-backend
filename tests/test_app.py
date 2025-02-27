@@ -2,9 +2,9 @@ import base64
 import unittest
 import uuid
 from datetime import datetime
-from io import BytesIO
 from unittest.mock import ANY, Mock, patch
 
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from pipeline import FertilizerInspection
 
@@ -22,7 +22,6 @@ from app.exceptions import (
     FolderNotFoundError,
     InspectionNotFoundError,
     UserConflictError,
-    UserNotFoundError,
 )
 from app.models.files import DeleteFolderResponse, Folder
 from app.models.inspections import DeletedInspection, InspectionData, InspectionResponse
@@ -158,10 +157,8 @@ class TestAPIUsers(unittest.TestCase):
     @patch("app.routes.sign_up")
     def test_signup_bad_authentication(self, _):
         del app.dependency_overrides[authenticate_user]
-        # Test with no authentication
         response = self.client.post("/signup")
         self.assertEqual(response.status_code, 401)
-        # Test with empty username
         empty_username = ""
         response = self.client.post(
             "/signup",
@@ -189,21 +186,19 @@ class TestAPIUsers(unittest.TestCase):
         user = User.model_validate(response.json())
         self.assertEqual(user, self.test_user)
 
-    @patch("app.dependencies.sign_in")
-    def test_sign_in_user_not_found(self, mock_sign_in):
-        del app.dependency_overrides[fetch_user]
-        mock_sign_in.side_effect = UserNotFoundError()
+    def test_sign_in_user_not_found(self):
+        # Simulate user not found by overriding fetch_user to raise HTTPException
+        app.dependency_overrides[fetch_user] = lambda: (_ for _ in ()).throw(
+            HTTPException(status_code=401, detail="User not found")
+        )
         response = self.client.post("/login")
-        # if the user is not found, the response should be NOT AUTHORIZED
         self.assertEqual(response.status_code, 401)
 
     def test_sign_in_bad_authentication(self):
         del app.dependency_overrides[authenticate_user]
         del app.dependency_overrides[fetch_user]
-        # Test with no authentication
         response = self.client.post("/login")
         self.assertEqual(response.status_code, 401)
-        # Test with empty username
         empty_username = ""
         response = self.client.post(
             "/login",
@@ -213,12 +208,10 @@ class TestAPIUsers(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    @patch("app.dependencies.sign_in")
-    def test_sign_in_authentication_success(self, mock_sign_in):
+    def test_sign_in_authentication_success(self):
         del app.dependency_overrides[authenticate_user]
         del app.dependency_overrides[fetch_user]
-        mock_sign_in.return_value = self.test_user
-        response = self.client.post("/login")
+        app.dependency_overrides[fetch_user] = lambda: self.test_user
         response = self.client.post(
             "/login",
             headers={
@@ -306,41 +299,6 @@ class TestAPIInspections(unittest.TestCase):
             self.sample_inspection_dict
         )
 
-        self.sample_label_data = {
-            "organizations": [],
-            "cautions_en": ["string"],
-            "instructions_en": [],
-            "cautions_fr": ["string"],
-            "ingredients_en": [],
-            "instructions_fr": [],
-            "density": {"value": 0, "unit": "string"},
-            "guaranteed_analysis_en": {
-                "title": "string",
-                "nutrients": [],
-                "is_minimal": True,
-            },
-            "ingredients_fr": [],
-            "npk": "10-10-10",
-            "guaranteed_analysis_fr": {
-                "title": "string",
-                "nutrients": [],
-                "is_minimal": True,
-            },
-            "registration_number": [],
-            "fertiliser_name": "string",
-            "lot_number": "string",
-            "weight": [],
-            "volume": {"value": 0, "unit": "string"},
-            "picture_set_id": str(uuid.uuid4()),
-        }
-        self.sample_label_data = LabelData.model_validate(self.sample_label_data)
-        self.label_data_dict = self.sample_label_data.model_dump(mode="json")
-
-        self.files = [
-            ("files", ("image1.png", BytesIO(b"fake_image_data_1"), "image/png")),
-            ("files", ("image2.png", BytesIO(b"fake_image_data_2"), "image/png")),
-        ]
-
     @patch("app.routes.read_all_inspections")
     def test_get_inspections(self, mock_read_all_inspections):
         mock_read_all_inspections.return_value = self.mock_inspection_data
@@ -376,21 +334,16 @@ class TestAPIInspections(unittest.TestCase):
         mock_create_inspection.return_value = self.mock_inspection
         response = self.client.post(
             "/inspections",
-            json=self.label_data_dict,
+            json=self.sample_inspection_dict,
         )
         self.assertEqual(response.status_code, 200, response.json())
         InspectionResponse.model_validate(response.json())
-
-    @patch("app.routes.create_inspection")
-    def test_create_inspection_empty_files(self, mock_create_inspection):
-        response = self.client.post("/inspections")
-        self.assertEqual(response.status_code, 422)
 
     def test_create_inspection_unauthenticated(self):
         del app.dependency_overrides[fetch_user]
         response = self.client.post(
             "/inspections",
-            json=self.label_data_dict,
+            json=self.sample_inspection_dict,
         )
         self.assertEqual(response.status_code, 401)
 

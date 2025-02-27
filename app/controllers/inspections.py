@@ -1,6 +1,7 @@
 import asyncio
 from uuid import UUID
 
+from fastapi.logger import logger
 from fertiscan import get_full_inspection_json, get_user_analysis_by_verified
 from fertiscan import update_inspection as db_update_inspection
 from fertiscan.db.metadata.inspection import build_inspection_import
@@ -16,7 +17,6 @@ from app.controllers.files import delete_folder, read_folder
 from app.exceptions import (
     FolderError,
     InspectionCreationError,
-    InspectionDeletionError,
     InspectionNotFoundError,
     MissingUserAttributeError,
     log_error,
@@ -91,11 +91,13 @@ async def create_inspection(
     if not isinstance(label_data, LabelData):
         label_data = LabelData.model_validate(label_data)
 
+    # TODO: both should probably share the same conn & conn context
+    try:
+        folder = await read_folder(cp, sm, user.id, label_data.picture_set_id)
+    except FolderError as e:
+        raise InspectionCreationError(f"{e}") from e
+
     with cp.connection() as conn, conn.cursor() as cursor:
-        try:
-            folder = await read_folder(cp, sm, user.id, label_data.picture_set_id)
-        except FolderError as e:
-            raise InspectionCreationError(f"{e}") from e
         formatted_analysis = build_inspection_import(
             label_data.model_dump(mode="json"), user.id, folder.id
         )
@@ -151,8 +153,13 @@ async def delete_inspection(
         if (inspection := cursor.fetchone()) is None:
             raise InspectionNotFoundError(f"Inspection with ID '{id}' not found.")
         inspection = DBInspectionMetadata.model_validate(inspection)
-        try:
-            await delete_folder(cp, sm, user.id, id)
-        except FolderError as e:
-            raise InspectionDeletionError(f"{e}") from e
-        return inspection
+
+    # TODO: should probably share the same conn & conn context as above
+    try:
+        await delete_folder(cp, sm, user.id, inspection.picture_set_id)
+    except FolderError as e:
+        logger.warning(f"[delete_inspection] {e}")
+    except Exception as e:
+        log_error(e)
+
+    return inspection
