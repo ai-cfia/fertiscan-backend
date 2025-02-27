@@ -50,7 +50,6 @@ class TestAPIPipeline(unittest.TestCase):
         app.dependency_overrides[get_connection_pool] = override_mock
         app.dependency_overrides[get_ocr] = override_mock
         app.dependency_overrides[get_gpt] = override_mock
-        app.dependency_overrides[get_settings] = override_mock
         app.dependency_overrides[fetch_user] = lambda: Mock(id="test-user")
 
     @patch("app.routes.extract_data")

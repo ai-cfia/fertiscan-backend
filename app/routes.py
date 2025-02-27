@@ -68,15 +68,12 @@ async def health_check():
 
 @router.post("/analyze", response_model=LabelData, tags=["Pipeline"])
 async def analyze_document(
-    cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
     ocr: Annotated[OCR, Depends(get_ocr)],
     gpt: Annotated[GPT, Depends(get_gpt)],
-    storage: Annotated[StorageBackend, Depends(get_storage)],
-    user: Annotated[User, Depends(fetch_user)],
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
     label_images = [await f.read() for f in files]
-    return await extract_data(cp, storage, ocr, gpt, user.id, label_images)
+    return extract_data(ocr, gpt, label_images)
 
 
 @router.post("/signup", tags=["Users"], status_code=201, response_model=User)
