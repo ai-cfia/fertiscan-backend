@@ -5,7 +5,6 @@ from uuid import UUID
 import filetype
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile
 from fastapi.responses import RedirectResponse
-from pipeline import GPT, OCR
 from psycopg_pool import ConnectionPool
 
 from app.config import Settings
@@ -29,9 +28,8 @@ from app.dependencies import (
     authenticate_user,
     fetch_user,
     get_connection_pool,
-    get_gpt,
-    get_ocr,
     get_settings,
+    get_pipeline_settings,
     validate_files,
 )
 from app.exceptions import FileNotFoundError, InspectionNotFoundError, UserConflictError
@@ -46,6 +44,8 @@ from app.models.inspections import (
 from app.models.label_data import LabelData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
+from app.sanitization import custom_secure_filename
+from pipeline import PipelineSettings
 
 router = APIRouter()
 
@@ -62,12 +62,20 @@ async def health_check():
 
 @router.post("/analyze", response_model=LabelData, tags=["Pipeline"])
 async def analyze_document(
+<<<<<<< HEAD
     ocr: Annotated[OCR, Depends(get_ocr)],
     gpt: Annotated[GPT, Depends(get_gpt)],
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
     label_images = [await f.read() for f in files]
     return extract_data(ocr, gpt, label_images)
+=======
+    settings: Annotated[PipelineSettings, Depends(get_pipeline_settings)],
+    files: Annotated[list[UploadFile], Depends(validate_files)],
+):
+    file_dict = {custom_secure_filename(f.filename): f.file for f in files}
+    return extract_data(file_dict, settings)
+>>>>>>> cc63f49 (Refactor data extraction to use PipelineSettings and update dependencies)
 
 
 @router.post("/signup", tags=["Users"], status_code=201, response_model=User)
