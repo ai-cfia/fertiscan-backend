@@ -15,7 +15,7 @@ from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from pipeline import GPT, OCR
+from pipeline import Settings as PipelineSettings
 from psycopg.conninfo import make_conninfo
 from psycopg_pool import ConnectionPool
 from pydantic import Field, computed_field
@@ -131,16 +131,25 @@ def create_app(settings: Settings, router: APIRouter, lifespan=None):
     )
     app.pool = pool
 
-    ocr = OCR(api_endpoint=settings.api_endpoint, api_key=settings.api_key)
-    app.ocr = ocr
-
-    gpt = GPT(
-        api_endpoint=settings.openai_api_endpoint,
-        api_key=settings.openai_api_key,
-        deployment_id=settings.openai_api_deployment,
-        phoenix_endpoint=settings.phoenix_endpoint,
+    app.pipeline_settings = PipelineSettings(
+        document_api_endpoint=settings.api_endpoint,
+        document_api_key=settings.api_key,
+        llm_api_deployment=settings.openai_api_deployment,
+        llm_api_endpoint=settings.openai_api_endpoint,
+        llm_api_key=settings.openai_api_key,
+        otel_exporter_otlp_endpoint=settings.phoenix_endpoint,
     )
-    app.gpt = gpt
+
+    # ocr = OCR(api_endpoint=settings.api_endpoint, api_key=settings.api_key)
+    # app.ocr = ocr
+
+    # gpt = GPT(
+    #     api_endpoint=settings.openai_api_endpoint,
+    #     api_key=settings.openai_api_key,
+    #     deployment_id=settings.openai_api_deployment,
+    #     phoenix_endpoint=settings.phoenix_endpoint,
+    # )
+    # app.gpt = gpt
 
     app.include_router(router)
 

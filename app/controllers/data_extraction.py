@@ -1,11 +1,13 @@
+import io
 from typing import BinaryIO
+from PIL import Image
 
-from pipeline import GPT, OCR, LabelStorage, analyze
+from pipeline import analyze, Settings
 
 from app.models.label_data import LabelData
 
 
-def extract_data(files: dict[str, BinaryIO], ocr: OCR, gpt: GPT):
+def extract_data(files: dict[str, BinaryIO], settings: Settings):
     """
     Extracts data from provided image files using OCR and GPT.
 
@@ -26,11 +28,10 @@ def extract_data(files: dict[str, BinaryIO], ocr: OCR, gpt: GPT):
 
     # TODO: Validate file types if necessary
 
-    label_storage = LabelStorage()
-
+    images = []
     for filename in files:
-        label_storage.add_image(files[filename].read())
+        images.append(Image.open(io.BytesIO(files[filename].read())))
 
-    data = analyze(label_storage, ocr, gpt)
+    data = analyze(images, settings)
 
     return LabelData.model_validate(data.model_dump())

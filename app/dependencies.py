@@ -16,6 +16,9 @@ auth = HTTPBasic()
 def get_settings(request: Request) -> Settings:
     return request.app.settings
 
+def get_pipeline_settings(request: Request) -> Settings:
+    return request.app.pipeline_settings
+
 
 def get_connection_pool(request: Request) -> ConnectionPool:
     return request.app.pool

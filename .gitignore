@@ -10,6 +10,9 @@ logs/
 # VS Code
 .vscode
 
+# Zed
+.zed
+
 # Upload folder
 uploads/*
 
