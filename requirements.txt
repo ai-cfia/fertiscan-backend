@@ -9,7 +9,7 @@ opentelemetry-instrumentation==0.48b0
 opentelemetry-instrumentation-fastapi==0.48b0
 opentelemetry-instrumentation-logging==0.48b0
 openinference-instrumentation-dspy==0.1.14
-fastapi[standard]==0.115.4
+fastapi[standard]==0.115.11
 pydantic-settings==2.7.1
 pydantic-extra-types==2.10.2
 filetype==1.2.0
