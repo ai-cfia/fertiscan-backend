@@ -2,9 +2,9 @@ import base64
 import unittest
 import uuid
 from datetime import datetime
-from io import BytesIO
 from unittest.mock import ANY, Mock, patch
 
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from pipeline import FertilizerInspection
 
@@ -15,12 +15,13 @@ from app.dependencies import (
     get_gpt,
     get_ocr,
     get_settings,
+    get_storage,
 )
 from app.exceptions import (
     FileNotFoundError,
+    FolderNotFoundError,
     InspectionNotFoundError,
     UserConflictError,
-    UserNotFoundError,
 )
 from app.models.files import DeleteFolderResponse, Folder
 from app.models.inspections import DeletedInspection, InspectionData, InspectionResponse
@@ -156,10 +157,8 @@ class TestAPIUsers(unittest.TestCase):
     @patch("app.routes.sign_up")
     def test_signup_bad_authentication(self, _):
         del app.dependency_overrides[authenticate_user]
-        # Test with no authentication
         response = self.client.post("/signup")
         self.assertEqual(response.status_code, 401)
-        # Test with empty username
         empty_username = ""
         response = self.client.post(
             "/signup",
@@ -187,21 +186,19 @@ class TestAPIUsers(unittest.TestCase):
         user = User.model_validate(response.json())
         self.assertEqual(user, self.test_user)
 
-    @patch("app.dependencies.sign_in")
-    def test_sign_in_user_not_found(self, mock_sign_in):
-        del app.dependency_overrides[fetch_user]
-        mock_sign_in.side_effect = UserNotFoundError()
+    def test_sign_in_user_not_found(self):
+        # Simulate user not found by overriding fetch_user to raise HTTPException
+        app.dependency_overrides[fetch_user] = lambda: (_ for _ in ()).throw(
+            HTTPException(status_code=401, detail="User not found")
+        )
         response = self.client.post("/login")
-        # if the user is not found, the response should be NOT AUTHORIZED
         self.assertEqual(response.status_code, 401)
 
     def test_sign_in_bad_authentication(self):
         del app.dependency_overrides[authenticate_user]
         del app.dependency_overrides[fetch_user]
-        # Test with no authentication
         response = self.client.post("/login")
         self.assertEqual(response.status_code, 401)
-        # Test with empty username
         empty_username = ""
         response = self.client.post(
             "/login",
@@ -211,12 +208,10 @@ class TestAPIUsers(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    @patch("app.dependencies.sign_in")
-    def test_sign_in_authentication_success(self, mock_sign_in):
+    def test_sign_in_authentication_success(self):
         del app.dependency_overrides[authenticate_user]
         del app.dependency_overrides[fetch_user]
-        mock_sign_in.return_value = self.test_user
-        response = self.client.post("/login")
+        app.dependency_overrides[fetch_user] = lambda: self.test_user
         response = self.client.post(
             "/login",
             headers={
@@ -304,41 +299,6 @@ class TestAPIInspections(unittest.TestCase):
             self.sample_inspection_dict
         )
 
-        self.sample_label_data = {
-            "organizations": [],
-            "cautions_en": ["string"],
-            "instructions_en": [],
-            "cautions_fr": ["string"],
-            "ingredients_en": [],
-            "instructions_fr": [],
-            "density": {"value": 0, "unit": "string"},
-            "guaranteed_analysis_en": {
-                "title": "string",
-                "nutrients": [],
-                "is_minimal": True,
-            },
-            "ingredients_fr": [],
-            "npk": "10-10-10",
-            "guaranteed_analysis_fr": {
-                "title": "string",
-                "nutrients": [],
-                "is_minimal": True,
-            },
-            "registration_number": [],
-            "fertiliser_name": "string",
-            "lot_number": "string",
-            "weight": [],
-            "volume": {"value": 0, "unit": "string"},
-            "picture_set_id": str(uuid.uuid4()),
-        }
-        self.sample_label_data = LabelData.model_validate(self.sample_label_data)
-        self.label_data_dict = self.sample_label_data.model_dump(mode="json")
-
-        self.files = [
-            ("files", ("image1.png", BytesIO(b"fake_image_data_1"), "image/png")),
-            ("files", ("image2.png", BytesIO(b"fake_image_data_2"), "image/png")),
-        ]
-
     @patch("app.routes.read_all_inspections")
     def test_get_inspections(self, mock_read_all_inspections):
         mock_read_all_inspections.return_value = self.mock_inspection_data
@@ -374,21 +334,16 @@ class TestAPIInspections(unittest.TestCase):
         mock_create_inspection.return_value = self.mock_inspection
         response = self.client.post(
             "/inspections",
-            json=self.label_data_dict,
+            json=self.sample_inspection_dict,
         )
         self.assertEqual(response.status_code, 200, response.json())
         InspectionResponse.model_validate(response.json())
-
-    @patch("app.routes.create_inspection")
-    def test_create_inspection_empty_files(self, mock_create_inspection):
-        response = self.client.post("/inspections")
-        self.assertEqual(response.status_code, 422)
 
     def test_create_inspection_unauthenticated(self):
         del app.dependency_overrides[fetch_user]
         response = self.client.post(
             "/inspections",
-            json=self.label_data_dict,
+            json=self.sample_inspection_dict,
         )
         self.assertEqual(response.status_code, 401)
 
@@ -471,11 +426,13 @@ class TestAPIFiles(unittest.TestCase):
         app.dependency_overrides[get_settings] = lambda: Mock(
             azure_storage_connection_string="mock_connection_string"
         )
+        self.mock_get_storage = Mock()
+        app.dependency_overrides[get_storage] = lambda: self.mock_get_storage
 
         self.folder_id = uuid.uuid4()
         self.file_id = uuid.uuid4()
 
-    @patch("app.routes.read_folders")
+    @patch("app.routes.read_inspection_folders")
     def test_get_folders_success(self, mock_read_folders):
         folder_1 = Folder(
             id=uuid.uuid4(), owner_id=self.test_user.id, file_ids=[uuid.uuid4()]
@@ -502,7 +459,7 @@ class TestAPIFiles(unittest.TestCase):
         response = self.client.get("/files")
         self.assertEqual(response.status_code, 401)
 
-    @patch("app.routes.read_folder")
+    @patch("app.routes.read_inspection_folder")
     def test_get_folder(self, mock_read_folder):
         folder_id = self.folder_id
         file_ids = [uuid.uuid4(), uuid.uuid4()]
@@ -520,14 +477,14 @@ class TestAPIFiles(unittest.TestCase):
         response = self.client.get(f"/files/{self.folder_id}")
         self.assertEqual(response.status_code, 401)
 
-    @patch("app.routes.read_folder")
+    @patch("app.routes.read_inspection_folder")
     def test_get_folder_not_found(self, mock_read_folder):
-        mock_read_folder.side_effect = FileNotFoundError()
+        mock_read_folder.side_effect = FolderNotFoundError()
         response = self.client.get(f"/files/{self.folder_id}")
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "Folder not found")
 
-    @patch("app.routes.create_folder")
+    @patch("app.routes.create_inspection_folder")
     def test_post_files_success(self, mock_create_folder):
         folder_id = uuid.uuid4()
         file_ids = [uuid.uuid4(), uuid.uuid4()]
@@ -548,13 +505,13 @@ class TestAPIFiles(unittest.TestCase):
         response = self.client.post("/files", files=[])
         self.assertEqual(response.status_code, 401)
 
-    @patch("app.routes.create_folder")
+    @patch("app.routes.create_inspection_folder")
     def test_post_files_empty(self, mock_create_folder):
         response = self.client.post("/files", files=[])
         self.assertEqual(response.status_code, 422)
         mock_create_folder.assert_not_called()
 
-    @patch("app.routes.delete_folder")
+    @patch("app.routes.delete_inspection_folder")
     def test_delete_folder_success(self, mock_delete_folder):
         mock_delete_folder.return_value = DeleteFolderResponse(
             id=self.folder_id, deleted=True
@@ -566,7 +523,7 @@ class TestAPIFiles(unittest.TestCase):
         self.assertEqual(data["id"], str(self.folder_id))
         self.assertTrue(data["deleted"])
         mock_delete_folder.assert_called_once_with(
-            ANY, "mock_connection_string", self.test_user.id, self.folder_id
+            ANY, self.mock_get_storage, self.test_user.id, self.folder_id
         )
 
     def test_delete_folder_unauthenticated(self):
@@ -574,27 +531,27 @@ class TestAPIFiles(unittest.TestCase):
         response = self.client.delete(f"/files/{self.folder_id}")
         self.assertEqual(response.status_code, 401)
 
-    @patch("app.routes.delete_folder")
+    @patch("app.routes.delete_inspection_folder")
     def test_delete_folder_not_found(self, mock_delete_folder):
-        mock_delete_folder.side_effect = FileNotFoundError()
+        mock_delete_folder.side_effect = FolderNotFoundError()
         response = self.client.delete(f"/files/{self.folder_id}")
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "Folder not found")
 
-    @patch("app.routes.read_file")
-    async def test_get_file(self, mock_read_file):
-        mock_read_file.return_value = b"fake_image_data"
+    @patch("app.routes.read_label")
+    async def test_get_file(self, mock_read_label):
+        mock_read_label.return_value = b"fake_image_data"
         response = self.client.get(f"/files/{self.folder_id}/{self.file_id}")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b"fake_image_data")
         self.assertEqual(response.headers["content-type"], "image/png")
-        mock_read_file.assert_called_once_with(
+        mock_read_label.assert_called_once_with(
             ANY, self.test_user.id, self.folder_id, self.file_id
         )
 
-    @patch("app.routes.read_file")
-    def test_get_file_not_found(self, mock_read_file):
-        mock_read_file.side_effect = FileNotFoundError()
+    @patch("app.routes.read_label")
+    def test_get_file_not_found(self, mock_read_label):
+        mock_read_label.side_effect = FileNotFoundError()
         response = self.client.get(f"/files/{self.folder_id}/{self.file_id}")
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "File not found")

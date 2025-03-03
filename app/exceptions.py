@@ -15,6 +15,10 @@ class UserConflictError(UserError):
     pass
 
 
+class UserDeletionError(UserError):
+    pass
+
+
 class MissingUserAttributeError(UserError):
     pass
 
@@ -27,11 +31,51 @@ class InspectionNotFoundError(InspectionError):
     pass
 
 
+class InspectionCreationError(InspectionError):
+    pass
+
+
+class InspectionDeletionError(InspectionError):
+    pass
+
+
+class FolderError(Exception):
+    pass
+
+
+class FolderReadError(FolderError):
+    pass
+
+
+class FolderNotFoundError(FolderError):
+    pass
+
+
+class FolderCreationError(FolderError):
+    pass
+
+
+class FolderDeletionError(FolderError):
+    pass
+
+
 class FileError(Exception):
     pass
 
 
 class FileNotFoundError(FileError):
+    pass
+
+
+class FileCreationError(FileError):
+    pass
+
+
+class StorageError(Exception):
+    pass
+
+
+class StorageFileNotFound(StorageError):
     pass
 
 

@@ -9,6 +9,7 @@ from app.config import Settings
 from app.controllers.users import sign_in
 from app.exceptions import UserNotFoundError
 from app.models.users import User
+from app.services.file_storage import StorageManager
 
 auth = HTTPBasic()
 
@@ -27,6 +28,10 @@ def get_ocr(request: Request) -> OCR:
 
 def get_gpt(request: Request) -> GPT:
     return request.app.gpt
+
+
+def get_storage(request: Request) -> StorageManager:
+    return request.app.storage
 
 
 def authenticate_user(credentials: HTTPBasicCredentials = Depends(auth)):

@@ -1,9 +1,7 @@
 import asyncio
 from uuid import UUID
 
-from azure.storage.blob import ContainerClient
-from datastore.blob.azure_storage_api import build_container_name
-from fertiscan import delete_inspection as db_delete_inspection
+from fastapi.logger import logger
 from fertiscan import get_full_inspection_json, get_user_analysis_by_verified
 from fertiscan import update_inspection as db_update_inspection
 from fertiscan.db.metadata.inspection import build_inspection_import
@@ -11,11 +9,20 @@ from fertiscan.db.queries.inspection import (
     InspectionNotFoundError as DBInspectionNotFoundError,
 )
 from fertiscan.db.queries.inspection import new_inspection_with_label_info
+from psycopg.rows import dict_row
+from psycopg.sql import SQL
 from psycopg_pool import ConnectionPool
 
-from app.exceptions import InspectionNotFoundError, MissingUserAttributeError, log_error
+from app.controllers.files import delete_inspection_folder, read_inspection_folder
+from app.exceptions import (
+    FolderError,
+    InspectionCreationError,
+    InspectionNotFoundError,
+    MissingUserAttributeError,
+    log_error,
+)
 from app.models.inspections import (
-    DeletedInspection,
+    DBInspectionMetadata,
     Inspection,
     InspectionData,
     InspectionResponse,
@@ -23,6 +30,7 @@ from app.models.inspections import (
 )
 from app.models.label_data import LabelData
 from app.models.users import User
+from app.services.file_storage import FertiscanStorage
 
 
 async def read_all_inspections(cp: ConnectionPool, user: User):
@@ -73,16 +81,27 @@ async def read_inspection(cp: ConnectionPool, user: User, id: UUID | str):
 
 
 async def create_inspection(
-    cp: ConnectionPool, user: User, label_data: LabelData | dict
+    cp: ConnectionPool,
+    fs: FertiscanStorage,
+    user: User,
+    label_data: LabelData | dict,
 ):
     if not user.id:
         raise MissingUserAttributeError("User ID is required for creating inspections.")
     if not isinstance(label_data, LabelData):
         label_data = LabelData.model_validate(label_data)
 
+    # TODO: both should probably share the same conn & conn context
+    try:
+        folder = await read_inspection_folder(
+            cp, fs, user.id, label_data.picture_set_id
+        )
+    except FolderError as e:
+        raise InspectionCreationError(f"{e}") from e
+
     with cp.connection() as conn, conn.cursor() as cursor:
         formatted_analysis = build_inspection_import(
-            label_data.model_dump(mode="json"), user.id, label_data.picture_set_id
+            label_data.model_dump(mode="json"), user.id, folder.id
         )
         inspection = new_inspection_with_label_info(cursor, user.id, formatted_analysis)
         inspection = Inspection.model_validate(inspection)
@@ -117,23 +136,32 @@ async def update_inspection(
 
 async def delete_inspection(
     cp: ConnectionPool,
+    fs: FertiscanStorage,
     user: User,
     id: UUID | str,
-    connection_string: str,
 ):
     if not user.id:
         raise MissingUserAttributeError("User ID is required to delete an inspection.")
-    if not id:
-        raise ValueError("Inspection ID is required for deletion.")
-    if not connection_string:
-        raise ValueError("Connection string is required for blob storage access.")
     if not isinstance(id, UUID):
         id = UUID(id)
 
-    container_client = ContainerClient.from_connection_string(
-        connection_string, container_name=build_container_name(str(user.id))
-    )
+    with cp.connection() as conn, conn.cursor(row_factory=dict_row) as cursor:
+        query = SQL("""
+            DELETE FROM inspection
+            WHERE id = %s AND inspector_id = %s
+            RETURNING *;
+        """)
+        cursor.execute(query, (id, user.id))
+        if (inspection := cursor.fetchone()) is None:
+            raise InspectionNotFoundError(f"Inspection with ID '{id}' not found.")
+        inspection = DBInspectionMetadata.model_validate(inspection)
 
-    with cp.connection() as conn, conn.cursor() as cursor:
-        deleted = await db_delete_inspection(cursor, id, user.id, container_client)
-        return DeletedInspection.model_validate(deleted.model_dump())
+    # TODO: should probably share the same conn & conn context as above
+    try:
+        await delete_inspection_folder(cp, fs, user.id, inspection.picture_set_id)
+    except FolderError as e:
+        logger.warning(f"[delete_inspection] {e}")
+    except Exception as e:
+        log_error(e)
+
+    return inspection

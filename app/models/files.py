@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
 from datastore.db.metadata.validator import AuditTrail
@@ -33,3 +33,20 @@ class FolderResponse(Folder):
 class DeleteFolderResponse(Folder):
     id: UUID
     deleted: bool = True
+
+
+class UploadedFile(BaseModel):
+    id: UUID | None = None
+    metadata: dict | None = Field(
+        None, validation_alias=AliasChoices("metadata", "picture")
+    )
+    nb_obj: int | None = None
+    picture_set_id: UUID | None = None
+    verified: bool = False
+    upload_date: datetime | None = None
+
+
+class StorageFile(BaseModel):
+    content: bytes | None = None
+    content_type: str | None = None
+    length: int | None = None

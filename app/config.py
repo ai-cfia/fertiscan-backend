@@ -3,9 +3,12 @@ from http import HTTPStatus
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, Request
+
+# from fastapi.logger import logger
 # from fastapi.logger import logger
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
 # from opentelemetry import trace
 # from opentelemetry._logs import set_logger_provider
 # from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
@@ -15,6 +18,7 @@ from fastapi.responses import JSONResponse
 # from opentelemetry.sdk.resources import Resource
 # from opentelemetry.sdk.trace import TracerProvider
 # from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from minio import Minio
 from pipeline import GPT, OCR
 from psycopg.conninfo import make_conninfo
 from psycopg_pool import ConnectionPool
@@ -22,6 +26,8 @@ from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings
 
 from app.exceptions import log_error
+from app.models.bucket_name import MinioBucketName
+from app.services.file_storage import FertiscanStorage, MinIOStorageManager
 
 load_dotenv(".env.secrets")
 load_dotenv(".env.config")
@@ -37,10 +43,10 @@ class Settings(BaseSettings):
     db_port: int
     db_name: str
     fertiscan_schema: str
-    azure_storage_account_name: str
-    azure_storage_account_key: str
-    azure_storage_default_endpoint_protocol: str
-    azure_storage_endpoint_suffix: str
+    azure_storage_account_name: str | None = None
+    azure_storage_account_key: str | None = None
+    azure_storage_default_endpoint_protocol: str | None = None
+    azure_storage_endpoint_suffix: str | None = None
     openai_api_deployment: str = Field(alias="azure_openai_deployment")
     openai_api_endpoint: str = Field(alias="azure_openai_endpoint")
     openai_api_key: str = Field(alias="azure_openai_key")
@@ -49,6 +55,11 @@ class Settings(BaseSettings):
     # upload_folder: str = "uploads"
     allowed_origins: list[str]
     otel_exporter_otlp_endpoint: str = Field(alias="otel_exporter_otlp_endpoint")
+    minio_endpoint: str
+    minio_access_key: str
+    minio_secret_key: str
+    minio_secure: bool = True
+    minio_app_bucket: MinioBucketName = "fertiscan"
 
     @computed_field
     @property
@@ -138,17 +149,29 @@ def create_app(settings: Settings, router: APIRouter, lifespan=None):
         api_endpoint=settings.openai_api_endpoint,
         api_key=settings.openai_api_key,
         deployment_id=settings.openai_api_deployment,
-        phoenix_endpoint=settings.phoenix_endpoint,
+        # phoenix_endpoint=settings.phoenix_endpoint,
     )
     app.gpt = gpt
 
     app.include_router(router)
 
+    minio_client = Minio(
+        settings.minio_endpoint,
+        access_key=settings.minio_access_key,
+        secret_key=settings.minio_secret_key,
+        secure=settings.minio_secure,
+    )
+
+    sm = MinIOStorageManager(minio_client)
+    storage = FertiscanStorage(sm, settings.minio_app_bucket)
+
+    app.storage = storage
+
     @app.exception_handler(Exception)
     async def global_exception_handler(_: Request, e: Exception):
         log_error(e)
         return JSONResponse(
-            status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content=str(e)
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR, content={"detail": str(e)}
         )
 
     return app
