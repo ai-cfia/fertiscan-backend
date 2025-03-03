@@ -1,11 +1,10 @@
 import io
-from typing import BinaryIO
 from PIL import Image
 
 from pipeline import analyze, Settings
 from app.models.label_data import LabelData
 
-def extract_data(files: dict[str, BinaryIO], settings: Settings):
+def extract_data(files: list[bytes], settings: Settings):
     """
     Extracts data from provided image files using OCR and GPT.
 
@@ -27,8 +26,8 @@ def extract_data(files: dict[str, BinaryIO], settings: Settings):
     # TODO: Validate file types if necessary
 
     images = []
-    for filename in files:
-        images.append(Image.open(io.BytesIO(files[filename].read())))
+    for file in files:
+        images.append(Image.open(io.BytesIO(file)))
 
     data = analyze(images, settings)
 

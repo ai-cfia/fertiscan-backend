@@ -12,8 +12,6 @@ from app.dependencies import (
     authenticate_user,
     fetch_user,
     get_connection_pool,
-    get_gpt,
-    get_ocr,
     get_settings,
 )
 from app.exceptions import (
@@ -48,8 +46,6 @@ class TestAPIPipeline(unittest.TestCase):
 
         app.dependency_overrides.clear()
         app.dependency_overrides[get_connection_pool] = override_mock
-        app.dependency_overrides[get_ocr] = override_mock
-        app.dependency_overrides[get_gpt] = override_mock
         app.dependency_overrides[fetch_user] = lambda: Mock(id="test-user")
 
     @patch("app.routes.extract_data")

@@ -44,7 +44,6 @@ from app.models.inspections import (
 from app.models.label_data import LabelData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
-from app.sanitization import custom_secure_filename
 from pipeline import Settings as PipelineSettings
 
 router = APIRouter()
@@ -62,20 +61,11 @@ async def health_check():
 
 @router.post("/analyze", response_model=LabelData, tags=["Pipeline"])
 async def analyze_document(
-<<<<<<< HEAD
-    ocr: Annotated[OCR, Depends(get_ocr)],
-    gpt: Annotated[GPT, Depends(get_gpt)],
-    files: Annotated[list[UploadFile], Depends(validate_files)],
-):
-    label_images = [await f.read() for f in files]
-    return extract_data(ocr, gpt, label_images)
-=======
     settings: Annotated[PipelineSettings, Depends(get_pipeline_settings)],
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
-    file_dict = {custom_secure_filename(f.filename): f.file for f in files}
-    return extract_data(file_dict, settings)
->>>>>>> cc63f49 (Refactor data extraction to use PipelineSettings and update dependencies)
+    label_images = [await f.read() for f in files]
+    return extract_data(label_images, settings)
 
 
 @router.post("/signup", tags=["Users"], status_code=201, response_model=User)

@@ -19,6 +19,7 @@ from psycopg.conninfo import make_conninfo
 from psycopg_pool import ConnectionPool
 from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings
+from pipeline import Settings as PipelineSettings
 
 from app.exceptions import log_error
 
