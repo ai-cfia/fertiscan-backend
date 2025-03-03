@@ -35,7 +35,7 @@ from app.models.label_data import LabelData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
 from app.sanitization import custom_secure_filename
-from pipeline import PipelineSettings
+from pipeline import Settings as PipelineSettings
 
 router = APIRouter()
 

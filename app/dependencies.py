@@ -2,7 +2,6 @@ from http import HTTPStatus
 
 from fastapi import Depends, File, HTTPException, Request, UploadFile
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from pipeline import GPT, OCR
 from psycopg_pool import ConnectionPool
 
 from app.config import Settings
@@ -22,15 +21,6 @@ def get_pipeline_settings(request: Request) -> Settings:
 
 def get_connection_pool(request: Request) -> ConnectionPool:
     return request.app.pool
-
-
-def get_ocr(request: Request) -> OCR:
-    return request.app.ocr
-
-
-def get_gpt(request: Request) -> GPT:
-    return request.app.gpt
-
 
 def authenticate_user(credentials: HTTPBasicCredentials = Depends(auth)):
     if not credentials.username:

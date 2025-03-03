@@ -1,5 +1,5 @@
 python-dotenv==1.0.1
-git+https://github.com/ai-cfia/fertiscan-pipeline.git@dspy-experimental-settings-parameter
+git+https://github.com/ai-cfia/fertiscan-pipeline.git@dspy-experimental
 git+https://github.com/ai-cfia/ailab-datastore.git@v1.0.13-fertiscan-datastore
 psycopg[pool]
 opentelemetry-api==1.27.0
