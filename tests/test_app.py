@@ -432,7 +432,7 @@ class TestAPIFiles(unittest.TestCase):
         self.folder_id = uuid.uuid4()
         self.file_id = uuid.uuid4()
 
-    @patch("app.routes.read_folders")
+    @patch("app.routes.read_inspection_folders")
     def test_get_folders_success(self, mock_read_folders):
         folder_1 = Folder(
             id=uuid.uuid4(), owner_id=self.test_user.id, file_ids=[uuid.uuid4()]
@@ -459,7 +459,7 @@ class TestAPIFiles(unittest.TestCase):
         response = self.client.get("/files")
         self.assertEqual(response.status_code, 401)
 
-    @patch("app.routes.read_folder")
+    @patch("app.routes.read_inspection_folder")
     def test_get_folder(self, mock_read_folder):
         folder_id = self.folder_id
         file_ids = [uuid.uuid4(), uuid.uuid4()]
@@ -477,14 +477,14 @@ class TestAPIFiles(unittest.TestCase):
         response = self.client.get(f"/files/{self.folder_id}")
         self.assertEqual(response.status_code, 401)
 
-    @patch("app.routes.read_folder")
+    @patch("app.routes.read_inspection_folder")
     def test_get_folder_not_found(self, mock_read_folder):
         mock_read_folder.side_effect = FolderNotFoundError()
         response = self.client.get(f"/files/{self.folder_id}")
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "Folder not found")
 
-    @patch("app.routes.create_folder")
+    @patch("app.routes.create_inspection_folder")
     def test_post_files_success(self, mock_create_folder):
         folder_id = uuid.uuid4()
         file_ids = [uuid.uuid4(), uuid.uuid4()]
@@ -505,13 +505,13 @@ class TestAPIFiles(unittest.TestCase):
         response = self.client.post("/files", files=[])
         self.assertEqual(response.status_code, 401)
 
-    @patch("app.routes.create_folder")
+    @patch("app.routes.create_inspection_folder")
     def test_post_files_empty(self, mock_create_folder):
         response = self.client.post("/files", files=[])
         self.assertEqual(response.status_code, 422)
         mock_create_folder.assert_not_called()
 
-    @patch("app.routes.delete_folder")
+    @patch("app.routes.delete_inspection_folder")
     def test_delete_folder_success(self, mock_delete_folder):
         mock_delete_folder.return_value = DeleteFolderResponse(
             id=self.folder_id, deleted=True
@@ -531,27 +531,27 @@ class TestAPIFiles(unittest.TestCase):
         response = self.client.delete(f"/files/{self.folder_id}")
         self.assertEqual(response.status_code, 401)
 
-    @patch("app.routes.delete_folder")
+    @patch("app.routes.delete_inspection_folder")
     def test_delete_folder_not_found(self, mock_delete_folder):
         mock_delete_folder.side_effect = FolderNotFoundError()
         response = self.client.delete(f"/files/{self.folder_id}")
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "Folder not found")
 
-    @patch("app.routes.read_file")
-    async def test_get_file(self, mock_read_file):
-        mock_read_file.return_value = b"fake_image_data"
+    @patch("app.routes.read_label")
+    async def test_get_file(self, mock_read_label):
+        mock_read_label.return_value = b"fake_image_data"
         response = self.client.get(f"/files/{self.folder_id}/{self.file_id}")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b"fake_image_data")
         self.assertEqual(response.headers["content-type"], "image/png")
-        mock_read_file.assert_called_once_with(
+        mock_read_label.assert_called_once_with(
             ANY, self.test_user.id, self.folder_id, self.file_id
         )
 
-    @patch("app.routes.read_file")
-    def test_get_file_not_found(self, mock_read_file):
-        mock_read_file.side_effect = FileNotFoundError()
+    @patch("app.routes.read_label")
+    def test_get_file_not_found(self, mock_read_label):
+        mock_read_label.side_effect = FileNotFoundError()
         response = self.client.get(f"/files/{self.folder_id}/{self.file_id}")
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "File not found")

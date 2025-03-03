@@ -7,11 +7,11 @@ from PIL import Image
 from psycopg_pool import ConnectionPool
 
 from app.controllers.files import (
-    create_folder,
-    delete_folder,
-    read_file,
-    read_folder,
-    read_folders,
+    create_inspection_folder,
+    delete_inspection_folder,
+    read_inspection_folder,
+    read_inspection_folders,
+    read_label,
 )
 from app.exceptions import (
     FileCreationError,
@@ -24,13 +24,13 @@ from app.exceptions import (
     UserNotFoundError,
 )
 from app.models.files import Folder
-from app.services.file_storage import StorageManager
+from app.services.file_storage import FertiscanStorage
 
 
 class TestReadFolders(unittest.IsolatedAsyncioTestCase):
     async def test_read_folders_success(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -52,14 +52,14 @@ class TestReadFolders(unittest.IsolatedAsyncioTestCase):
             },
         ]
         mock_cursor.fetchall.return_value = sample_folders
-        mock_sm.read_folder.side_effect = lambda user_id, folder_id: [
+        mock_fs.read_inspection_folder.side_effect = lambda user_id, folder_id: [
             str(f_id)
             for f_id in next(
                 f["file_ids"] for f in sample_folders if str(f["id"]) == folder_id
             )
         ]
 
-        folders = await read_folders(mock_cp, mock_sm, user_id)
+        folders = await read_inspection_folders(mock_cp, mock_fs, user_id)
 
         self.assertEqual(len(folders), len(sample_folders))
         for folder, sample in zip(folders, sample_folders):
@@ -70,7 +70,7 @@ class TestReadFolders(unittest.IsolatedAsyncioTestCase):
 
     async def test_read_folders_with_string_user_id(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -92,14 +92,14 @@ class TestReadFolders(unittest.IsolatedAsyncioTestCase):
             },
         ]
         mock_cursor.fetchall.return_value = sample_folders
-        mock_sm.read_folder.side_effect = lambda user_id, folder_id: [
+        mock_fs.read_inspection_folder.side_effect = lambda user_id, folder_id: [
             str(f_id)
             for f_id in next(
                 f["file_ids"] for f in sample_folders if str(f["id"]) == folder_id
             )
         ]
 
-        folders = await read_folders(mock_cp, mock_sm, str(user_id))
+        folders = await read_inspection_folders(mock_cp, mock_fs, str(user_id))
 
         self.assertEqual(len(folders), len(sample_folders))
         for folder, sample in zip(folders, sample_folders):
@@ -110,7 +110,7 @@ class TestReadFolders(unittest.IsolatedAsyncioTestCase):
 
     async def test_read_folders_no_results(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -119,13 +119,13 @@ class TestReadFolders(unittest.IsolatedAsyncioTestCase):
         user_id = uuid.uuid4()
         mock_cursor.fetchall.return_value = []
 
-        folders = await read_folders(mock_cp, mock_sm, user_id)
+        folders = await read_inspection_folders(mock_cp, mock_fs, user_id)
 
         self.assertEqual(folders, [])
 
     async def test_read_folders_inconsistent_storage(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -144,16 +144,16 @@ class TestReadFolders(unittest.IsolatedAsyncioTestCase):
         mock_cursor.fetchall.return_value = sample_folders
 
         # Simulating inconsistency between DB and Storage
-        mock_sm.read_folder.return_value = ["mismatched-file-id"]
+        mock_fs.read_inspection_folder.return_value = ["mismatched-file-id"]
 
         with self.assertRaises(FolderReadError):
-            await read_folders(mock_cp, mock_sm, user_id)
+            await read_inspection_folders(mock_cp, mock_fs, user_id)
 
 
 class TestReadFolder(unittest.IsolatedAsyncioTestCase):
     async def test_read_folder_success(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -168,11 +168,9 @@ class TestReadFolder(unittest.IsolatedAsyncioTestCase):
         }
         mock_cursor.fetchone.return_value = sample_folder
 
-        mock_sm.read_folder.return_value = [
-            str(f_id) for f_id in sample_folder["file_ids"]
-        ]
+        mock_fs.read_inspection_folder.return_value = sample_folder["file_ids"]
 
-        folder = await read_folder(mock_cp, mock_sm, user_id, picture_set_id)
+        folder = await read_inspection_folder(mock_cp, mock_fs, user_id, picture_set_id)
 
         self.assertIsInstance(folder, Folder)
         self.assertEqual(folder.id, picture_set_id)
@@ -181,7 +179,7 @@ class TestReadFolder(unittest.IsolatedAsyncioTestCase):
 
     async def test_read_folder_not_found(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -192,13 +190,13 @@ class TestReadFolder(unittest.IsolatedAsyncioTestCase):
         mock_cursor.fetchone.return_value = None
 
         with self.assertRaises(FolderNotFoundError) as context:
-            await read_folder(mock_cp, mock_sm, user_id, picture_set_id)
+            await read_inspection_folder(mock_cp, mock_fs, user_id, picture_set_id)
 
         self.assertIn(f"Folder {picture_set_id} not found", str(context.exception))
 
     async def test_read_folder_inconsistent_storage(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -213,16 +211,16 @@ class TestReadFolder(unittest.IsolatedAsyncioTestCase):
         }
         mock_cursor.fetchone.return_value = sample_folder
 
-        mock_sm.read_folder.return_value = ["mismatched-file-id"]
+        mock_fs.read_inspection_folder.return_value = ["mismatched-file-id"]
 
         with self.assertRaises(FolderReadError):
-            await read_folder(mock_cp, mock_sm, user_id, picture_set_id)
+            await read_inspection_folder(mock_cp, mock_fs, user_id, picture_set_id)
 
 
 class TestDeleteFolder(unittest.IsolatedAsyncioTestCase):
     async def test_delete_folder_success(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -236,16 +234,18 @@ class TestDeleteFolder(unittest.IsolatedAsyncioTestCase):
             {"id": str(folder_id), "owner_id": str(user_id)},  # Folder exists
         ]
 
-        folder = await delete_folder(mock_cp, mock_sm, user_id, folder_id)
+        folder = await delete_inspection_folder(mock_cp, mock_fs, user_id, folder_id)
 
         self.assertIsInstance(folder, Folder)
         self.assertEqual(folder.id, folder_id)
 
-        mock_sm.delete_folder.assert_called_once_with(str(user_id), str(folder_id))
+        mock_fs.delete_inspection_folder.assert_called_once_with(
+            str(user_id), str(folder_id)
+        )
 
     async def test_delete_folder_user_not_found(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -257,11 +257,11 @@ class TestDeleteFolder(unittest.IsolatedAsyncioTestCase):
         folder_id = uuid.uuid4()
 
         with self.assertRaises(UserNotFoundError):
-            await delete_folder(mock_cp, mock_sm, user_id, folder_id)
+            await delete_inspection_folder(mock_cp, mock_fs, user_id, folder_id)
 
     async def test_delete_folder_default_folder(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -275,11 +275,11 @@ class TestDeleteFolder(unittest.IsolatedAsyncioTestCase):
         ]
 
         with self.assertRaises(FolderDeletionError):
-            await delete_folder(mock_cp, mock_sm, user_id, folder_id)
+            await delete_inspection_folder(mock_cp, mock_fs, user_id, folder_id)
 
     async def test_delete_folder_not_found(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -294,17 +294,17 @@ class TestDeleteFolder(unittest.IsolatedAsyncioTestCase):
         ]
 
         with self.assertRaises(FolderNotFoundError):
-            await delete_folder(mock_cp, mock_sm, user_id, folder_id)
+            await delete_inspection_folder(mock_cp, mock_fs, user_id, folder_id)
 
     async def test_delete_folder_storage_error(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
         mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
 
-        mock_sm.delete_folder.side_effect = Exception("Storage error")
+        mock_fs.delete_inspection_folder.side_effect = Exception("Storage error")
 
         user_id = uuid.uuid4()
         folder_id = uuid.uuid4()
@@ -315,7 +315,7 @@ class TestDeleteFolder(unittest.IsolatedAsyncioTestCase):
         ]
 
         with self.assertRaises(FolderDeletionError):
-            await delete_folder(mock_cp, mock_sm, user_id, folder_id)
+            await delete_inspection_folder(mock_cp, mock_fs, user_id, folder_id)
 
 
 class TestCreateFolder(unittest.IsolatedAsyncioTestCase):
@@ -329,7 +329,7 @@ class TestCreateFolder(unittest.IsolatedAsyncioTestCase):
 
     async def test_create_folder_success(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -348,19 +348,19 @@ class TestCreateFolder(unittest.IsolatedAsyncioTestCase):
             {"id": str(file_id_2), "picture_set_id": str(folder_id)},  # Second file
         ]
 
-        folder = await create_folder(
-            mock_cp, mock_sm, user_id, files, name="test_folder"
+        folder = await create_inspection_folder(
+            mock_cp, mock_fs, user_id, files, name="test_folder"
         )
 
         self.assertIsInstance(folder, Folder)
         self.assertEqual(folder.id, folder_id)
         self.assertEqual(len(folder.file_ids), len(files))
 
-        mock_sm.save_file.assert_called()
+        mock_fs.save_label.assert_called()
 
     async def test_create_folder_user_not_found(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -372,11 +372,11 @@ class TestCreateFolder(unittest.IsolatedAsyncioTestCase):
         files = [self.image]
 
         with self.assertRaises(UserNotFoundError):
-            await create_folder(mock_cp, mock_sm, user_id, files)
+            await create_inspection_folder(mock_cp, mock_fs, user_id, files)
 
     async def test_create_folder_fallback_to_default(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -408,7 +408,7 @@ class TestCreateFolder(unittest.IsolatedAsyncioTestCase):
             },  # Insert file 2
         ]
 
-        folder = await create_folder(mock_cp, mock_sm, user_id, files)
+        folder = await create_inspection_folder(mock_cp, mock_fs, user_id, files)
 
         self.assertIsInstance(folder, Folder)
         self.assertEqual(folder.id, default_folder_id)
@@ -416,7 +416,7 @@ class TestCreateFolder(unittest.IsolatedAsyncioTestCase):
 
     async def test_create_folder_fails(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -432,11 +432,11 @@ class TestCreateFolder(unittest.IsolatedAsyncioTestCase):
         ]
 
         with self.assertRaises(FolderCreationError):
-            await create_folder(mock_cp, mock_sm, user_id, files)
+            await create_inspection_folder(mock_cp, mock_fs, user_id, files)
 
     async def test_create_folder_file_creation_fails(self):
         mock_cp = MagicMock(spec=ConnectionPool)
-        mock_sm = MagicMock(spec=StorageManager)
+        mock_fs = MagicMock(spec=FertiscanStorage)
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cp.connection.return_value.__enter__.return_value = mock_conn
@@ -453,33 +453,37 @@ class TestCreateFolder(unittest.IsolatedAsyncioTestCase):
         ]
 
         with self.assertRaises(FileCreationError):
-            await create_folder(mock_cp, mock_sm, user_id, files)
+            await create_inspection_folder(mock_cp, mock_fs, user_id, files)
 
 
-class TestReadFile(unittest.IsolatedAsyncioTestCase):
-    async def test_valid_file_returns_blob(self):
-        mock_sm = MagicMock(spec=StorageManager)
+class TestReadLabel(unittest.IsolatedAsyncioTestCase):
+    async def test_valid_label(self):
+        mock_fs = MagicMock(spec=FertiscanStorage)
         expected_blob = b"sample binary data"
-        mock_sm.read_file.return_value = expected_blob
+        mock_fs.read_label.return_value = expected_blob
 
         user_id = uuid.uuid4()
         folder_id = uuid.uuid4()
         file_id = uuid.uuid4()
 
-        blob = await read_file(mock_sm, user_id, folder_id, file_id)
+        file = await read_label(mock_fs, user_id, folder_id, file_id)
 
-        self.assertEqual(blob, expected_blob)
-        mock_sm.read_file.assert_called_once_with(user_id, str(folder_id), str(file_id))
+        self.assertEqual(file, expected_blob)
+        mock_fs.read_label.assert_called_once_with(
+            user_id, str(folder_id), str(file_id)
+        )
 
     async def test_file_not_found_raises_error(self):
-        mock_sm = MagicMock(spec=StorageManager)
-        mock_sm.read_file.side_effect = StorageFileNotFound()
+        mock_fs = MagicMock(spec=FertiscanStorage)
+        mock_fs.read_label.side_effect = StorageFileNotFound()
 
         user_id = uuid.uuid4()
         folder_id = uuid.uuid4()
         file_id = uuid.uuid4()
 
         with self.assertRaises(FileNotFoundError):
-            await read_file(mock_sm, user_id, folder_id, file_id)
+            await read_label(mock_fs, user_id, folder_id, file_id)
 
-        mock_sm.read_file.assert_called_once_with(user_id, str(folder_id), str(file_id))
+        mock_fs.read_label.assert_called_once_with(
+            user_id, str(folder_id), str(file_id)
+        )

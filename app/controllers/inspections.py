@@ -13,7 +13,7 @@ from psycopg.rows import dict_row
 from psycopg.sql import SQL
 from psycopg_pool import ConnectionPool
 
-from app.controllers.files import delete_folder, read_folder
+from app.controllers.files import delete_inspection_folder, read_inspection_folder
 from app.exceptions import (
     FolderError,
     InspectionCreationError,
@@ -30,7 +30,7 @@ from app.models.inspections import (
 )
 from app.models.label_data import LabelData
 from app.models.users import User
-from app.services.file_storage import StorageManager
+from app.services.file_storage import FertiscanStorage
 
 
 async def read_all_inspections(cp: ConnectionPool, user: User):
@@ -82,7 +82,7 @@ async def read_inspection(cp: ConnectionPool, user: User, id: UUID | str):
 
 async def create_inspection(
     cp: ConnectionPool,
-    sm: StorageManager,
+    fs: FertiscanStorage,
     user: User,
     label_data: LabelData | dict,
 ):
@@ -93,7 +93,9 @@ async def create_inspection(
 
     # TODO: both should probably share the same conn & conn context
     try:
-        folder = await read_folder(cp, sm, user.id, label_data.picture_set_id)
+        folder = await read_inspection_folder(
+            cp, fs, user.id, label_data.picture_set_id
+        )
     except FolderError as e:
         raise InspectionCreationError(f"{e}") from e
 
@@ -134,7 +136,7 @@ async def update_inspection(
 
 async def delete_inspection(
     cp: ConnectionPool,
-    sm: StorageManager,
+    fs: FertiscanStorage,
     user: User,
     id: UUID | str,
 ):
@@ -156,7 +158,7 @@ async def delete_inspection(
 
     # TODO: should probably share the same conn & conn context as above
     try:
-        await delete_folder(cp, sm, user.id, inspection.picture_set_id)
+        await delete_inspection_folder(cp, fs, user.id, inspection.picture_set_id)
     except FolderError as e:
         logger.warning(f"[delete_inspection] {e}")
     except Exception as e:

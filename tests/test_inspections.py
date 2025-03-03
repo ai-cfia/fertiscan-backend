@@ -212,21 +212,21 @@ class TestRead(unittest.IsolatedAsyncioTestCase):
 class TestCreateInspection(unittest.IsolatedAsyncioTestCase):
     async def test_missing_user_id_raises_error(self):
         cp = MagicMock()
-        sm = MagicMock()
+        fs = MagicMock()
         label_data = LabelData()
         user = User(id=None)
 
         with self.assertRaises(MissingUserAttributeError):
-            await create_inspection(cp, sm, user, label_data)
+            await create_inspection(cp, fs, user, label_data)
 
     @patch("app.controllers.inspections.build_inspection_import")
     @patch("app.controllers.inspections.new_inspection_with_label_info")
-    @patch("app.controllers.inspections.read_folder")
+    @patch("app.controllers.inspections.read_inspection_folder")
     async def test_create_inspection_success_with_label_data(
         self, mock_read_folder, mock_db_create_inspection, mock_build_inspection_import
     ):
         cp = MagicMock()
-        sm = MagicMock()
+        fs = MagicMock()
         conn_mock = MagicMock()
         cursor_mock = MagicMock()
         conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
@@ -277,7 +277,7 @@ class TestCreateInspection(unittest.IsolatedAsyncioTestCase):
         }
         mock_db_create_inspection.return_value = mock_inspection_data
 
-        inspection = await create_inspection(cp, sm, user, label_data)
+        inspection = await create_inspection(cp, fs, user, label_data)
 
         self.assertIsInstance(inspection, Inspection)
         self.assertEqual(
@@ -286,11 +286,11 @@ class TestCreateInspection(unittest.IsolatedAsyncioTestCase):
 
     async def test_missing_label_data_raises_error(self):
         cp = MagicMock()
-        sm = MagicMock()
+        fs = MagicMock()
         user = User(id=uuid.uuid4())
 
         with self.assertRaises(ValidationError):
-            await create_inspection(cp, sm, user, None)
+            await create_inspection(cp, fs, user, None)
 
 
 class TestUpdateFunction(unittest.IsolatedAsyncioTestCase):
@@ -412,34 +412,34 @@ class TestUpdateFunction(unittest.IsolatedAsyncioTestCase):
 class TestDeleteInspection(unittest.IsolatedAsyncioTestCase):
     async def test_missing_user_id_raises_error(self):
         cp = MagicMock()
-        sm = MagicMock()
+        fs = MagicMock()
         user = User(id=None)
         inspection_id = uuid.uuid4()
 
         with self.assertRaises(MissingUserAttributeError):
-            await delete_inspection(cp, sm, user, inspection_id)
+            await delete_inspection(cp, fs, user, inspection_id)
 
     async def test_missing_inspection_id_raises_error(self):
         cp = MagicMock()
-        sm = MagicMock()
+        fs = MagicMock()
         user = User(id=uuid.uuid4())
 
         with self.assertRaises(TypeError):
-            await delete_inspection(cp, sm, user, None)
+            await delete_inspection(cp, fs, user, None)
 
     async def test_invalid_inspection_id_format(self):
         cp = MagicMock()
-        sm = MagicMock()
+        fs = MagicMock()
         user = User(id=uuid.uuid4())
         invalid_id = "not-a-uuid"
 
         with self.assertRaises(ValueError):
-            await delete_inspection(cp, sm, user, invalid_id)
+            await delete_inspection(cp, fs, user, invalid_id)
 
-    @patch("app.controllers.inspections.delete_folder")
+    @patch("app.controllers.inspections.delete_inspection_folder")
     async def test_delete_inspection_success(self, mock_delete_folder):
         cp = MagicMock()
-        sm = MagicMock()
+        fs = MagicMock()
         conn_mock = MagicMock()
         cursor_mock = MagicMock()
         conn_mock.cursor.return_value.__enter__.return_value = cursor_mock
@@ -454,11 +454,11 @@ class TestDeleteInspection(unittest.IsolatedAsyncioTestCase):
             "picture_set_id": str(uuid.uuid4()),
         }
 
-        deleted_inspection = await delete_inspection(cp, sm, user, inspection_id)
+        deleted_inspection = await delete_inspection(cp, fs, user, inspection_id)
 
         cursor_mock.execute.assert_called_once()
         mock_delete_folder.assert_called_once_with(
-            cp, sm, user.id, deleted_inspection.picture_set_id
+            cp, fs, user.id, deleted_inspection.picture_set_id
         )
         self.assertIsInstance(deleted_inspection, DBInspectionMetadata)
         self.assertEqual(deleted_inspection.id, inspection_id)

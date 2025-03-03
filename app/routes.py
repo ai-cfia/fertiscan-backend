@@ -9,11 +9,11 @@ from psycopg_pool import ConnectionPool
 
 from app.controllers.data_extraction import extract_data
 from app.controllers.files import (
-    create_folder,
-    delete_folder,
-    read_file,
-    read_folder,
-    read_folders,
+    create_inspection_folder,
+    delete_inspection_folder,
+    read_inspection_folder,
+    read_inspection_folders,
+    read_label,
 )
 from app.controllers.inspections import (
     create_inspection,
@@ -49,7 +49,7 @@ from app.models.inspections import (
 from app.models.label_data import LabelData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
-from app.services.file_storage import StorageManager
+from app.services.file_storage import FertiscanStorage
 
 router = APIRouter()
 
@@ -117,11 +117,11 @@ async def get_inspection(
 @router.post("/inspections", tags=["Inspections"], response_model=InspectionResponse)
 async def post_inspection(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
-    sm: Annotated[StorageManager, Depends(get_storage)],
+    fs: Annotated[FertiscanStorage, Depends(get_storage)],
     user: Annotated[User, Depends(fetch_user)],
     data: InspectionCreate,
 ):
-    return await create_inspection(cp, sm, user, data)
+    return await create_inspection(cp, fs, user, data)
 
 
 @router.put(
@@ -146,12 +146,12 @@ async def put_inspection(
 )
 async def delete_inspection_(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
-    sm: Annotated[StorageManager, Depends(get_storage)],
+    fs: Annotated[FertiscanStorage, Depends(get_storage)],
     user: Annotated[User, Depends(fetch_user)],
     id: UUID,
 ):
     try:
-        return await delete_inspection(cp, sm, user, id)
+        return await delete_inspection(cp, fs, user, id)
     except InspectionNotFoundError:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Inspection not found"
@@ -161,21 +161,21 @@ async def delete_inspection_(
 @router.get("/files", tags=["Files"], response_model=list[FolderResponse])
 async def get_folders(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
-    sm: Annotated[StorageManager, Depends(get_storage)],
+    fs: Annotated[FertiscanStorage, Depends(get_storage)],
     user: Annotated[User, Depends(fetch_user)],
 ):
-    return await read_folders(cp, sm, user.id)
+    return await read_inspection_folders(cp, fs, user.id)
 
 
 @router.get("/files/{folder_id}", tags=["Files"], response_model=FolderResponse)
 async def get_folder(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
-    sm: Annotated[StorageManager, Depends(get_storage)],
+    fs: Annotated[FertiscanStorage, Depends(get_storage)],
     user: Annotated[User, Depends(fetch_user)],
     folder_id: UUID,
 ):
     try:
-        return await read_folder(cp, sm, user.id, folder_id)
+        return await read_inspection_folder(cp, fs, user.id, folder_id)
     except FolderNotFoundError:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Folder not found")
 
@@ -183,12 +183,12 @@ async def get_folder(
 @router.post("/files", tags=["Files"], response_model=FolderResponse)
 async def create_folder_(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
-    sm: Annotated[StorageManager, Depends(get_storage)],
+    fs: Annotated[FertiscanStorage, Depends(get_storage)],
     user: Annotated[User, Depends(fetch_user)],
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
     label_images = [await f.read() for f in files]
-    return await create_folder(cp, sm, user.id, label_images)
+    return await create_inspection_folder(cp, fs, user.id, label_images)
 
 
 @router.delete(
@@ -196,25 +196,25 @@ async def create_folder_(
 )
 async def delete_folder_(
     cp: Annotated[ConnectionPool, Depends(get_connection_pool)],
-    sm: Annotated[StorageManager, Depends(get_storage)],
+    fs: Annotated[FertiscanStorage, Depends(get_storage)],
     user: Annotated[User, Depends(fetch_user)],
     folder_id: UUID,
 ):
     try:
-        return await delete_folder(cp, sm, user.id, folder_id)
+        return await delete_inspection_folder(cp, fs, user.id, folder_id)
     except FolderNotFoundError:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Folder not found")
 
 
 @router.get("/files/{folder_id}/{file_id}", tags=["Files"], response_class=Response)
 async def get_file(
-    sm: Annotated[StorageManager, Depends(get_storage)],
+    fs: Annotated[FertiscanStorage, Depends(get_storage)],
     user: Annotated[User, Depends(fetch_user)],
     folder_id: UUID,
     file_id: UUID,
 ):
     try:
-        file = await read_file(sm, user.id, folder_id, file_id)
+        file = await read_label(fs, user.id, folder_id, file_id)
         return Response(content=file.content, media_type=file.content_type)
     except FileNotFoundError:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="File not found")

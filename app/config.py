@@ -26,7 +26,8 @@ from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings
 
 from app.exceptions import log_error
-from app.services.file_storage import MinIOStorageManager, build_storage_name
+from app.models.bucket_name import MinioBucketName
+from app.services.file_storage import FertiscanStorage, MinIOStorageManager
 
 load_dotenv(".env.secrets")
 load_dotenv(".env.config")
@@ -58,6 +59,7 @@ class Settings(BaseSettings):
     minio_access_key: str
     minio_secret_key: str
     minio_secure: bool = True
+    minio_app_bucket: MinioBucketName = "fertiscan"
 
     @computed_field
     @property
@@ -160,7 +162,8 @@ def create_app(settings: Settings, router: APIRouter, lifespan=None):
         secure=settings.minio_secure,
     )
 
-    storage = MinIOStorageManager(minio_client, build_storage_name)
+    sm = MinIOStorageManager(minio_client)
+    storage = FertiscanStorage(sm, settings.minio_app_bucket)
 
     app.storage = storage
 
