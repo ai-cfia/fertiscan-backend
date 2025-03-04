@@ -5,7 +5,6 @@ from uuid import UUID
 import filetype
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile
 from fastapi.responses import RedirectResponse
-from pipeline import GPT, OCR
 from psycopg_pool import ConnectionPool
 
 from app.config import Settings
@@ -29,9 +28,8 @@ from app.dependencies import (
     authenticate_user,
     fetch_user,
     get_connection_pool,
-    get_gpt,
-    get_ocr,
     get_settings,
+    get_pipeline_settings,
     validate_files,
 )
 from app.exceptions import FileNotFoundError, InspectionNotFoundError, UserConflictError
@@ -46,6 +44,7 @@ from app.models.inspections import (
 from app.models.label_data import LabelData
 from app.models.monitoring import HealthStatus
 from app.models.users import User
+from pipeline import Settings as PipelineSettings
 
 router = APIRouter()
 
@@ -62,12 +61,11 @@ async def health_check():
 
 @router.post("/analyze", response_model=LabelData, tags=["Pipeline"])
 async def analyze_document(
-    ocr: Annotated[OCR, Depends(get_ocr)],
-    gpt: Annotated[GPT, Depends(get_gpt)],
+    settings: Annotated[PipelineSettings, Depends(get_pipeline_settings)],
     files: Annotated[list[UploadFile], Depends(validate_files)],
 ):
     label_images = [await f.read() for f in files]
-    return extract_data(ocr, gpt, label_images)
+    return extract_data(label_images, settings)
 
 
 @router.post("/signup", tags=["Users"], status_code=201, response_model=User)
