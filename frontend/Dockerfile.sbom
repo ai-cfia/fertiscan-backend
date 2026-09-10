@@ -1,7 +1,7 @@
 # Dockerfile for generating Node.js/npm SBOM in CycloneDX format.
 # Used by scripts/generate-sbom.sh
 
-FROM node:24-slim@sha256:24dc26ef1e3c3690f27ebc4136c9c186c3133b25563ae4d7f0692e4d1fe5db0e
+FROM node:24-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
 
 # Install SBOM generator globally
 RUN npm install -g @cyclonedx/cyclonedx-npm
